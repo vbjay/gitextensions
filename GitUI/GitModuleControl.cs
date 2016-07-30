@@ -18,8 +18,8 @@ namespace GitUI
         /// <summary>Occurs after the <see cref="UICommandsSource"/> is changed.</summary>
         [Browsable(false)]
         public event EventHandler<GitUICommandsSourceEventArgs> GitUICommandsSourceSet;
-        private IGitUICommandsSource _uiCommandsSource;
 
+        private IGitUICommandsSource _uiCommandsSource;
 
         /// <summary>Gets the <see cref="IGitUICommandsSource"/>.</summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -62,6 +62,7 @@ namespace GitUI
                 return UICommandsSource != null;
             }
         }
+
         /// <summary>Gets the <see cref="UICommands"/>' <see cref="GitModule"/> reference.</summary>
         [Browsable(false)]
         public GitModule Module
@@ -87,7 +88,9 @@ namespace GitUI
             base.Dispose(disposing);
         }
 
-        protected virtual void DisposeCustomResources() { }
+        protected virtual void DisposeCustomResources()
+        {
+        }
 
         /// <summary>Occurs when the <see cref="UICommandsSource"/> is disposed.</summary>
         protected virtual void DisposeUICommandsSource()
@@ -96,7 +99,7 @@ namespace GitUI
         }
 
         /// <summary>Searches up the <see cref="UserControl"/>'s parent tree until it finds a <see cref="IGitUICommandsSource"/>.</summary>
-        void SearchForUICommandsSource()
+        private void SearchForUICommandsSource()
         {
             if (!UICommandsSourceParentSearch)
                 return;
@@ -116,7 +119,7 @@ namespace GitUI
                         parent = parent.Parent;
                 }
 
-                if(cmdsSrc == null)
+                if (cmdsSrc == null)
                     throw new InvalidOperationException("The UI Command Source is not available for this control. Are you calling methods before adding it to the parent control?");
                 UICommandsSource = cmdsSrc;
             }

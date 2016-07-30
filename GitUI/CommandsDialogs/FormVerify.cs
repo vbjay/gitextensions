@@ -117,7 +117,7 @@ namespace GitUI.CommandsDialogs
 
             MessageBox.Show(this, string.Format(_xTagsCreated.Text, restoredObjectsCount), "Tags created", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-            // if user restored all items, nothing else to do in this form. 
+            // if user restored all items, nothing else to do in this form.
             // User wants to see restored commits, so close this dialog and return to the main window.
             if (restoredObjectsCount == Warnings.Rows.Count)
             {
@@ -169,7 +169,7 @@ namespace GitUI.CommandsDialogs
             ViewCurrentItem();
         }
 
-        #endregion
+        #endregion Event Handlers
 
         private void UpdateLostObjects()
         {

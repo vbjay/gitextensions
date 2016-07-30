@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using System.Windows.Forms;
 using GitCommands.Settings;
 using GitUIPluginInterfaces;
@@ -106,9 +105,13 @@ namespace GitUI.CommandsDialogs.SettingsDialog
     public interface SettingsLayout
     {
         void AddSettingControl(ISettingControlBinding controlBinding);
+
         void AddSettingsLayout(SettingsLayout aLayout);
+
         Control GetControl();
+
         void AddKeyword(string aKeyword);
+
         void AddControlBinding(ISettingControlBinding controlBinding);
     }
 
@@ -139,7 +142,9 @@ namespace GitUI.CommandsDialogs.SettingsDialog
         }
 
         public abstract void AddSettingControlImpl(ISettingControlBinding controlBinding);
+
         public abstract void AddSettingsLayout(SettingsLayout aLayout);
+
         public abstract Control GetControl();
     }
 
@@ -243,5 +248,4 @@ namespace GitUI.CommandsDialogs.SettingsDialog
             : base(setting.FullPath, aCaption, setting.DefaultValue)
         { }
     }
-
 }

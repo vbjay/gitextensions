@@ -132,7 +132,7 @@ namespace GitCommands
             return paths.Where(aPath => IsValidPath(aPath));
         }
 
-        static IEnumerable<string> GetEnvironmentPaths()
+        private static IEnumerable<string> GetEnvironmentPaths()
         {
             string pathVariable = Environment.GetEnvironmentVariable("PATH");
             return GetEnvironmentPaths(pathVariable);
@@ -168,7 +168,7 @@ namespace GitCommands
 
             return fi != null;
         }
-                
+
         public static bool PathExists(string aPath)
         {
             FileInfo fi = null;

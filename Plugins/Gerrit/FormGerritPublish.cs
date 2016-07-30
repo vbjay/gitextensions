@@ -13,13 +13,15 @@ namespace Gerrit
         private string _currentBranchRemote;
 
         #region Translation
+
         private readonly TranslationString _publishGerritChangeCaption = new TranslationString("Publish Gerrit Change");
 
         private readonly TranslationString _publishCaption = new TranslationString("Publish change");
 
         private readonly TranslationString _selectRemote = new TranslationString("Please select a remote repository");
         private readonly TranslationString _selectBranch = new TranslationString("Please enter a branch");
-        #endregion
+
+        #endregion Translation
 
         public FormGerritPublish(IGitUICommands uiCommand)
             : base(uiCommand)

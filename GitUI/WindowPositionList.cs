@@ -1,16 +1,10 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Runtime.Serialization;
 using System.Windows.Forms;
-using System.Xml;
-using System.Xml.Schema;
 using System.Xml.Serialization;
 
 namespace GitUI
@@ -55,6 +49,7 @@ namespace GitUI
                 Directory.CreateDirectory(AppDataDir);
             }
         }
+
         protected WindowPositionList()
         {
             WindowPositions = new List<WindowPosition>();
@@ -82,7 +77,7 @@ namespace GitUI
                 using (
                     var stream = File.Open(ConfigFilePath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite))
                 {
-                    return new XmlSerializer(typeof (WindowPositionList)).Deserialize(stream) as WindowPositionList;
+                    return new XmlSerializer(typeof(WindowPositionList)).Deserialize(stream) as WindowPositionList;
                 }
             }
             catch

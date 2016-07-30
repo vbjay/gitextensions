@@ -5,7 +5,6 @@ using System.Linq;
 using System.Windows.Forms;
 using GitCommands.Utils;
 using ResourceManager;
-using ResourceManager.Xliff;
 
 namespace TranslationApp
 {
@@ -15,7 +14,7 @@ namespace TranslationApp
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        private static void Main()
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
@@ -89,12 +88,11 @@ namespace TranslationApp
                 stream.WriteLine("{0};{1};{2};{3}", "Language", "Percent", "TranslatedItems", "TotalItems");
                 foreach (var item in list.OrderByDescending(item => item.Value))
                 {
-                    stream.WriteLine("{0};{1:F}%;{2};{3}", item.Key, 100.0f*item.Value/neutralItems.Count, item.Value,
+                    stream.WriteLine("{0};{1:F}%;{2};{3}", item.Key, 100.0f * item.Value / neutralItems.Count, item.Value,
                         neutralItems.Count);
                 }
             }
             Cursor.Current = Cursors.Default;
         }
-
     }
 }

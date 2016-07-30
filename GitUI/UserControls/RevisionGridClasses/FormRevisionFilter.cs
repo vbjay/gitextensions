@@ -1,6 +1,5 @@
 ﻿using System;
 using GitCommands;
-using ResourceManager;
 
 namespace GitUI.RevisionGridClasses
 {
@@ -142,6 +141,7 @@ namespace GitUI.RevisionGridClasses
         {
             _NO_TRANSLATE_Limit.Value = limit;
         }
+
         private void OkClick(object sender, EventArgs e)
         {
             Close();

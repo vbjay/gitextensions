@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Windows.Forms;
 using GitCommands;
 using ResourceManager;
@@ -11,6 +10,7 @@ namespace GitUI.CommandsDialogs
     {
         private readonly TranslationString _noRevisionSelectedMsgBox =
             new TranslationString("Select 1 revision to checkout.");
+
         private readonly TranslationString _noRevisionSelectedMsgBoxCaption =
             new TranslationString("Checkout");
 
@@ -31,7 +31,6 @@ namespace GitUI.CommandsDialogs
 
         private void FormCheckoutLoad(object sender, EventArgs e)
         {
-
         }
 
         public void SetRevision(string commitHash)

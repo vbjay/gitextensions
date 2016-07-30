@@ -9,6 +9,7 @@ namespace GitUI.CommitInfo
             this.Command = command;
             this.Data = data;
         }
+
         public string Command { get; set; }
         public string Data { get; set; }
     }

@@ -14,6 +14,7 @@ namespace Gerrit
     public class GerritPlugin : GitPluginBase, IGitPluginForRepository
     {
         #region Translation
+
         private readonly TranslationString _editGitReview = new TranslationString("Edit .gitreview");
         private readonly TranslationString _downloadGerritChange = new TranslationString("Download Gerrit Change");
         private readonly TranslationString _publishGerritChange = new TranslationString("Publish Gerrit Change");
@@ -21,7 +22,8 @@ namespace Gerrit
         private readonly TranslationString _installCommitMsgHookShortText = new TranslationString("Install commit-msg hook");
         private readonly TranslationString _installCommitMsgHookMessage = new TranslationString("Gerrit requires a commit-msg hook to be installed. Do you want to install the commit-msg hook into your repository?");
         private readonly TranslationString _installCommitMsgHookFailed = new TranslationString("Could not download the commit-msg file. Please install the commit-msg hook manually.");
-        #endregion
+
+        #endregion Translation
 
         private static readonly Dictionary<string, bool> _validatedHooks = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         private static readonly object _syncRoot = new object();
@@ -54,12 +56,12 @@ namespace Gerrit
             _gitUiCommands = null;
         }
 
-        void gitUiCommands_PostRegisterPlugin(object sender, GitUIBaseEventArgs e)
+        private void gitUiCommands_PostRegisterPlugin(object sender, GitUIBaseEventArgs e)
         {
             UpdateGerritMenuItems(e);
         }
 
-        void gitUiCommands_PostBrowseInitialize(object sender, GitUIBaseEventArgs e)
+        private void gitUiCommands_PostBrowseInitialize(object sender, GitUIBaseEventArgs e)
         {
             UpdateGerritMenuItems(e);
         }
@@ -236,7 +238,7 @@ namespace Gerrit
             };
         }
 
-        void publishMenuItem_Click(object sender, EventArgs e)
+        private void publishMenuItem_Click(object sender, EventArgs e)
         {
             using (var form = new FormGerritPublish(_gitUiCommands))
             {
@@ -246,7 +248,7 @@ namespace Gerrit
             _gitUiCommands.RepoChangedNotifier.Notify();
         }
 
-        void downloadMenuItem_Click(object sender, EventArgs e)
+        private void downloadMenuItem_Click(object sender, EventArgs e)
         {
             using (var form = new FormGerritDownload(_gitUiCommands))
             {
@@ -256,7 +258,7 @@ namespace Gerrit
             _gitUiCommands.RepoChangedNotifier.Notify();
         }
 
-        void installCommitMsgMenuItem_Click(object sender, EventArgs e)
+        private void installCommitMsgMenuItem_Click(object sender, EventArgs e)
         {
             var result = MessageBox.Show(
                 _mainForm,
@@ -363,7 +365,7 @@ namespace Gerrit
             return content;
         }
 
-        void gitReviewMenuItem_Click(object sender, EventArgs e)
+        private void gitReviewMenuItem_Click(object sender, EventArgs e)
         {
             using (var form = new FormGitReview(_gitUiCommands))
             {

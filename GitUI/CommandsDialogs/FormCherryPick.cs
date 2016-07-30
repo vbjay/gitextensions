@@ -11,11 +11,14 @@ namespace GitUI.CommandsDialogs
     public partial class FormCherryPick : GitModuleForm
     {
         #region Translation
+
         private readonly TranslationString _noneParentSelectedText =
             new TranslationString("None parent is selected!");
+
         private readonly TranslationString _noneParentSelectedTextCaption =
             new TranslationString("Error");
-        #endregion
+
+        #endregion Translation
 
         private bool isMerge;
 
@@ -32,7 +35,7 @@ namespace GitUI.CommandsDialogs
             Translate();
         }
 
-        public GitRevision Revision { get; set; } 
+        public GitRevision Revision { get; set; }
 
         private void Form_Load(object sender, EventArgs e)
         {
@@ -44,7 +47,7 @@ namespace GitUI.CommandsDialogs
         {
             AutoCommit.Checked = AppSettings.CommitAutomaticallyAfterCherryPick;
             checkAddReference.Checked = AppSettings.AddCommitReferenceToCherryPick;
-        } 
+        }
 
         private void OnRevisionChanged()
         {
@@ -80,7 +83,7 @@ namespace GitUI.CommandsDialogs
         {
             List<string> argumentsList = new List<string>();
             bool canExecute = true;
-            
+
             if (isMerge)
             {
                 if (ParentsList.SelectedItems.Count == 0)
@@ -127,12 +130,12 @@ namespace GitUI.CommandsDialogs
             OnRevisionChanged();
         }
 
-        void Form_Closing(object sender, FormClosingEventArgs e)
+        private void Form_Closing(object sender, FormClosingEventArgs e)
         {
             SaveSettings();
         }
 
-        void SaveSettings()
+        private void SaveSettings()
         {
             AppSettings.CommitAutomaticallyAfterCherryPick = AutoCommit.Checked;
             AppSettings.AddCommitReferenceToCherryPick = checkAddReference.Checked;

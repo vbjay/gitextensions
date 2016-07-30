@@ -36,7 +36,7 @@ namespace GitUI
             var openSubKey = Registry.ClassesRoot.OpenSubKey(@"\http\shell\open\command\");
             if (openSubKey != null)
             {
-                var browserRegistryString  = openSubKey.GetValue("").ToString();
+                var browserRegistryString = openSubKey.GetValue("").ToString();
                 var defaultBrowserPath = Regex.Match(browserRegistryString, @"(\"".*?\"")").Captures[0].ToString();
                 Process.Start(defaultBrowserPath, url);
             }

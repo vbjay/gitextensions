@@ -11,6 +11,7 @@ namespace GitUI.CommandsDialogs.RepoHosting
     public partial class CreatePullRequestForm : GitModuleForm
     {
         #region Translation
+
         private readonly TranslationString _strLoading = new TranslationString("Loading...");
         private readonly TranslationString _strYouMustSpecifyATitle = new TranslationString("You must specify a title.");
         private readonly TranslationString _strPullRequest = new TranslationString("Pull request");
@@ -18,7 +19,8 @@ namespace GitUI.CommandsDialogs.RepoHosting
         private readonly TranslationString _strPleaseCloneGitHubRep = new TranslationString("Please clone GitHub repository before pull request.");
         private readonly TranslationString _strDone = new TranslationString("Done");
         private readonly TranslationString _strError = new TranslationString("Error");
-        #endregion
+
+        #endregion Translation
 
         private readonly IRepositoryHostPlugin _repoHost;
         private IHostedRemote _currentHostedRemote;
@@ -56,7 +58,7 @@ namespace GitUI.CommandsDialogs.RepoHosting
                 {
                     if (foreignHostedRemotes.Length == 0)
                     {
-                        MessageBox.Show(this, _strFailedToCreatePullRequest.Text + Environment.NewLine + 
+                        MessageBox.Show(this, _strFailedToCreatePullRequest.Text + Environment.NewLine +
                             _strPleaseCloneGitHubRep.Text, "", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         Close();
                         return;
@@ -173,7 +175,7 @@ namespace GitUI.CommandsDialogs.RepoHosting
             var body = _bodyTB.Text.Trim();
             if (title.Length == 0)
             {
-                MessageBox.Show(this, _strYouMustSpecifyATitle.Text , _strError.Text);
+                MessageBox.Show(this, _strYouMustSpecifyATitle.Text, _strError.Text);
                 return;
             }
 
@@ -187,7 +189,7 @@ namespace GitUI.CommandsDialogs.RepoHosting
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, _strFailedToCreatePullRequest.Text + Environment.NewLine + 
+                MessageBox.Show(this, _strFailedToCreatePullRequest.Text + Environment.NewLine +
                     ex.Message, _strError.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }

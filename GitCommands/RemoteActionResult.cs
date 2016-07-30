@@ -1,5 +1,4 @@
-﻿
-namespace GitCommands
+﻿namespace GitCommands
 {
     public class RemoteActionResult<R>
     {

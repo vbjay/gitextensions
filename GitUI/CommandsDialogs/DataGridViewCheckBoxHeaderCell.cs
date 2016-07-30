@@ -12,10 +12,12 @@ namespace GitUI.CommandsDialogs
     {
         private bool wasAttached;
         private bool selfChanging;
+
         /// <summary>
         /// Relative check box location (from cellbounds).
         /// </summary>
         private Rectangle checkBoxArea;
+
         private CheckState checkedState = CheckState.Indeterminate;
 
         public void AttachTo(DataGridViewCheckBoxColumn owningColumn)
@@ -80,7 +82,6 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-
         private CheckState CheckedState
         {
             get { return checkedState; }
@@ -101,10 +102,13 @@ namespace GitUI.CommandsDialogs
                 {
                     case CheckState.Unchecked:
                         return CheckBoxState.UncheckedNormal;
+
                     case CheckState.Checked:
                         return CheckBoxState.CheckedNormal;
+
                     case CheckState.Indeterminate:
                         return CheckBoxState.MixedNormal;
+
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -135,7 +139,7 @@ namespace GitUI.CommandsDialogs
                 {
                     if (cell == DataGridView.CurrentCell)
                     {
-                        // workaround for updating current cell                        
+                        // workaround for updating current cell
                         DataGridView.CurrentCell = null;
                     }
                     cell.Value = newStateIsChecked;

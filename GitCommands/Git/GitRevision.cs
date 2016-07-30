@@ -12,10 +12,13 @@ namespace GitCommands
     {
         /// <summary>40 characters of 0's</summary>
         public const string UnstagedGuid = "0000000000000000000000000000000000000000";
+
         /// <summary>40 characters of 1's</summary>
         public const string IndexGuid = "1111111111111111111111111111111111111111";
+
         /// <summary>40 characters of a-f or any digit.</summary>
         public const string Sha1HashPattern = @"[a-f\d]{40}";
+
         public static readonly Regex Sha1HashRegex = new Regex("^" + Sha1HashPattern + "$", RegexOptions.Compiled);
 
         public string[] ParentGuids;
@@ -55,6 +58,7 @@ namespace GitCommands
 
         public string Subject { get; set; }
         public string Body { get; set; }
+
         //UTF-8 when is null or empty
         public string MessageEncoding { get; set; }
 
@@ -68,7 +72,7 @@ namespace GitCommands
             get { return _subItems ?? (_subItems = _module.GetTree(TreeGuid, false)); }
         }
 
-        #endregion
+        #endregion IGitItem Members
 
         public override string ToString()
         {

@@ -12,23 +12,28 @@ namespace GitUI.CommandsDialogs
     {
         private readonly TranslationString _gitignoreOnlyInWorkingDirSupported =
             new TranslationString(".gitignore is only supported when there is a working directory.");
+
         private readonly TranslationString _gitignoreOnlyInWorkingDirSupportedCaption =
             new TranslationString("No working directory");
 
         private readonly TranslationString _cannotAccessGitignore =
             new TranslationString("Failed to save .gitignore." + Environment.NewLine + "Check if file is accessible.");
+
         private readonly TranslationString _cannotAccessGitignoreCaption =
             new TranslationString("Failed to save .gitignore");
 
         private readonly TranslationString _saveFileQuestion =
             new TranslationString("Save changes to .gitignore?");
+
         private readonly TranslationString _saveFileQuestionCaption =
             new TranslationString("Save changes?");
 
         private string _originalGitIgnoreFileContent = string.Empty;
 
         #region default patterns
+
         private static readonly string DefaultIgnorePatternsFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GitExtensions/DefaultIgnorePatterns.txt");
+
         private static readonly string[] DefaultIgnorePatterns = new[]
         {
             "#Ignore thumbnails created by Windows",
@@ -60,7 +65,8 @@ namespace GitUI.CommandsDialogs
             "_ReSharper*/",
             "[Tt]est[Rr]esult*"
         };
-        #endregion
+
+        #endregion default patterns
 
         public FormGitIgnore(GitUICommands aCommands)
             : base(aCommands)
@@ -136,6 +142,7 @@ namespace GitUI.CommandsDialogs
                             return;
                         }
                         break;
+
                     case DialogResult.Cancel:
                         e.Cancel = true;
                         return;

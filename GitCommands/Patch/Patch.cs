@@ -215,7 +215,7 @@ namespace PatchApply
                         AppendText(line.Substring(4));
                     else
                         if (line.Length > 1)
-                            FileTextB += line.Substring(1);
+                        FileTextB += line.Substring(1);
 
                     FileTextB += "\n";
                 }

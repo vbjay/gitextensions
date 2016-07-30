@@ -1,11 +1,10 @@
-using System.IO;
 // Copyright (C) 2006-2008 Jim Tilander. See COPYING for and README for more details.
 using EnvDTE;
 using EnvDTE80;
 
 namespace GitPlugin.Commands
 {
-    class ToolbarCommand<ItemCommandT> : CommandBase
+    internal class ToolbarCommand<ItemCommandT> : CommandBase
         where ItemCommandT : ItemCommandBase, new()
     {
         public ToolbarCommand(bool runForSelection = false)
@@ -15,7 +14,7 @@ namespace GitPlugin.Commands
 
         public override void OnCommand(DTE2 application, OutputWindowPane pane)
         {
-            var command = new ItemCommandT {RunForSelection = RunForSelection};
+            var command = new ItemCommandT { RunForSelection = RunForSelection };
             command.OnCommand(application, pane);
         }
 
@@ -24,5 +23,4 @@ namespace GitPlugin.Commands
             return new ItemCommandT().IsEnabled(application);
         }
     }
-
 }

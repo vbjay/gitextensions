@@ -93,12 +93,12 @@ namespace GitUI.CommandsDialogs
         private void CreateBuildReportTabPage(TabControl tabControl)
         {
             this.buildReportTabPage = new TabPage
-                {
-                    Padding = new Padding(3),
-                    TabIndex = tabControl.Controls.Count,
-                    Text = "Build Report",
-                    UseVisualStyleBackColor = true
-                };
+            {
+                Padding = new Padding(3),
+                TabIndex = tabControl.Controls.Count,
+                Text = "Build Report",
+                UseVisualStyleBackColor = true
+            };
             this.buildReportWebBrowser = new WebBrowserCtrl
             {
                 Dock = DockStyle.Fill
@@ -165,7 +165,7 @@ namespace GitUI.CommandsDialogs
 
         private static Task<Stream> DownloadRemoteImageFileAsync(string uri)
         {
-            var request = (HttpWebRequest) WebRequest.Create(uri);
+            var request = (HttpWebRequest)WebRequest.Create(uri);
 
             return GetWebResponseAsync(request).ContinueWith(
                 task =>

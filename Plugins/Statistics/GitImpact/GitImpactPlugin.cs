@@ -1,5 +1,4 @@
-﻿using System.Windows.Forms;
-using GitUIPluginInterfaces;
+﻿using GitUIPluginInterfaces;
 using ResourceManager;
 
 namespace GitImpact
@@ -24,6 +23,6 @@ namespace GitImpact
             return false;
         }
 
-        #endregion
+        #endregion IGitPlugin Members
     }
 }

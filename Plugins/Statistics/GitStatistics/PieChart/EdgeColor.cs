@@ -23,22 +23,29 @@ namespace GitStatistics.PieChart
             {
                 case EdgeColorType.SystemColor:
                     return SystemColors.WindowText;
+
                 case EdgeColorType.SurfaceColor:
                     return color;
+
                 case EdgeColorType.FullContrast:
                     return GetFullContrastColor(color);
+
                 case EdgeColorType.DarkerThanSurface:
                     correctionFactor = -ColorUtil.BrightnessEnhancementFactor1;
                     break;
+
                 case EdgeColorType.DarkerDarkerThanSurface:
                     correctionFactor = -ColorUtil.BrightnessEnhancementFactor2;
                     break;
+
                 case EdgeColorType.LighterThanSurface:
                     correctionFactor = +ColorUtil.BrightnessEnhancementFactor1;
                     break;
+
                 case EdgeColorType.LighterLighterThanSurface:
                     correctionFactor = +ColorUtil.BrightnessEnhancementFactor2;
                     break;
+
                 case EdgeColorType.NoEdge:
                     return Color.Transparent;
             }

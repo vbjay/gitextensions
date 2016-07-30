@@ -40,8 +40,6 @@ namespace GitUI
         [DllImport("user32")]
         internal static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wp, ref FORMATRANGE lp);
 
-
-
         [DllImport("user32", CharSet = CharSet.Auto, EntryPoint = "SendMessage")]
         internal extern static IntPtr SendMessageInt(
             IntPtr handle,
@@ -49,6 +47,7 @@ namespace GitUI
             IntPtr wParam,
             IntPtr lParam
             );
+
         internal const int EM_LINEINDEX = 0x00BB;
         internal const int EM_LINELENGTH = 0x00C1;
         internal const int EM_POSFROMCHAR = 0x00D6;
@@ -65,9 +64,12 @@ namespace GitUI
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         internal static extern int GetLongPathName(string lpszShortPath, StringBuilder lpszLongPath, int cchBuffer);
-        #endregion
 
-        private NativeMethods() { }
+        #endregion Unmanaged Code
+
+        private NativeMethods()
+        {
+        }
     }
 
     internal sealed class NativeConstants

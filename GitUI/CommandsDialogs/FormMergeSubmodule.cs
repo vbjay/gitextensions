@@ -7,7 +7,7 @@ namespace GitUI.CommandsDialogs
 {
     public sealed partial class FormMergeSubmodule : GitModuleForm
     {
-        readonly string _filename;
+        private readonly string _filename;
         private readonly TranslationString _stageFilename = new TranslationString("Stage {0}");
         private readonly TranslationString _deleted = new TranslationString("deleted");
 
@@ -36,7 +36,7 @@ namespace GitUI.CommandsDialogs
 
         private void StageSubmodule()
         {
-            var processStart = new FormStatus.ProcessStart(delegate(FormStatus form)
+            var processStart = new FormStatus.ProcessStart(delegate (FormStatus form)
                 {
                     form.AddMessageLine(string.Format(_stageFilename.Text,
                         _filename));

@@ -25,6 +25,7 @@ namespace GitCommands
     {
         //semi-constants
         public static readonly char PosixPathSeparator = '/';
+
         public static Version AppVersion { get { return Assembly.GetCallingAssembly().GetName().Version; } }
         public static string ProductVersion { get { return Application.ProductVersion; } }
         public const string SettingsFileName = "GitExtensions.settings";
@@ -246,8 +247,8 @@ namespace GitCommands
 
         public static bool AddNewlineToCommitMessageWhenMissing
         {
-            get { return GetBool ("addnewlinetocommitmessagewhenmissing", true); }
-            set { SetBool ("addnewlinetocommitmessagewhenmissing", value); }
+            get { return GetBool("addnewlinetocommitmessagewhenmissing", true); }
+            set { SetBool("addnewlinetocommitmessagewhenmissing", value); }
         }
 
         public static string LastCommitMessage
@@ -350,12 +351,12 @@ namespace GitCommands
         }
 
         private static string _currentTranslation;
+
         public static string CurrentTranslation
         {
             get { return _currentTranslation ?? Translation; }
             set { _currentTranslation = value; }
         }
-
 
         private static readonly Dictionary<string, string> _languageCodes =
             new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
@@ -833,7 +834,7 @@ namespace GitCommands
             set { SetBool("showdiffforallparents", value); }
         }
 
-		public static string RecentWorkingDir
+        public static string RecentWorkingDir
         {
             get { return GetString("RecentWorkingDir", null); }
             set { SetString("RecentWorkingDir", value); }
@@ -852,6 +853,7 @@ namespace GitCommands
             get { return GetString("plink", ReadStringRegValue("plink", "")); }
             set { SetString("plink", value); }
         }
+
         public static string Puttygen
         {
             get { return GetString("puttygen", ReadStringRegValue("puttygen", "")); }
@@ -963,7 +965,7 @@ namespace GitCommands
             set { SetFont("font", value); }
         }
 
-        #endregion
+        #endregion Colors
 
         public static bool MulticolorBranches
         {
@@ -1039,7 +1041,7 @@ namespace GitCommands
 
         public static void LoadSettings()
         {
-            Action<Encoding> addEncoding = delegate(Encoding e) { AvailableEncodings[e.HeaderName] = e; };
+            Action<Encoding> addEncoding = delegate (Encoding e) { AvailableEncodings[e.HeaderName] = e; };
             addEncoding(Encoding.Default);
             addEncoding(new ASCIIEncoding());
             addEncoding(new UnicodeEncoding());
@@ -1224,7 +1226,6 @@ namespace GitCommands
         public static bool IsPortable()
         {
             return Properties.Settings.Default.IsPortable;
-
         }
 
         private static IEnumerable<Tuple<string, string>> GetSettingsFromRegistry()
@@ -1350,7 +1351,6 @@ namespace GitCommands
         {
             return SettingsContainer.GetString(name, defaultValue);
         }
-
     }
 
     /*
@@ -1393,5 +1393,4 @@ namespace GitCommands
     }
 
     */
-
 }

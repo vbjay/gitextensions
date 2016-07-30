@@ -1,9 +1,9 @@
-﻿using GitUIPluginInterfaces;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
+using GitUIPluginInterfaces;
 
 namespace Gource
 {
@@ -108,10 +108,10 @@ namespace Gource
         {
             using (var fileDialog =
                 new OpenFileDialog
-                    {
-                        Filter = "Gource (gource.exe)|gource.exe",
-                        FileName = GourcePath.Text
-                    })
+                {
+                    Filter = "Gource (gource.exe)|gource.exe",
+                    FileName = GourcePath.Text
+                })
             {
                 fileDialog.ShowDialog(this);
 

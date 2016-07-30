@@ -4,7 +4,6 @@ using System.ComponentModel.Composition.Hosting;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Windows.Forms;
 
 namespace GitUIPluginInterfaces
@@ -42,7 +41,7 @@ namespace GitUIPluginInterfaces
         public static IEnumerable<Lazy<T, TMetadataView>> GetExports<T, TMetadataView>()
         {
             var ret = new List<Lazy<T, TMetadataView>>();
-            foreach(var container in GetCompositionContainers())
+            foreach (var container in GetCompositionContainers())
             {
                 try
                 {

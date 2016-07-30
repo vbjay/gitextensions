@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.DirectoryServices;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -12,19 +11,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using GitCommands;
-using GitCommands.Config;
 using GitCommands.Git;
 using GitUI.BuildServerIntegration;
 using GitUI.CommandsDialogs;
+using GitUI.CommandsDialogs.BrowseDialog;
 using GitUI.HelperDialogs;
 using GitUI.Hotkey;
 using GitUI.RevisionGridClasses;
 using GitUI.Script;
+using GitUI.UserControls;
+using GitUI.UserControls.RevisionGridClasses;
 using Gravatar;
 using ResourceManager;
-using GitUI.UserControls.RevisionGridClasses;
-using GitUI.CommandsDialogs.BrowseDialog;
-using GitUI.UserControls;
 
 namespace GitUI
 {
@@ -77,14 +75,16 @@ namespace GitUI
 
         private RevisionGridLayout _layout;
         private int _rowHeigth;
+
         public event EventHandler<GitModuleEventArgs> GitModuleChanged;
+
         public event EventHandler<DoubleClickRevisionEventArgs> DoubleClickRevision;
 
         private readonly RevisionGridMenuCommands _revisionGridMenuCommands;
 
-        bool _showCurrentBranchOnlyToolStripMenuItemChecked; // refactoring
-        bool _showAllBranchesToolStripMenuItemChecked; // refactoring
-        bool _showFilteredBranchesToolStripMenuItemChecked; // refactoring
+        private bool _showCurrentBranchOnlyToolStripMenuItemChecked; // refactoring
+        private bool _showAllBranchesToolStripMenuItemChecked; // refactoring
+        private bool _showFilteredBranchesToolStripMenuItemChecked; // refactoring
 
         private readonly ParentChildNavigationHistory _parentChildNavigationHistory;
         private readonly NavigationHistory _navigationHistory = new NavigationHistory();
@@ -178,7 +178,7 @@ namespace GitUI
             }
         }
 
-        void Loading_Paint(object sender, PaintEventArgs e)
+        private void Loading_Paint(object sender, PaintEventArgs e)
         {
             // If our loading state has changed since the last paint, update it.
             if (Loading != null)
@@ -192,15 +192,21 @@ namespace GitUI
 
         [Browsable(false)]
         public Font HeadFont { get; private set; }
+
         [Browsable(false)]
         public Font SuperprojectFont { get; private set; }
+
         [Browsable(false)]
         public int LastScrollPos { get; private set; }
+
         [Browsable(false)]
         public string[] LastSelectedRows { get; private set; }
+
         [Browsable(false)]
         public Font RefsFont { get; private set; }
+
         private Font _normalFont;
+
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Font NormalFont
@@ -223,38 +229,49 @@ namespace GitUI
         [Category("Filter")]
         [DefaultValue("")]
         public string QuickRevisionFilter { get; set; }
+
         [Category("Filter")]
         [DefaultValue("")]
         public string FixedRevisionFilter { get; set; }
+
         [Category("Filter")]
         [DefaultValue("")]
         public string FixedPathFilter { get; set; }
+
         [Category("Filter")]
         [DefaultValue(true)]
         public bool InMemFilterIgnoreCase { get; set; }
+
         [Category("Filter")]
         [DefaultValue("")]
         public string InMemAuthorFilter { get; set; }
+
         [Category("Filter")]
         [DefaultValue("")]
         public string InMemCommitterFilter { get; set; }
+
         [Category("Filter")]
         [DefaultValue("")]
         public string InMemMessageFilter { get; set; }
+
         [Category("Filter")]
         [DefaultValue("")]
         public string BranchFilter { get; set; }
+
         [Category("Filter")]
         [DefaultValue(false)]
         public bool AllowGraphWithFilter { get; set; }
 
         [Browsable(false)]
         public string CurrentCheckout { get; private set; }
+
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string FiltredFileName { get; set; }
+
         [Browsable(false)]
         public Task<SuperProjectInfo> SuperprojectCurrentCheckout { get; private set; }
+
         [Browsable(false)]
         public int LastRowIndex { get; private set; }
 
@@ -295,6 +312,7 @@ namespace GitUI
         }
 
         private IndexWatcher _indexWatcher;
+
         [Browsable(false)]
         public IndexWatcher IndexWatcher
         {
@@ -317,6 +335,7 @@ namespace GitUI
         }
 
         private bool _isLoading;
+
         private void RevisionsLoading(object sender, DvcsGraph.LoadingEventArgs e)
         {
             // Since this can happen on a background thread, we'll just set a
@@ -331,12 +350,12 @@ namespace GitUI
             {
                 _quickSearchLabel
                     = new Label
-                          {
-                              Location = new Point(10, 10),
-                              BorderStyle = BorderStyle.FixedSingle,
-                              ForeColor = SystemColors.InfoText,
-                              BackColor = SystemColors.Info
-                          };
+                    {
+                        Location = new Point(10, 10),
+                        BorderStyle = BorderStyle.FixedSingle,
+                        ForeColor = SystemColors.InfoText,
+                        BackColor = SystemColors.Info
+                    };
                 Controls.Add(_quickSearchLabel);
             }
 
@@ -522,7 +541,6 @@ namespace GitUI
                 if (GetRevision(index).MatchesSearchString(searchString))
                     return index;
             }
-
 
             return null;
         }
@@ -737,7 +755,6 @@ namespace GitUI
                 .Cast<DataGridViewRow>()
                 .Where(row => Revisions.RowCount > row.Index);
 
-
             if (direction.HasValue)
             {
                 int d = direction.Value == SortDirection.Ascending ? 1 : -1;
@@ -783,6 +800,7 @@ namespace GitUI
         {
             private RevisionGraphInMemFilter fFilter1;
             private RevisionGraphInMemFilter fFilter2;
+
             public RevisionGraphInMemFilterOr(RevisionGraphInMemFilter aFilter1,
                                               RevisionGraphInMemFilter aFilter2)
             {
@@ -1005,7 +1023,8 @@ namespace GitUI
                 else
                     revGraphIMF = filterBarIMF;
 
-                _revisionGraphCommand = new RevisionGraph(Module) {
+                _revisionGraphCommand = new RevisionGraph(Module)
+                {
                     BranchFilter = BranchFilter,
                     RefsOptions = _refsOptions,
                     RevisionFilter = _revisionFilter.GetRevisionFilter() + QuickRevisionFilter + FixedRevisionFilter,
@@ -1068,6 +1087,7 @@ namespace GitUI
         }
 
         private static readonly Regex PotentialShaPattern = new Regex(@"^[a-f0-9]{5,}", RegexOptions.Compiled);
+
         public static bool MessageFilterCouldBeSHA(string filter)
         {
             bool result = PotentialShaPattern.IsMatch(filter);
@@ -1475,10 +1495,10 @@ namespace GitUI
                                 superprojectRefs.Remove(superprojectRef);
 
                             string name = gitRef.Name;
-                            if ( gitRef.IsTag
+                            if (gitRef.IsTag
                                  && gitRef.IsDereference // see note on using IsDereference in CommitInfo class.
                                  && AppSettings.ShowAnnotatedTagsMessages
-                                 && AppSettings.ShowIndicatorForMultilineMessage )
+                                 && AppSettings.ShowIndicatorForMultilineMessage)
                             {
                                 name = name + "  " + MultilineMessageIndicator;
                             }
@@ -1513,7 +1533,6 @@ namespace GitUI
                         int gravatarTop = e.CellBounds.Top + textHeight + 6;
                         int gravatarLeft = e.CellBounds.Left + baseOffset + 2;
 
-
                         Image gravatar = Gravatar.GravatarService.GetImageFromCache(revision.AuthorEmail + gravatarSize.ToString() + ".png", revision.AuthorEmail, AppSettings.AuthorImageCacheDays, gravatarSize, AppSettings.GravatarCachePath, FallBackService.MonsterId);
 
                         if (gravatar == null && !string.IsNullOrEmpty(revision.AuthorEmail))
@@ -1540,8 +1559,6 @@ namespace GitUI
                             timeText = string.Concat(revision.Author, " (", TimeToString(AppSettings.ShowAuthorDate ? revision.AuthorDate : revision.CommitDate), ")");
                             authorText = string.Empty;
                         }
-
-
 
                         e.Graphics.DrawString(authorText, rowFont, foreBrush,
                                               new PointF(gravatarLeft + gravatarSize + 5, gravatarTop + 6));
@@ -1779,14 +1796,14 @@ namespace GitUI
             return result < value ? result + 2 : result;
         }
 
-        enum ArrowType
+        private enum ArrowType
         {
             None,
             Filled,
             NotFilled
         }
 
-        static readonly float[] dashPattern = new float[] { 4, 4 };
+        private static readonly float[] dashPattern = new float[] { 4, 4 };
 
         private float DrawHeadBackground(bool isSelected, Graphics graphics, Color color,
             float x, float y, float width, float height, float radius, ArrowType arrowType, bool dashedLine, bool fill)
@@ -1815,7 +1832,6 @@ namespace GitUI
                             graphics.FillPath(fillBrush, forePath);
                     else if (isSelected)
                         graphics.FillPath(Brushes.White, forePath);
-
 
                     // frame
                     using (var pen = new Pen(Lerp(color, Color.White, 0.83F)))
@@ -2236,7 +2252,6 @@ namespace GitUI
 
                 if (!head.Name.Equals(currentBranch))
                 {
-
                     toolStripItem = new ToolStripMenuItem(head.Name);
                     if (head.IsRemote)
                         toolStripItem.Click += ToolStripItemClickCheckoutRemoteBranch;
@@ -2481,7 +2496,7 @@ namespace GitUI
 
             if (filtredCurrentCheckout == rev.Guid && ShowUncommitedChanges())
             {
-                CheckUncommitedChanged( filtredCurrentCheckout );
+                CheckUncommitedChanged(filtredCurrentCheckout);
             }
 
             var dataType = DvcsGraph.DataType.Normal;
@@ -2638,7 +2653,7 @@ namespace GitUI
 
         #region Drag/drop patch files on revision grid
 
-        void Revisions_DragDrop(object sender, DragEventArgs e)
+        private void Revisions_DragDrop(object sender, DragEventArgs e)
         {
             var fileNameArray = e.Data.GetData(DataFormats.FileDrop) as Array;
             if (fileNameArray != null)
@@ -2663,7 +2678,7 @@ namespace GitUI
             }
         }
 
-        static void Revisions_DragEnter(object sender, DragEventArgs e)
+        private static void Revisions_DragEnter(object sender, DragEventArgs e)
         {
             var fileNameArray = e.Data.GetData(DataFormats.FileDrop) as Array;
             if (fileNameArray != null)
@@ -2686,7 +2701,8 @@ namespace GitUI
                 }
             }
         }
-        #endregion
+
+        #endregion Drag/drop patch files on revision grid
 
         internal void ShowGitNotes_ToolStripMenuItemClick(object sender, EventArgs e)
         {
@@ -2730,7 +2746,6 @@ namespace GitUI
 
         internal void ShowRevisionGraph_ToolStripMenuItemClick(object sender, EventArgs e)
         {
-
             ToggleRevisionGraph();
             SetRevisionsLayout();
             _revisionGridMenuCommands.TriggerMenuChanged();
@@ -2834,7 +2849,6 @@ namespace GitUI
 
                 Revisions.ShowAuthor(!IsCardLayout());
                 Revisions.SetDimensions(NodeDimension, LaneWidth, LaneLineWidth, _rowHeigth, _selectedItemBrush);
-
             }
             else
             {
@@ -2978,7 +2992,7 @@ namespace GitUI
             return true;
         }
 
-        #endregion
+        #endregion Hotkey commands
 
         internal bool ExecuteCommand(Commands cmd)
         {

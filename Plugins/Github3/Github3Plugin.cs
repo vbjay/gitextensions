@@ -11,15 +11,16 @@ using ResourceManager;
 
 namespace Github3
 {
-    class GithubAPIInfo
+    internal class GithubAPIInfo
     {
         internal static string client_id = "ebc0e8947c206610d737";
         internal static string client_secret = "c993907df3f45145bf638842692b69c56d1ace4d";
     }
 
-    class GithubLoginInfo
+    internal class GithubLoginInfo
     {
         private static string _username;
+
         public static string username
         {
             get
@@ -71,6 +72,7 @@ namespace Github3
 
         internal static Github3Plugin instance;
         internal static Client github;
+
         public Github3Plugin()
         {
             SetNameAndDescription("Github");
@@ -132,6 +134,7 @@ namespace Github3
         }
 
         public bool ConfigurationOk { get { return true; } }
+
         public bool GitModuleIsRelevantToMe(IGitModule aModule)
         {
             return GetHostedRemotesForModule(aModule).Count > 0;

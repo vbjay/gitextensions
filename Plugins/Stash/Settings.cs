@@ -1,27 +1,28 @@
-﻿using GitCommands;
+﻿using System.Linq;
+using System.Text.RegularExpressions;
+using GitCommands;
 using GitCommands.Config;
 using GitUIPluginInterfaces;
-using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace Stash
 {
-    class Settings
+    internal class Settings
     {
-        private const string StashHttpRegex = 
+        private const string StashHttpRegex =
             @"https?:\/\/([\w\.\:]+\@)?(?<url>([a-zA-Z0-9\.\-]+)):?(\d+)?\/scm\/(?<project>~?([\w\-]+))\/(?<repo>([\w\-]+)).git";
+
         private const string StashSshRegex =
             @"ssh:\/\/([\w\.]+\@)(?<url>([a-zA-Z0-9\.\-]+)):?(\d+)?\/(?<project>~?([\w\-]+))\/(?<repo>([\w\-]+)).git";
 
         public static Settings Parse(IGitModule gitModule, ISettingsSource settings)
         {
             var result = new Settings
-                             {
-                                 Username = StashPlugin.StashUsername.ValueOrDefault(settings),
-                                 Password = StashPlugin.StashPassword.ValueOrDefault(settings),
-                                 StashUrl = StashPlugin.StashBaseURL.ValueOrDefault(settings),
-                                 DisableSSL = StashPlugin.StashDisableSSL.ValueOrDefault(settings)
-                             };
+            {
+                Username = StashPlugin.StashUsername.ValueOrDefault(settings),
+                Password = StashPlugin.StashPassword.ValueOrDefault(settings),
+                StashUrl = StashPlugin.StashBaseURL.ValueOrDefault(settings),
+                DisableSSL = StashPlugin.StashDisableSSL.ValueOrDefault(settings)
+            };
 
             var module = ((GitModule)gitModule);
 

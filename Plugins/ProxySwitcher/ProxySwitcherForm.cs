@@ -4,7 +4,6 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using GitUIPluginInterfaces;
 using ResourceManager;
-using Settings = GitCommands.AppSettings;
 
 namespace ProxySwitcher
 {
@@ -14,9 +13,11 @@ namespace ProxySwitcher
         private readonly IGitModule gitCommands;
 
         #region Translation
+
         private readonly TranslationString _pluginDescription = new TranslationString("Proxy Switcher");
         private readonly TranslationString _pleaseSetProxy = new TranslationString("There is no proxy configured. Please set the proxy host in the plugin settings.");
-        #endregion
+
+        #endregion Translation
 
         /// <summary>
         /// Default constructor added to register all strings to be translated
@@ -72,7 +73,7 @@ namespace ProxySwitcher
             {
                 var password = SettingsKey.Password.ValueOrDefault(settings);
                 sb.Append(username);
-                if(!string.IsNullOrEmpty(password))
+                if (!string.IsNullOrEmpty(password))
                 {
                     sb.Append(":");
                     sb.Append(password);

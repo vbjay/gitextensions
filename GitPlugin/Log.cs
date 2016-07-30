@@ -20,7 +20,7 @@ namespace GitPlugin
             Error,
         }
 
-        #endregion
+        #endregion Level enum
 
         private static readonly List<IHandler> Handlers;
         private static int _indent;
@@ -139,6 +139,6 @@ namespace GitPlugin
             void OnMessage(Level level, string message, string formattedLine);
         }
 
-        #endregion
+        #endregion Nested type: Handler
     }
 }

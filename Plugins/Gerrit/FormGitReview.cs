@@ -13,16 +13,19 @@ namespace Gerrit
     {
         private readonly TranslationString _gitreviewOnlyInWorkingDirSupported =
             new TranslationString(".gitreview is only supported when there is a working directory.");
+
         private readonly TranslationString _gitreviewOnlyInWorkingDirSupportedCaption =
             new TranslationString("No working directory");
 
         private readonly TranslationString _cannotAccessGitreview =
             new TranslationString("Failed to save .gitreview." + Environment.NewLine + "Check if file is accessible.");
+
         private readonly TranslationString _cannotAccessGitreviewCaption =
             new TranslationString("Failed to save .gitreview");
 
         private readonly TranslationString _saveFileQuestion =
             new TranslationString("Save changes to .gitreview?");
+
         private readonly TranslationString _saveFileQuestionCaption =
             new TranslationString("Save changes?");
 
@@ -39,6 +42,7 @@ namespace Gerrit
         }
 
         private GitUICommands _uiCommands;
+
         public GitUICommands UICommands
         {
             get { return _uiCommands; }
@@ -124,6 +128,7 @@ namespace Gerrit
                             return;
                         }
                         break;
+
                     case DialogResult.Cancel:
                         e.Cancel = true;
                         return;

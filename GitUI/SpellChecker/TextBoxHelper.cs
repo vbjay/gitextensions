@@ -34,21 +34,20 @@ namespace GitUI.SpellChecker
 
             NativeMethods.RECT rect;
             rect.Top = 0;
-            rect.Bottom = (int) AnInch;
+            rect.Bottom = (int)AnInch;
             rect.Left = 0;
-            rect.Right = (int) (richTextBox.ClientSize.Width*AnInch);
+            rect.Right = (int)(richTextBox.ClientSize.Width * AnInch);
 
             NativeMethods.RECT rectPage;
             rectPage.Top = 0;
-            rectPage.Bottom = (int) AnInch;
+            rectPage.Bottom = (int)AnInch;
             rectPage.Left = 0;
-            rectPage.Right = (int) (richTextBox.ClientSize.Width*AnInch);
+            rectPage.Right = (int)(richTextBox.ClientSize.Width * AnInch);
 
             var canvas = Graphics.FromHwnd(richTextBox.Handle);
             var canvasHdc = canvas.GetHdc();
 
             var formatRange = GetFormatRange(charRange, canvasHdc, rect, rectPage);
-
 
             NativeMethods.SendMessage(
                 richTextBox.Handle,
@@ -59,7 +58,7 @@ namespace GitUI.SpellChecker
             canvas.ReleaseHdc(canvasHdc);
             canvas.Dispose();
 
-            return (int) ((formatRange.rc.Right - formatRange.rc.Left)/AnInch);
+            return (int)((formatRange.rc.Right - formatRange.rc.Left) / AnInch);
         }
 
         internal static int GetBaselineOffsetAtCharIndex(TextBoxBase tb, int index)
@@ -78,23 +77,21 @@ namespace GitUI.SpellChecker
                 NativeMethods.SendMessageInt(rtb.Handle, NativeMethods.EM_LINELENGTH, new IntPtr(lineNumber),
                                              IntPtr.Zero).ToInt32();
 
-
             NativeMethods.CHARRANGE charRange;
             charRange.cpMin = lineIndex;
             charRange.cpMax = lineIndex + lineLength;
 
             NativeMethods.RECT rect;
             rect.Top = 0;
-            rect.Bottom = (int) AnInch;
+            rect.Bottom = (int)AnInch;
             rect.Left = 0;
-            rect.Right = 10000000; //(int)(rtb.Width * anInch + 20); 
-
+            rect.Right = 10000000; //(int)(rtb.Width * anInch + 20);
 
             NativeMethods.RECT rectPage;
             rectPage.Top = 0;
-            rectPage.Bottom = (int) AnInch;
+            rectPage.Bottom = (int)AnInch;
             rectPage.Left = 0;
-            rectPage.Right = 10000000; //(int)(rtb.Width * anInch + 20); 
+            rectPage.Right = 10000000; //(int)(rtb.Width * anInch + 20);
 
             var canvas = Graphics.FromHwnd(rtb.Handle);
             var canvasHdc = canvas.GetHdc();
@@ -106,7 +103,7 @@ namespace GitUI.SpellChecker
             canvas.ReleaseHdc(canvasHdc);
             canvas.Dispose();
 
-            return (int) ((formatRange.rc.Bottom - formatRange.rc.Top)/AnInch);
+            return (int)((formatRange.rc.Bottom - formatRange.rc.Top) / AnInch);
         }
 
         private static NativeMethods.FORMATRANGE GetFormatRange(NativeMethods.CHARRANGE charRange, IntPtr canvasHdc,
@@ -144,12 +141,12 @@ namespace GitUI.SpellChecker
         }
 
         /// <summary>
-        ///   Returns the index of the character under the specified 
+        ///   Returns the index of the character under the specified
         ///   point in the control, or the nearest character if there
         ///   is no character under the point.
         /// </summary>
         /// <param name = "textBox">The text box control to check.</param>
-        /// <param name = "point">The point to find the character for, 
+        /// <param name = "point">The point to find the character for,
         ///   specified relative to the client area of the text box.</param>
         /// <returns></returns>
         private static int CharFromPos(TextBoxBase textBox, Point point)
@@ -173,7 +170,7 @@ namespace GitUI.SpellChecker
                 var lineNumber = ((res & 0xFFFF) >> 16);
                 var charIndex = (res & 0xFFFF);
 
-                // Find the index of the first character on the line within 
+                // Find the index of the first character on the line within
                 // the control:
                 var lineStartIndex =
                     NativeMethods.SendMessageInt(

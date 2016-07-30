@@ -7,11 +7,14 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
     public partial class FormDashboardCategoryTitle : GitExtensionsForm
     {
         #region Translation
+
         private readonly TranslationString _needEnterCaptionText =
             new TranslationString("You need to enter a caption.");
+
         private readonly TranslationString _needEnterCaptionTextCaption =
             new TranslationString("Enter caption");
-        #endregion
+
+        #endregion Translation
 
         public FormDashboardCategoryTitle()
         {

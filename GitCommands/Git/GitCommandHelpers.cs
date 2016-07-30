@@ -18,10 +18,13 @@ namespace GitCommands
     {
         /// <summary>Default is <see cref="All"/>; when <see cref="UntrackedFilesMode"/> is NOT used, 'git status' uses <see cref="Normal"/>.</summary>
         Default = 1,
+
         /// <summary>Show no untracked files.</summary>
         No = 2,
+
         /// <summary>Shows untracked files and directories.</summary>
         Normal = 3,
+
         /// <summary>Shows untracked files and directories, and individual files in untracked directories.</summary>
         All = 4
     }
@@ -31,16 +34,20 @@ namespace GitCommands
     {
         /// <summary>Default is <see cref="All"/> (hides all changes to submodules).</summary>
         Default = 1,
+
         /// <summary>Consider a submodule modified when it either:
         ///  contains untracked or modified files,
         ///  or its HEAD differs from the commit recorded in the superproject.</summary>
         None = 2,
+
         /// <summary>Submodules NOT considered dirty when they only contain <i>untracked</i> content
         ///  (but they are still scanned for modified content).</summary>
         Untracked = 3,
+
         /// <summary>Ignores all changes to the work tree of submodules,
         ///  only changes to the <i>commits</i> stored in the superproject are shown.</summary>
         Dirty = 4,
+
         /// <summary>Hides all changes to submodules
         ///  (and suppresses the output of submodule summaries when the config option status.submodulesummary is set).</summary>
         All = 5
@@ -122,7 +129,7 @@ namespace GitCommands
             }
         }
 
-	    public static ProcessStartInfo CreateProcessStartInfo(string fileName, string arguments, string workingDirectory, Encoding outputEncoding)
+        public static ProcessStartInfo CreateProcessStartInfo(string fileName, string arguments, string workingDirectory, Encoding outputEncoding)
         {
             return new ProcessStartInfo
             {
@@ -162,7 +169,7 @@ namespace GitCommands
             return startProcess;
         }
 
-	    public static bool UseSsh(string arguments)
+        public static bool UseSsh(string arguments)
         {
             var x = !Plink() && GetArgumentsRequiresSsh(arguments);
             return x || arguments.Contains("plink");
@@ -341,6 +348,7 @@ namespace GitCommands
         }
 
         private static GitVersion _versionInUse;
+
         private static readonly string UserHomeDir = Environment.GetEnvironmentVariable("HOME", EnvironmentVariableTarget.User)
             ?? Environment.GetEnvironmentVariable("HOME", EnvironmentVariableTarget.Machine);
 
@@ -509,7 +517,7 @@ namespace GitCommands
                 options.Add("--recurse-submodules");
             if (depth.HasValue)
                 options.Add("--depth " + depth);
-            if(isSingleBranch.HasValue)
+            if (isSingleBranch.HasValue)
                 options.Add(isSingleBranch.Value ? "--single-branch" : "--no-single-branch");
             options.Add("--progress");
             if (branch == null)
@@ -530,6 +538,7 @@ namespace GitCommands
                 case LocalChangesAction.Merge:
                     args = " --merge";
                     break;
+
                 case LocalChangesAction.Reset:
                     args = " --force";
                     break;
@@ -689,10 +698,13 @@ namespace GitCommands
             {
                 case GitBisectOption.Good:
                     return "bisect good";
+
                 case GitBisectOption.Bad:
                     return "bisect bad";
+
                 case GitBisectOption.Skip:
                     return "bisect skip";
+
                 default:
                     throw new NotSupportedException(string.Format("Bisect option {0} is not supported", bisectOption));
             }
@@ -727,10 +739,8 @@ namespace GitCommands
             sb.Append(branch);
             sb.Append('"');
 
-
             return sb.ToString();
         }
-
 
         public static string RebaseRangeCmd(string from, string branch, string onto, bool interactive, bool preserveMerges, bool autosquash, bool autostash)
         {
@@ -756,18 +766,15 @@ namespace GitCommands
               .Append(from)
               .Append("\" ");
 
-
             sb.Append('"')
               .Append(branch)
               .Append("\"");
-
 
             sb.Append(" --onto ")
               .Append(onto);
 
             return sb.ToString();
         }
-
 
         public static string AbortRebaseCmd()
         {
@@ -845,12 +852,15 @@ namespace GitCommands
                 case UntrackedFilesMode.Default:
                     stringBuilder.Append(" --untracked-files");
                     break;
+
                 case UntrackedFilesMode.No:
                     stringBuilder.Append(" --untracked-files=no");
                     break;
+
                 case UntrackedFilesMode.Normal:
                     stringBuilder.Append(" --untracked-files=normal");
                     break;
+
                 case UntrackedFilesMode.All:
                     stringBuilder.Append(" --untracked-files=all");
                     break;
@@ -860,15 +870,19 @@ namespace GitCommands
                 case IgnoreSubmodulesMode.Default:
                     stringBuilder.Append(" --ignore-submodules");
                     break;
+
                 case IgnoreSubmodulesMode.None:
                     stringBuilder.Append(" --ignore-submodules=none");
                     break;
+
                 case IgnoreSubmodulesMode.Untracked:
                     stringBuilder.Append(" --ignore-submodules=untracked");
                     break;
+
                 case IgnoreSubmodulesMode.Dirty:
                     stringBuilder.Append(" --ignore-submodules=dirty");
                     break;
+
                 case IgnoreSubmodulesMode.All:
                     stringBuilder.Append(" --ignore-submodules=all");
                     break;
@@ -960,6 +974,7 @@ namespace GitCommands
         /*
                source: https://git-scm.com/docs/git-status
         */
+
         public static List<GitItemStatus> GetAllChangedFilesFromString(GitModule module, string statusString, bool fromDiff = false)
         {
             var diffFiles = new List<GitItemStatus>();
@@ -1200,7 +1215,8 @@ namespace GitCommands
         }
 
 #if !__MonoCS__
-        static class NativeMethods
+
+        private static class NativeMethods
         {
             [DllImport("kernel32.dll")]
             public static extern bool SetConsoleCtrlHandler(IntPtr HandlerRoutine,
@@ -1214,6 +1230,7 @@ namespace GitCommands
             public static extern bool GenerateConsoleCtrlEvent(uint dwCtrlEvent,
                int dwProcessGroupId);
         }
+
 #endif
 
         public static void TerminateTree(this Process process)

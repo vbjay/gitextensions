@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 
 namespace GitUI.CommandsDialogs.SettingsDialog
 {
@@ -24,7 +20,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog
         }
 
         public virtual void SetGlobalSettings()
-        {        
+        {
         }
     }
 }

@@ -1,10 +1,9 @@
-﻿using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using RestSharp;
 
 namespace Stash
 {
-    class MergeRequestInfo
+    internal class MergeRequestInfo
     {
         public string Id { get; set; }
         public string Version { get; set; }
@@ -12,7 +11,7 @@ namespace Stash
         public string TargetRepo { get; set; }
     }
 
-    class MergePullRequest : StashRequestBase<JObject>
+    internal class MergePullRequest : StashRequestBase<JObject>
     {
         private readonly MergeRequestInfo _info;
 
@@ -45,6 +44,5 @@ namespace Stash
         {
             return json;
         }
-
     }
 }

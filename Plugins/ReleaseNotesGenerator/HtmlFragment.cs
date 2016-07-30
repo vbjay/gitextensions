@@ -1,11 +1,10 @@
 ﻿// Sample class for Copying and Pasting HTML fragments to and from the clipboard.
 //
 // Mike Stall. http://blogs.msdn.com/jmstall
-// 
+//
 using System;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-
 
 namespace ReleaseNotesGenerator
 {
@@ -16,9 +15,10 @@ namespace ReleaseNotesGenerator
     internal class HtmlFragment
     {
         #region Read and decode from clipboard
+
         /// <summary>
         /// Get a HTML fragment from the clipboard.
-        /// </summary>    
+        /// </summary>
         /// <example>
         ///    string html = "<b>Hello!</b>";
         ///    HtmlFragment.CopyToClipboard(html);
@@ -33,7 +33,7 @@ namespace ReleaseNotesGenerator
         }
 
         /// <summary>
-        /// Create an HTML fragment decoder around raw HTML text from the clipboard. 
+        /// Create an HTML fragment decoder around raw HTML text from the clipboard.
         /// This text should have the header.
         /// </summary>
         /// <param name="rawClipboardText">raw html text, with header.</param>
@@ -46,7 +46,7 @@ namespace ReleaseNotesGenerator
             // Note the counters are byte counts in the original string, which may be Ansi. So byte counts
             // may be the same as character counts (since sizeof(char) == 1).
             // But System.String is unicode, and so byte couns are no longer the same as character counts,
-            // (since sizeof(wchar) == 2). 
+            // (since sizeof(wchar) == 2).
             int startHmtl = 0;
             int startFragment = 0;
 
@@ -62,7 +62,7 @@ namespace ReleaseNotesGenerator
 
                 switch (key)
                 {
-                    // Version number of the clipboard. Starting version is 0.9. 
+                    // Version number of the clipboard. Starting version is 0.9.
                     case "version":
                         _version = val;
                         break;
@@ -107,12 +107,12 @@ namespace ReleaseNotesGenerator
             }
         }
 
-
         // Data. See properties for descriptions.
-        readonly string _version;
-        readonly string _fullText;
-        readonly string _fragment;
-        readonly System.Uri _source;
+        private readonly string _version;
+
+        private readonly string _fullText;
+        private readonly string _fragment;
+        private readonly System.Uri _source;
 
         /// <summary>
         /// Get the Version of the html. Usually something like "1.0".
@@ -121,7 +121,6 @@ namespace ReleaseNotesGenerator
         {
             get { return _version; }
         }
-
 
         /// <summary>
         /// Get the full text (context) of the HTML fragment. This includes tags that the HTML is enclosed in.
@@ -132,7 +131,6 @@ namespace ReleaseNotesGenerator
             get { return _fullText; }
         }
 
-
         /// <summary>
         /// Get just the fragment of HTML text.
         /// </summary>
@@ -140,7 +138,6 @@ namespace ReleaseNotesGenerator
         {
             get { return _fragment; }
         }
-
 
         /// <summary>
         /// Get the Source URL of the HTML. May be null if no SourceUrl is specified. This is useful for resolving relative urls.
@@ -150,11 +147,12 @@ namespace ReleaseNotesGenerator
             get { return _source; }
         }
 
-        #endregion // Read and decode from clipboard
+        #endregion Read and decode from clipboard
 
         #region Write to Clipboard
+
         // Helper to convert an integer into an 8 digit string.
-        // String must be 8 characters, because it will be used to replace an 8 character string within a larger string.    
+        // String must be 8 characters, because it will be used to replace an 8 character string within a larger string.
         internal static string To8DigitString(int x)
         {
             return string.Format("{0:00000000}", x);
@@ -171,7 +169,6 @@ namespace ReleaseNotesGenerator
         {
             CopyToClipboard(htmlFragment, null, null);
         }
-
 
         /// <summary>
         /// Clears clipboard and copy a HTML fragment to the clipboard, providing additional meta-information.
@@ -195,7 +192,7 @@ namespace ReleaseNotesGenerator
             // Builds the CF_HTML header. See format specification here:
             // http://msdn.microsoft.com/library/default.asp?url=/workshop/networking/clipboard/htmlclipboard.asp
 
-            // The string contains index references to other spots in the string, so we need placeholders so we can compute the offsets. 
+            // The string contains index references to other spots in the string, so we need placeholders so we can compute the offsets.
             // The <<<<<<<_ strings are just placeholders. We'll backpatch them actual values afterwards.
             // The string layout (<<<) also ensures that it can't appear in the body of the html because the <
             // character must be escaped.
@@ -244,6 +241,6 @@ EndFragment:<<<<<<<4
             return dataObject;
         }
 
-        #endregion // Write to Clipboard
+        #endregion Write to Clipboard
     } // end of class
 }

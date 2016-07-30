@@ -8,7 +8,7 @@ namespace Gravatar
     {
         private static Object padlock = new Object();
 
-        string cachePath;
+        private string cachePath;
         public string Path { get { return cachePath; } }
 
         public DirectoryImageCache(string cachePath)
@@ -43,7 +43,6 @@ namespace Gravatar
                 {
                     try
                     {
-
                         File.Delete(cachePath + imageFileName);
                     }
                     catch
@@ -119,6 +118,5 @@ namespace Gravatar
                 }
             }
         }
-
     }
 }

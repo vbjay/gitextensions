@@ -15,6 +15,6 @@ namespace GitPlugin
             Debug.Write(formattedLine);
         }
 
-        #endregion
+        #endregion Handler Members
     }
 }

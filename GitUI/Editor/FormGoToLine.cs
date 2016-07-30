@@ -1,5 +1,4 @@
 ﻿using System;
-using ResourceManager;
 
 namespace GitUI.Editor
 {
@@ -26,7 +25,5 @@ namespace GitUI.Editor
         {
             _NO_TRANSLATE_LineNumberUpDown.Select(0, _NO_TRANSLATE_LineNumberUpDown.ToString().Length);
         }
-
-
     }
 }

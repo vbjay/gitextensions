@@ -65,7 +65,7 @@ namespace GitUI.CommandsDialogs
         {
             // prevent recursive calls to this method when setting DialogResult
             // due to Mono bug https://bugzilla.xamarin.com/show_bug.cgi?id=5040
-            if(_formClosing)
+            if (_formClosing)
             {
                 return;
             }
@@ -93,9 +93,11 @@ namespace GitUI.CommandsDialogs
                         _formClosing = true;
                         DialogResult = DialogResult.OK;
                         break;
+
                     case DialogResult.Cancel:
                         e.Cancel = true;
                         return;
+
                     default:
                         _formClosing = true;
                         DialogResult = DialogResult.Cancel;
@@ -139,9 +141,11 @@ namespace GitUI.CommandsDialogs
                 case Keys.Escape:
                     Close();
                     return true;
+
                 case Keys.Control | Keys.S:
                     SaveChanges();
                     return true;
+
                 default:
                     return base.ProcessCmdKey(ref msg, keyData);
             }

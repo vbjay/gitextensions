@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using GitCommands;
-using System.Collections.Generic;
 using System.Windows.Forms;
+using GitCommands;
 using ResourceManager;
 
 namespace GitUI.CommandsDialogs.BrowseDialog
@@ -13,11 +13,12 @@ namespace GitUI.CommandsDialogs.BrowseDialog
         /// <summary>
         /// this will be used when Go() is called
         /// </summary>
-        string _selectedRevision;
+        private string _selectedRevision;
 
         // these two are used to prepare for _selectedRevision
-        GitRef _selectedTag;
-        GitRef _selectedBranch;
+        private GitRef _selectedTag;
+
+        private GitRef _selectedBranch;
 
         private readonly AsyncLoader _tagsLoader;
         private readonly AsyncLoader _branchesLoader;

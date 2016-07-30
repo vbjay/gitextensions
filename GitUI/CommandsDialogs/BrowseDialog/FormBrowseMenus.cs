@@ -1,13 +1,10 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows.Forms;
 using GitCommands;
 using GitUI.CommandsDialogs.BrowseDialog;
 using ResourceManager;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
 
 namespace GitUI.CommandsDialogs
 {
@@ -16,19 +13,19 @@ namespace GitUI.CommandsDialogs
     /// This class is intended to have NO dependency to FormBrowse
     ///   (if needed this kind of code should be done in FormBrowseMenuCommands).
     /// </summary>
-    class FormBrowseMenus : ITranslate, IDisposable
+    internal class FormBrowseMenus : ITranslate, IDisposable
     {
-        MenuStrip _menuStrip;
+        private MenuStrip _menuStrip;
 
-        IList<MenuCommand> _navigateMenuCommands;
-        IList<MenuCommand> _viewMenuCommands;
+        private IList<MenuCommand> _navigateMenuCommands;
+        private IList<MenuCommand> _viewMenuCommands;
 
-        ToolStripMenuItem _navigateToolStripMenuItem;
-        ToolStripMenuItem _viewToolStripMenuItem;
+        private ToolStripMenuItem _navigateToolStripMenuItem;
+        private ToolStripMenuItem _viewToolStripMenuItem;
 
         // we have to remember which items we registered with the menucommands because other
         // location (RevisionGrid) can register items too!
-        IList<ToolStripMenuItem> _itemsRegisteredWithMenuCommand = new List<ToolStripMenuItem>();
+        private IList<ToolStripMenuItem> _itemsRegisteredWithMenuCommand = new List<ToolStripMenuItem>();
 
         public FormBrowseMenus(MenuStrip menuStrip)
         {
@@ -233,7 +230,7 @@ namespace GitUI.CommandsDialogs
         }
     }
 
-    enum MainMenuItem
+    internal enum MainMenuItem
     {
         NavigateMenu,
         ViewMenu

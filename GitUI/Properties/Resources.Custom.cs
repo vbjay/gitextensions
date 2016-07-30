@@ -16,11 +16,10 @@
         {
             get
             {
-                if(GitCommands.Utils.EnvUtils.IsMonoRuntime())
+                if (GitCommands.Utils.EnvUtils.IsMonoRuntime())
                     return loadingpanel_static;
                 else
                     return loadingpanel_animated;
-
             }
         }
     }

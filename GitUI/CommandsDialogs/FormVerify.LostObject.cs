@@ -24,6 +24,7 @@ namespace GitUI.CommandsDialogs
             /// %ct - committer date, UNIX timestamp (easy to parse format).
             /// </summary>
             private const string LogCommandArgumentsFormat = "log -n1 --pretty=format:\"%aN, %e, %s, %ct\" {0}";
+
             private const string LogPattern = @"^([^,]+), (.*), (.+), (\d+)$";
             private const string RawDataPattern = "^((dangling|missing|unreachable) (commit|blob|tree)|warning in tree) (" + GitRevision.Sha1HashPattern + ")(.)*$";
 
@@ -68,7 +69,7 @@ namespace GitUI.CommandsDialogs
                 var patternMatch = RawDataRegex.Match(raw);
 
                 // show failed assertion for unsupported cases (for developers)
-                // if you get this message, 
+                // if you get this message,
                 //     you can implement this format parsing
                 //     or post an issue to https://github.com/gitextensions/gitextensions/issues
                 Debug.Assert(patternMatch.Success, "Lost object's extracted diagnostics format not implemented", raw);

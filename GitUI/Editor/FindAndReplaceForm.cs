@@ -14,20 +14,28 @@ namespace GitUI
     {
         private readonly TranslationString _findAndReplaceString =
             new TranslationString("Find & replace");
+
         private readonly TranslationString _findString =
             new TranslationString("Find");
+
         private readonly TranslationString _selectionOnlyString =
             new TranslationString("selection only");
+
         private readonly TranslationString _textNotFoundString =
             new TranslationString("Text not found");
+
         private readonly TranslationString _noSearchString =
             new TranslationString("No string specified to look for!");
+
         private readonly TranslationString _textNotFoundString2 =
             new TranslationString("Search text not found.");
+
         private readonly TranslationString _notFoundString =
             new TranslationString("Not found");
+
         private readonly TranslationString _noOccurrencesFoundString =
             new TranslationString("No occurrences found.");
+
         private readonly TranslationString _replacedOccurrencesString =
             new TranslationString("Replaced {0} occurrences.");
 
@@ -113,7 +121,7 @@ namespace GitUI
 
             ReplaceMode = replaceMode;
 
-            Owner = (Form) editor.TopLevelControl;
+            Owner = (Form)editor.TopLevelControl;
             Show();
 
             txtLookFor.SelectAll();
@@ -146,7 +154,8 @@ namespace GitUI
             int startIdx = -1;
             int currentIdx = -1;
             TextRange range = null;
-            do {
+            do
+            {
                 Caret caret = _editor.ActiveTextAreaControl.Caret;
                 if (viaF3 && _search.HasScanRegion &&
                     !Globals.IsInRange(caret.Offset, _search.BeginOffset, _search.EndOffset))
@@ -185,7 +194,7 @@ namespace GitUI
             TextLocation p2 = _editor.Document.OffsetToPosition(range.Offset + range.Length);
             _editor.ActiveTextAreaControl.SelectionManager.SetSelection(p1, p2);
             _editor.ActiveTextAreaControl.ScrollTo(p1.Line, p1.Column);
-            // Also move the caret to the end of the selection, because when the user 
+            // Also move the caret to the end of the selection, because when the user
             // presses F3, the caret is where we start searching next time.
             _editor.ActiveTextAreaControl.Caret.Position = p2;
         }
@@ -263,7 +272,7 @@ namespace GitUI
             int count = 0;
             // BUG FIX: if the replacement string contains the original search string
             // (e.g. replace "red" with "very red") we must avoid looping around and
-            // replacing forever! To fix, start replacing at beginning of region (by 
+            // replacing forever! To fix, start replacing at beginning of region (by
             // moving the caret) and stop as soon as we loop around.
             _editor.ActiveTextAreaControl.Caret.Position =
                 _editor.Document.OffsetToPosition(_search.BeginOffset);
@@ -313,7 +322,6 @@ namespace GitUI
             }
         }
 
-
         internal void SetFileLoader(Func<bool, Tuple<int, string>> fileLoader)
         {
             _fileLoader = fileLoader;
@@ -345,7 +353,7 @@ namespace GitUI
         }
     }
 
-    /// <summary>This class finds occurrances of a search string in a text 
+    /// <summary>This class finds occurrances of a search string in a text
     /// editor's IDocument... it's like Find box without a GUI.</summary>
     public sealed class TextEditorSearcher : IDisposable
     {
@@ -356,13 +364,13 @@ namespace GitUI
         private string _lookFor;
         private string _lookFor2; // uppercase in case-insensitive mode
 
-        // I would have used the TextAnchor class to represent the beginning and 
-        // end of the region to scan while automatically adjusting to changes in 
-        // the document--but for some reason it is sealed and its constructor is 
-        // internal. Instead I use a TextMarker, which is perhaps even better as 
-        // it gives me the opportunity to highlight the region. Note that all the 
-        // markers and coloring information is associated with the text document, 
-        // not the editor control, so TextEditorSearcher doesn't need a reference 
+        // I would have used the TextAnchor class to represent the beginning and
+        // end of the region to scan while automatically adjusting to changes in
+        // the document--but for some reason it is sealed and its constructor is
+        // internal. Instead I use a TextMarker, which is perhaps even better as
+        // it gives me the opportunity to highlight the region. Note that all the
+        // markers and coloring information is associated with the text document,
+        // not the editor control, so TextEditorSearcher doesn't need a reference
         // to the TextEditorControl. After adding the marker to the document, we
         // must remember to remove it when it is no longer needed.
         private TextMarker _region;
@@ -421,16 +429,16 @@ namespace GitUI
             GC.SuppressFinalize(this);
         }
 
-        #endregion
+        #endregion IDisposable Members
 
-        /// <summary>Sets the region to search. The region is updated 
+        /// <summary>Sets the region to search. The region is updated
         /// automatically as the document changes.</summary>
         public void SetScanRegion(ISelection sel)
         {
             SetScanRegion(sel.Offset, sel.Length);
         }
 
-        /// <summary>Sets the region to search. The region is updated 
+        /// <summary>Sets the region to search. The region is updated
         /// automatically as the document changes.</summary>
         public void SetScanRegion(int offset, int length)
         {
@@ -454,7 +462,7 @@ namespace GitUI
             Dispose();
         }
 
-        /// <summary>Finds next instance of LookFor, according to the search rules 
+        /// <summary>Finds next instance of LookFor, according to the search rules
         /// (MatchCase, MatchWholeWordOnly).</summary>
         /// <param name="beginAtOffset">Offset in Document at which to begin the search</param>
         /// <param name="searchBackward"></param>
@@ -508,7 +516,6 @@ namespace GitUI
         {
             Debug.Assert(offset2 >= offset1);
             offset2 -= _lookFor.Length;
-
 
             // Search
             char lookForCh = _lookFor2[0];
@@ -565,7 +572,7 @@ namespace GitUI
         }
     }
 
-    /// <summary>Bundles a group of markers together so that they can be cleared 
+    /// <summary>Bundles a group of markers together so that they can be cleared
     /// together.</summary>
     public sealed class HighlightGroup : IDisposable
     {
@@ -592,7 +599,7 @@ namespace GitUI
             GC.SuppressFinalize(this);
         }
 
-        #endregion
+        #endregion IDisposable Members
 
         public void AddMarker(TextMarker marker)
         {

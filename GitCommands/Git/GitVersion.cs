@@ -88,7 +88,7 @@ namespace GitCommands
         // outside ASCII (7bit) range.
         public bool IsRegExStringCmdPassable(string s)
         {
-            if (s==null) return true;
+            if (s == null) return true;
             foreach (char ch in s)
                 if ((uint)ch >= 0x80) return false;
             return true;
@@ -141,7 +141,7 @@ namespace GitCommands
             if (left == null && right == null) return 0;
             if (right == null) return 1;
             if (left == null) return -1;
-            
+
             int compareA = left.a.CompareTo(right.a);
             if (compareA != 0) return compareA;
 

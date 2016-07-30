@@ -20,7 +20,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             chkShowCommitAndPush.Checked = AppSettings.ShowCommitAndPush;
             chkShowResetUnstagedChanges.Checked = AppSettings.ShowResetUnstagedChanges;
             chkShowResetAllChanges.Checked = AppSettings.ShowResetAllChanges;
-
         }
 
         protected override void PageToSettings()
@@ -28,7 +27,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             AppSettings.ShowErrorsWhenStagingFiles = chkShowErrorsWhenStagingFiles.Checked;
             AppSettings.AddNewlineToCommitMessageWhenMissing = chkAddNewlineToCommitMessageWhenMissing.Checked;
             AppSettings.UseFormCommitMessage = chkWriteCommitMessageInCommitWindow.Checked;
-            AppSettings.CommitDialogNumberOfPreviousMessages = (int) _NO_TRANSLATE_CommitDialogNumberOfPreviousMessages.Value;
+            AppSettings.CommitDialogNumberOfPreviousMessages = (int)_NO_TRANSLATE_CommitDialogNumberOfPreviousMessages.Value;
             AppSettings.ShowCommitAndPush = chkShowCommitAndPush.Checked;
             AppSettings.ShowResetUnstagedChanges = chkShowResetUnstagedChanges.Checked;
             AppSettings.ShowResetAllChanges = chkShowResetAllChanges.Checked;

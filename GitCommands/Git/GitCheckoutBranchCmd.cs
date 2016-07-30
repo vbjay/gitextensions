@@ -5,7 +5,6 @@ namespace GitCommands.Git
 {
     public class GitCheckoutBranchCmd : GitCommand
     {
-
         public enum NewBranch
         {
             DontCreate,
@@ -17,6 +16,7 @@ namespace GitCommands.Git
         public string NewBranchName { get; set; }
         public bool Remote { get; set; }
         private LocalChangesAction _localChanges;
+
         public LocalChangesAction LocalChanges
         {
             get { return _localChanges; }
@@ -28,6 +28,7 @@ namespace GitCommands.Git
                     _localChanges = value;
             }
         }
+
         public NewBranch NewBranchAction { get; set; }
 
         public GitCheckoutBranchCmd(string branchName, bool remote)

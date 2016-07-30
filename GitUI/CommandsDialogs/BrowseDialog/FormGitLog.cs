@@ -4,7 +4,6 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using GitCommands;
-using ResourceManager;
 
 namespace GitUI.CommandsDialogs.BrowseDialog
 {
@@ -112,6 +111,7 @@ namespace GitUI.CommandsDialogs.BrowseDialog
         }
 
         #region Single instance static members
+
         private static FormGitLog instance;
 
         public static void ShowOrActivate(IWin32Window owner)
@@ -123,6 +123,7 @@ namespace GitUI.CommandsDialogs.BrowseDialog
             else
                 instance.Activate();
         }
-        #endregion
+
+        #endregion Single instance static members
     }
 }

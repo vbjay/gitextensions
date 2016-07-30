@@ -9,7 +9,7 @@ namespace GitCommands.Config
     ///   [section "subsection"] (subsection is case sensitive)
     ///   or
     ///   [section.subsection] (subsection is case insensitive)
-    ///   
+    ///
     ///   Case insensitive sections are deprecated. Dot separated subsections are treated
     ///   as case insensitive only when loaded from config file. Dot separated subsections
     ///   added from code, are treated as case sensitive.
@@ -138,7 +138,7 @@ namespace GitCommands.Config
             else
                 sc = StringComparison.OrdinalIgnoreCase;
 
-            return string.Equals(SectionName, other.SectionName, StringComparison.OrdinalIgnoreCase) && 
+            return string.Equals(SectionName, other.SectionName, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(SubSection, other.SubSection, sc);
         }
     }
@@ -148,7 +148,7 @@ namespace GitCommands.Config
         public static bool GetValueAsBool(this ConfigSection section, string name, bool defaultValue)
         {
             bool result = defaultValue;
-            
+
             if (section.HasValue(name))
             {
                 string value = section.GetValue(name);

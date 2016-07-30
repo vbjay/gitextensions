@@ -23,6 +23,7 @@ namespace Github3
         public bool IsPrivate { get { return repo.Private; } }
         public int Forks { get { return repo.Forks; } }
         public string Homepage { get { return repo.Homepage; } }
+
         public string ParentReadOnlyUrl
         {
             get
@@ -59,6 +60,7 @@ namespace Github3
                 return repo.Parent == null ? null : repo.Parent.Owner.Login;
             }
         }
+
         public string CloneReadWriteUrl { get { return repo.SshUrl; } }
         public string CloneReadOnlyUrl { get { return repo.GitUrl; } }
 

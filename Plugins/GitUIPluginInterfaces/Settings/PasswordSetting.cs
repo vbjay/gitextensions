@@ -23,7 +23,7 @@ namespace GitUIPluginInterfaces
         public ISettingControlBinding CreateControlBinding()
         {
             return new TextBoxBinding(this);
-    }
+        }
 
         private class TextBoxBinding : SettingControlBinding<PasswordSetting, TextBox>
         {
@@ -33,7 +33,7 @@ namespace GitUIPluginInterfaces
 
             public override TextBox CreateControl()
             {
-                return new TextBox {PasswordChar = '\u25CF'};
+                return new TextBox { PasswordChar = '\u25CF' };
             }
 
             public override void LoadSetting(ISettingsSource settings, bool areSettingsEffective, TextBox control)

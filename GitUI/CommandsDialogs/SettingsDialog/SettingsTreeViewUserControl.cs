@@ -17,6 +17,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog
         private readonly IList<ISettingsPage> _SettingsPages = new List<ISettingsPage>();
 
         public event EventHandler<SettingsPageSelectedEventArgs> SettingsPageSelected;
+
         public IEnumerable<ISettingsPage> SettingsPages { get { return _SettingsPages; } }
 
         public SettingsTreeViewUserControl()
@@ -141,7 +142,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog
         }
 
         /// <summary>Highlights a <see cref="TreeNode"/> or returns it to the default colors.</summary>
-        static void HighlightNode(TreeNode treeNode, bool highlight)
+        private static void HighlightNode(TreeNode treeNode, bool highlight)
         {
             treeNode.ForeColor = highlight ? Color.White : Color.Black;
             treeNode.BackColor = highlight ? Color.SeaGreen : new Color();
@@ -172,6 +173,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog
         ////}
 
         #region FindPrompt
+
         private void SetFindPrompt(bool show)
         {
             if (show)
@@ -202,7 +204,8 @@ namespace GitUI.CommandsDialogs.SettingsDialog
         {
             SetFindPrompt(true);
         }
-        #endregion
+
+        #endregion FindPrompt
 
         public void GotoPage(SettingsPageReference settingsPageReference)
         {

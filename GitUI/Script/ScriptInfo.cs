@@ -1,5 +1,4 @@
-﻿
-namespace GitUI.Script
+﻿namespace GitUI.Script
 {
     public enum ScriptEvent
     {
@@ -42,24 +41,28 @@ namespace GitUI.Script
         public bool RunInBackground { get; set; }
 
         public int HotkeyCommandIdentifier { get; set; }
+
         /// <summary>
         /// Gets or sets the icon name.
         /// </summary>
-        public string Icon {
+        public string Icon
+        {
             get { return _Icon; }
-            set { _Icon = value; } 
+            set { _Icon = value; }
         }
+
         /// <summary>
         /// Gets the associated bitmap.
         /// </summary>
         /// <returns>Bitmap image</returns>
-        public System.Drawing.Bitmap GetIcon() {
+        public System.Drawing.Bitmap GetIcon()
+        {
             // Get all resources
-                    System.Resources.ResourceManager rm 
-                        = new System.Resources.ResourceManager("GitUI.Properties.Resources"
-                            , System.Reflection.Assembly.GetExecutingAssembly());
+            System.Resources.ResourceManager rm
+                = new System.Resources.ResourceManager("GitUI.Properties.Resources"
+                    , System.Reflection.Assembly.GetExecutingAssembly());
             // return icon
-                    return (System.Drawing.Bitmap)rm.GetObject(_Icon);
+            return (System.Drawing.Bitmap)rm.GetObject(_Icon);
         }
     }
 }

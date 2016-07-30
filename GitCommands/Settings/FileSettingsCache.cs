@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using GitCommands.Utils;
 
 namespace GitCommands.Settings
@@ -46,13 +43,13 @@ namespace GitCommands.Settings
             FileChanged();
         }
 
-        void _fileWatcher_Created(object sender, FileSystemEventArgs e)
+        private void _fileWatcher_Created(object sender, FileSystemEventArgs e)
         {
             LastFileRead = null;
             FileChanged();
         }
 
-        void _fileWatcher_Renamed(object sender, RenamedEventArgs e)
+        private void _fileWatcher_Renamed(object sender, RenamedEventArgs e)
         {
             FileChanged();
         }
@@ -67,7 +64,6 @@ namespace GitCommands.Settings
                 {
                     if (SaveTimer != null)
                     {
-
                         SaveTimer.Dispose();
                         SaveTimer = null;
                         _fileWatcher.Changed -= _fileWatcher_Changed;
@@ -99,7 +95,7 @@ namespace GitCommands.Settings
         }
 
         private void FileChanged()
-        {           
+        {
             LastFileModificationDate = GetLastFileModificationUTC();
         }
 
@@ -119,6 +115,7 @@ namespace GitCommands.Settings
         }
 
         protected abstract void WriteSettings(string fileName);
+
         protected abstract void ReadSettings(string fileName);
 
         protected override void SaveImpl()
@@ -149,7 +146,6 @@ namespace GitCommands.Settings
                 if (SaveTimer != null)
                     _fileWatcher.EnableRaisingEvents = canEnableFileWatcher;
             }
-
             catch (IOException e)
             {
                 System.Diagnostics.Debug.WriteLine(e.Message);

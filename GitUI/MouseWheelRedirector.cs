@@ -15,6 +15,7 @@ namespace GitUI
         }
 
         private bool _active;
+
         public static bool Active
         {
             get { return instance._active; }
@@ -31,8 +32,8 @@ namespace GitUI
             }
         }
 
-        private IntPtr  _previousHWnd = IntPtr.Zero;
-        private bool    _GEControl;
+        private IntPtr _previousHWnd = IntPtr.Zero;
+        private bool _GEControl;
 
         public bool PreFilterMessage(ref Message m)
         {

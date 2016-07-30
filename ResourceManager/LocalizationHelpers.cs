@@ -159,21 +159,27 @@ namespace ResourceManager
                 case SubmoduleStatus.NewSubmodule:
                     sb.AppendLine("New submodule");
                     break;
+
                 case SubmoduleStatus.FastForward:
                     sb.AppendLine("Fast Forward");
                     break;
+
                 case SubmoduleStatus.Rewind:
                     sb.AppendLine("Rewind");
                     break;
+
                 case SubmoduleStatus.NewerTime:
                     sb.AppendLine("Newer commit time");
                     break;
+
                 case SubmoduleStatus.OlderTime:
                     sb.AppendLine("Older commit time");
                     break;
+
                 case SubmoduleStatus.SameTime:
                     sb.AppendLine("Same commit time");
                     break;
+
                 default:
                     sb.AppendLine("Unknown");
                     break;

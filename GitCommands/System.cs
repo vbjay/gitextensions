@@ -8,7 +8,7 @@ namespace System
     public static class StringExtensions
     {
         /// <summary>'\n'</summary>
-        static readonly char[] NewLineSeparator = new char[] { '\n' };
+        private static readonly char[] NewLineSeparator = new char[] { '\n' };
 
         public static string SkipStr(this string str, string toSkip)
         {
@@ -58,7 +58,6 @@ namespace System
         {
             return string.IsNullOrEmpty(s);
         }
-
 
         public static string Combine(this string left, string sep, string right)
         {
@@ -198,6 +197,7 @@ namespace System
             }
             return value.Substring(1 + value.LastIndexOf(separator, StringComparison.InvariantCultureIgnoreCase));
         }
+
         public static string SubstringAfterFirst(this string value, string separator)
         {
             return value.Substring(1 + value.IndexOf(separator, StringComparison.InvariantCultureIgnoreCase));
@@ -218,12 +218,10 @@ namespace System
             else
                 return str.Substring(0, maxLength - 3) + "...";
         }
-
     }
 
     public static class BoolExtensions
     {
-
         /// <summary>
         /// Translates this bool value to the git command line force flag
         /// </summary>
@@ -231,6 +229,5 @@ namespace System
         {
             return force ? " -f " : string.Empty;
         }
-
     }
 }

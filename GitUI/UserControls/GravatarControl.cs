@@ -105,7 +105,6 @@ namespace GitUI
             UpdateGravatar();
         }
 
-
         private void toolStripMenuItemClick(object sender, EventArgs e)
         {
             var toolStripItem = (ToolStripItem)sender;

@@ -9,7 +9,6 @@ namespace ResourceManager.Xliff
     {
         public TranslationItem()
         {
-
         }
 
         public TranslationItem(string name, string property, string source)
@@ -28,8 +27,9 @@ namespace ResourceManager.Xliff
         }
 
         private string _name;
+
         [XmlIgnore]
-        public string Name 
+        public string Name
         {
             get
             {
@@ -42,6 +42,7 @@ namespace ResourceManager.Xliff
         }
 
         private string _property;
+
         [XmlIgnore]
         public string Property
         {
@@ -64,13 +65,14 @@ namespace ResourceManager.Xliff
             }
             set
             {
-                var vals = value.Split(new[] {'.'}, 2);
+                var vals = value.Split(new[] { '.' }, 2);
                 _name = vals[0];
                 _property = vals.Length > 1 ? vals[1] : "";
             }
         }
 
         private string _source;
+
         [XmlElement("source")]
         public string Source
         {
@@ -85,8 +87,9 @@ namespace ResourceManager.Xliff
         }
 
         private string _value;
+
         [XmlElement("target")]
-        public string Value 
+        public string Value
         {
             get
             {

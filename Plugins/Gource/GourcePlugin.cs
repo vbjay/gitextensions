@@ -1,12 +1,12 @@
-﻿using GitUIPluginInterfaces;
-using ICSharpCode.SharpZipLib.Zip;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using GitUIPluginInterfaces;
+using ICSharpCode.SharpZipLib.Zip;
 using ResourceManager;
 
 namespace Gource
@@ -14,21 +14,30 @@ namespace Gource
     public class GourcePlugin : GitPluginBase, IGitPluginForRepository
     {
         #region Translation
+
         private readonly TranslationString _currentDirectoryIsNotValidGit = new TranslationString("The current directory is not a valid git repository.\n\n" +
             "Gource can be only be started from a valid git repository.");
+
         private readonly TranslationString _resetConfigPath = new TranslationString("Cannot find Gource in the configured path: {0}.\n\n" +
             "Do you want to reset the configured path?");
+
         private readonly TranslationString _gource = new TranslationString("Gource");
+
         private readonly TranslationString _doYouWantDownloadGource = new TranslationString("There is no path to Gource configured.\n\n" +
             "Do you want to automatically download Gource?");
+
         private readonly TranslationString _download = new TranslationString("Download");
+
         private readonly TranslationString _cannotFindGource = new TranslationString("Cannot find Gource.\n" +
             "Please download Gource and set the path in the plugins settings dialog.");
+
         private readonly TranslationString _bytesDownloaded = new TranslationString("{0} bytes downloaded.");
         private readonly TranslationString _gourceDownloadedAndUnzipped = new TranslationString("Gource has been downloaded and unzipped.");
+
         private readonly TranslationString _downloadingFailed = new TranslationString("Downloading failed.\n" +
             "Please download Gource and set the path in the plugins settings dialog.");
-        #endregion
+
+        #endregion Translation
 
         public GourcePlugin()
         {

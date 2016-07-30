@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
+using GitCommands;
 using GitCommands.Repository;
 using GitUI.Properties;
-using GitCommands;
 using ResourceManager;
 
 namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
@@ -26,7 +26,6 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
                 return;
 
             Bitmap icon = GetRepositoryIcon(repository);
-
 
             if (AppSettings.DashboardShowCurrentBranch)
             {
@@ -79,14 +78,14 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
                 Icon.Image = icon;
 
             toolTip = new ToolTip
-                              {
-                                  InitialDelay = 1,
-                                  AutomaticDelay = 1,
-                                  AutoPopDelay = 5000,
-                                  UseFading = false,
-                                  UseAnimation = false,
-                                  ReshowDelay = 1
-                              };
+            {
+                InitialDelay = 1,
+                AutomaticDelay = 1,
+                AutoPopDelay = 5000,
+                UseFading = false,
+                UseAnimation = false,
+                ReshowDelay = 1
+            };
             toolTip.SetToolTip(_NO_TRANSLATE_Title, Path);
 
             _NO_TRANSLATE_Title.MouseDown += Title_MouseDown;
@@ -109,12 +108,12 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             }
         }
 
-        void Title_Click(object sender, EventArgs e)
+        private void Title_Click(object sender, EventArgs e)
         {
             OnClick(e);
         }
 
-        void Title_MouseDown(object sender, MouseEventArgs e)
+        private void Title_MouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
             {
@@ -141,7 +140,7 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             BackColor = SystemColors.Control;
         }
 
-        void DashboardItem_VisibleChanged(object sender, System.EventArgs e)
+        private void DashboardItem_VisibleChanged(object sender, System.EventArgs e)
         {
             if (!Visible)
             {
@@ -155,10 +154,13 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             {
                 case RepositoryType.Repository:
                     return Resources.Star;
+
                 case RepositoryType.RssFeed:
                     return Resources.rss;
+
                 case RepositoryType.History:
                     return Resources.history;
+
                 default:
                     throw new ArgumentException("Repository type is not supported.", "repository");
             }

@@ -2,7 +2,6 @@
 using System.Threading;
 using GitUIPluginInterfaces;
 
-
 namespace GitCommands
 {
     public abstract class LockableNotifier : ILockableNotifier
@@ -18,8 +17,9 @@ namespace GitCommands
             {
                 notifyRequested = false;
                 InternalNotify();
-            }        
+            }
         }
+
         /// <summary>
         /// notifies if is unlocked
         /// </summary>
@@ -59,7 +59,6 @@ namespace GitCommands
         /// true if raising notification is locked
         /// </summary>
         public bool IsLocked { get { return lockCount != 0; } }
-
     }
 
     public class ActionNotifier : LockableNotifier

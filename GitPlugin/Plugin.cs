@@ -137,8 +137,10 @@ namespace GitPlugin.Commands
             {
                 case vsCommandStyle.vsCommandStylePict:
                     return MsoButtonStyle.msoButtonIcon;
+
                 case vsCommandStyle.vsCommandStyleText:
                     return MsoButtonStyle.msoButtonCaption;
+
                 default:
                     return MsoButtonStyle.msoButtonIconAndCaption;
             }
@@ -434,7 +436,7 @@ namespace GitPlugin.Commands
         private Command GetCommand(string commandName, string caption, string tooltip, int iconIndex,
             vsCommandStyle commandStyle, Commands2 commands)
         {
-            var contextGUIDS = new object[] {};
+            var contextGUIDS = new object[] { };
 
             // Add command
             Command command = GetCommand(commandName);
@@ -448,9 +450,9 @@ namespace GitPlugin.Commands
                     command = commands.AddNamedCommand2(_addIn,
                         commandName, caption, tooltip, false, iconIndex,
                         ref contextGUIDS,
-                        (int) vsCommandStatus.vsCommandStatusSupported |
-                        (int) vsCommandStatus.vsCommandStatusEnabled,
-                        (int) commandStyle);
+                        (int)vsCommandStatus.vsCommandStatusSupported |
+                        (int)vsCommandStatus.vsCommandStatusEnabled,
+                        (int)commandStyle);
                 }
                 catch (Exception)
                 {
@@ -461,9 +463,9 @@ namespace GitPlugin.Commands
             {
                 command = commands.AddNamedCommand2(_addIn,
                     commandName, caption, tooltip, true, -1, ref contextGUIDS,
-                    (int) vsCommandStatus.vsCommandStatusSupported |
-                    (int) vsCommandStatus.vsCommandStatusEnabled,
-                    (int) commandStyle);
+                    (int)vsCommandStatus.vsCommandStatusSupported |
+                    (int)vsCommandStatus.vsCommandStatusEnabled,
+                    (int)commandStyle);
             }
 
             if (command != null)
@@ -826,7 +828,6 @@ namespace GitPlugin.Commands
 
                     return pane;
                 }
-
             }
             catch (Exception)
             {

@@ -28,6 +28,7 @@ namespace ResourceManager.Xliff
         public string GitExVersion { get; set; }
 
         private string _languageCode;
+
         [XmlAttribute("LanguageCode")]
         public string LanguageCode { get { return _languageCode; } }
 
@@ -61,7 +62,7 @@ namespace ResourceManager.Xliff
         public void Sort()
         {
             TranslationCategories.Sort();
-            foreach(TranslationCategory tc in TranslationCategories)
+            foreach (TranslationCategory tc in TranslationCategories)
                 tc.Body.TranslationItems.Sort();
         }
 

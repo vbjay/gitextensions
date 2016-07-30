@@ -136,7 +136,7 @@ namespace GitPlugin.Git
                         if (exitCode == 1)
                             head = "no branch";
                     }
-                    
+
                     if (!string.IsNullOrEmpty(head))
                     {
                         head = head.Replace("ref:", "").Trim().Replace("refs/heads/", string.Empty);
@@ -177,7 +177,7 @@ namespace GitPlugin.Git
             if (string.IsNullOrEmpty(dir))
                 return false;
 
-            if (Directory.Exists(Path.Combine(dir, ".git")) || File.Exists(Path.Combine(dir , ".git")))
+            if (Directory.Exists(Path.Combine(dir, ".git")) || File.Exists(Path.Combine(dir, ".git")))
                 return true;
 
             return !dir.Contains(".git") &&

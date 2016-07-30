@@ -41,7 +41,6 @@ namespace GitUI.CommandsDialogs
                     aCommands.StartRebaseDialog(owner, null);
                 }
             }
-
         }
     }
 }

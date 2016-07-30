@@ -4,7 +4,7 @@ using RestSharp;
 
 namespace Stash
 {
-    class PullRequestInfo
+    internal class PullRequestInfo
     {
         public string Title { get; set; }
         public string Description { get; set; }
@@ -15,7 +15,7 @@ namespace Stash
         public IEnumerable<StashUser> Reviewers { get; set; }
     }
 
-    class CreatePullRequestRequest : StashRequestBase<JObject>
+    internal class CreatePullRequestRequest : StashRequestBase<JObject>
     {
         private readonly PullRequestInfo _info;
 

@@ -1,17 +1,13 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Drawing;
-using System.Threading;
 using System.Windows.Forms;
 using GitCommands;
 
 using GitUI.UserControls;
 
-using ResourceManager;
-
 namespace GitUI
 {
-    delegate void DataCallback(string text);
+    internal delegate void DataCallback(string text);
+
     /// <summary>
     ///
     /// </summary>
@@ -79,7 +75,6 @@ namespace GitUI
             return ShowDialog(owner, null, arguments, module.WorkingDir, null, useDialogSettings);
         }
 
-
         public static bool ShowDialog(IWin32Window owner, string process, string arguments, string aWorkingDirectory, string input, bool useDialogSettings)
         {
             using (var formProcess = new FormProcess(process, arguments, aWorkingDirectory, input, useDialogSettings))
@@ -120,7 +115,6 @@ namespace GitUI
 
         protected virtual void BeforeProcessStart()
         {
-
         }
 
         private void processStart(FormStatus form)
@@ -133,16 +127,16 @@ namespace GitUI
 
             try
             {
-				ConsoleOutput.StartProcess(ProcessString, ProcessArguments, WorkingDirectory);
+                ConsoleOutput.StartProcess(ProcessString, ProcessArguments, WorkingDirectory);
 
                 if (!string.IsNullOrEmpty(ProcessInput))
                 {
-					throw new NotSupportedException("No non-NULL usages of ProcessInput are currently expected.");	// Not implemented with all terminal variations, so let's postpone until there's at least one non-null case
-/*
-                    Thread.Sleep(500);
-                    Process.StandardInput.Write(ProcessInput);
-                    AddMessageLine(string.Format(":: Wrote [{0}] to process!\r\n", ProcessInput));
-*/
+                    throw new NotSupportedException("No non-NULL usages of ProcessInput are currently expected.");  // Not implemented with all terminal variations, so let's postpone until there's at least one non-null case
+                                                                                                                    /*
+                                                                                                                                        Thread.Sleep(500);
+                                                                                                                                        Process.StandardInput.Write(ProcessInput);
+                                                                                                                                        AddMessageLine(string.Format(":: Wrote [{0}] to process!\r\n", ProcessInput));
+                                                                                                                    */
                 }
             }
             catch (Exception e)
@@ -154,7 +148,7 @@ namespace GitUI
 
         private void processAbort(FormStatus form)
         {
-			ConsoleOutput.KillProcess();
+            ConsoleOutput.KillProcess();
         }
 
         protected void KillGitCommand()
@@ -198,36 +192,35 @@ namespace GitUI
 
         protected virtual void DataReceived(object sender, TextEventArgs e)
         {
-
         }
 
-	    private void DataReceivedCore(object sender, TextEventArgs e)
-	    {
-		    if(e.Text.Contains("%") || e.Text.Contains("remote: Counting objects"))
-			    SetProgress(e.Text);
-		    else
-		    {
-			    const string ansiSuffix = "\u001B[K";
-			    string line = e.Text.Replace(ansiSuffix, "");
+        private void DataReceivedCore(object sender, TextEventArgs e)
+        {
+            if (e.Text.Contains("%") || e.Text.Contains("remote: Counting objects"))
+                SetProgress(e.Text);
+            else
+            {
+                const string ansiSuffix = "\u001B[K";
+                string line = e.Text.Replace(ansiSuffix, "");
 
-			    if(ConsoleOutput.IsDisplayingFullProcessOutput)
-				    OutputLog.AppendLine(line); // To the log only, display control displays it by itself
-			    else
-				    AppendOutputLine(line); // Both to log and display control
-		    }
+                if (ConsoleOutput.IsDisplayingFullProcessOutput)
+                    OutputLog.AppendLine(line); // To the log only, display control displays it by itself
+                else
+                    AppendOutputLine(line); // Both to log and display control
+            }
 
-		    DataReceived(sender, e);
-	    }
+            DataReceived(sender, e);
+        }
 
-		/// <summary>
-		/// Appends a line of text (CRLF added automatically) both to the logged output (<see cref="FormStatus.GetOutputString"/>) and to the display console control.
-		/// </summary>
+        /// <summary>
+        /// Appends a line of text (CRLF added automatically) both to the logged output (<see cref="FormStatus.GetOutputString"/>) and to the display console control.
+        /// </summary>
         public void AppendOutputLine(string line)
         {
-			// To the internal log (which can be then retrieved as full text from this form)
+            // To the internal log (which can be then retrieved as full text from this form)
             OutputLog.AppendLine(line);
 
-			// To the display control
+            // To the display control
             AddMessageLine(line);
         }
 
@@ -248,7 +241,6 @@ namespace GitUI
             this.Name = "FormProcess";
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
     }
 }

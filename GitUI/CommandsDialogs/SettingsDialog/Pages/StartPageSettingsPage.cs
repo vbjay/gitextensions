@@ -24,7 +24,5 @@
         protected override void PageToSettings()
         {
         }
-
-
     }
 }

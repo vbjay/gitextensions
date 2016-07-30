@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 
 namespace GitUIPluginInterfaces
 {
-    public class NumberSetting<T>: ISetting
+    public class NumberSetting<T> : ISetting
     {
         public NumberSetting(string aName, T aDefaultValue)
             : this(aName, aName, aDefaultValue)
@@ -27,7 +23,7 @@ namespace GitUIPluginInterfaces
         public ISettingControlBinding CreateControlBinding()
         {
             return new TextBoxBinding(this);
-    }
+        }
 
         private class TextBoxBinding : SettingControlBinding<NumberSetting<T>, TextBox>
         {
@@ -78,8 +74,8 @@ namespace GitUIPluginInterfaces
                 return null;
             }
 
-            var type = typeof (T);
-            if (type == typeof (int))
+            var type = typeof(T);
+            if (type == typeof(int))
                 return int.Parse(value);
             if (type == typeof(float))
                 return float.Parse(value);
@@ -92,7 +88,7 @@ namespace GitUIPluginInterfaces
 
         public object this[ISettingsSource settings]
         {
-            get 
+            get
             {
                 return settings.GetValue(Name, null, s =>
                     {
@@ -100,7 +96,7 @@ namespace GitUIPluginInterfaces
                     });
             }
 
-            set 
+            set
             {
                 settings.SetValue(Name, value, i => { return ConvertToString(i); });
             }
@@ -116,8 +112,7 @@ namespace GitUIPluginInterfaces
             else
             {
                 return (T)settingVal;
-            }            
+            }
         }
-
     }
 }

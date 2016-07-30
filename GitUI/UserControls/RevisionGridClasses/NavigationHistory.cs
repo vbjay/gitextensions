@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace GitUI.UserControls.RevisionGridClasses
 {
-    class NavigationHistory
+    internal class NavigationHistory
     {
         // history of selected items (browse history)
         // head == currently selected item
         private readonly Stack<string> prevItems = new Stack<string>();
+
         // backtracked items
         // head == item to show when navigating forward
         private readonly Stack<string> nextItems = new Stack<string>();
@@ -32,7 +31,7 @@ namespace GitUI.UserControls.RevisionGridClasses
         /// </summary>
         public bool CanNavigateBackward
         {
-            get 
+            get
             {
                 return (prevItems.Count > 1);
             }

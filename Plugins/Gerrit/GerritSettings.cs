@@ -11,13 +11,15 @@ namespace Gerrit
     public class GerritSettings : Translate
     {
         #region Translation
+
         private readonly TranslationString _settingsError = new TranslationString("Error loading .gitreview file.");
         private readonly TranslationString _settingsErrorFileNotFound = new TranslationString("Cannot find the \".gitreview\" file in the working directory.");
         private readonly TranslationString _settingsErrorPortNotNumeric = new TranslationString("The \"port\" specified in the .gitreview file may only contain digits.");
         private readonly TranslationString _settingsErrorHostNotEntered = new TranslationString("The \"host\" setting in the .gitreview file is mandatory.");
         private readonly TranslationString _settingsErrorProjectNotEntered = new TranslationString("The \"project\" setting in the .gitreview file is mandatory.");
         private readonly TranslationString _settingsErrorDefaultRemoteNotPresent = new TranslationString("The remote \"{0}\" specified with the \"defaultremote\" setting in the .gitreview file does not refer to a configured remote. Either create this remote or change the setting in the .gitreview file.");
-        #endregion
+
+        #endregion Translation
 
         public string Host { get; private set; }
         public int Port { get; private set; }

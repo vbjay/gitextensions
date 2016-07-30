@@ -12,11 +12,13 @@ namespace GitUI.CommandsDialogs
 
         private readonly TranslationString _conflictResolvedText =
             new TranslationString("Conflicts resolved");
+
         private readonly TranslationString _conflictMergetoolText =
             new TranslationString("Solve conflicts");
 
         private readonly TranslationString _selectPatchFileFilter =
             new TranslationString("Patch file (*.Patch)");
+
         private readonly TranslationString _selectPatchFileCaption =
             new TranslationString("Select patch file");
 
@@ -26,7 +28,7 @@ namespace GitUI.CommandsDialogs
         private readonly TranslationString _applyPatchMsgBox =
             new TranslationString("Apply patch");
 
-        #endregion
+        #endregion Translation
 
         /// <summary>
         /// For VS designer
@@ -125,11 +127,11 @@ namespace GitUI.CommandsDialogs
         private string SelectPatchFile(string initialDirectory)
         {
             using (var dialog = new OpenFileDialog
-                             {
-                                 Filter = _selectPatchFileFilter.Text + "|*.Patch",
-                                 InitialDirectory = initialDirectory,
-                                 Title = _selectPatchFileCaption.Text
-                             })
+            {
+                Filter = _selectPatchFileFilter.Text + "|*.Patch",
+                InitialDirectory = initialDirectory,
+                Title = _selectPatchFileCaption.Text
+            })
             {
                 return (dialog.ShowDialog(this) == DialogResult.OK) ? dialog.FileName : PatchFile.Text;
             }
@@ -218,7 +220,7 @@ namespace GitUI.CommandsDialogs
         private void MergePatch_Load(object sender, EventArgs e)
         {
             PatchFile.Select();
-            
+
             Text = _applyPatchMsgBox.Text + " (" + Module.WorkingDir + ")";
             IgnoreWhitespace.Checked = AppSettings.ApplyPatchIgnoreWhitespace;
         }
@@ -227,7 +229,6 @@ namespace GitUI.CommandsDialogs
         {
             using (var browseDialog = new FolderBrowserDialog())
             {
-
                 if (browseDialog.ShowDialog(this) == DialogResult.OK)
                 {
                     PatchDir.Text = browseDialog.SelectedPath;
@@ -242,7 +243,6 @@ namespace GitUI.CommandsDialogs
 
         private void PatchDirMode_CheckedChanged(object sender, EventArgs e)
         {
-
         }
 
         private void SolveMergeconflicts_Click(object sender, EventArgs e)

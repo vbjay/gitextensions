@@ -3,7 +3,6 @@ using System.Drawing;
 using System.Windows.Forms;
 using GitCommands;
 using GitUI.Editor;
-using ResourceManager;
 
 namespace GitUI.CommandsDialogs.SettingsDialog.Pages
 {
@@ -27,10 +26,13 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             {
                 case "large":
                     return 1;
+
                 case "small":
                     return 2;
+
                 case "cow":
                     return 3;
+
                 default:
                     return 0;
             }
@@ -42,10 +44,13 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             {
                 case 1:
                     return "large";
+
                 case 2:
                     return "small";
+
                 case 3:
                     return "cow";
+
                 default:
                     return "default";
             }
@@ -208,16 +213,19 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
                     IconPreview.Image = (new Icon(GitExtensionsForm.GetApplicationIcon("Large", GetSelectedApplicationIconColor()), 32, 32)).ToBitmap();
                     IconPreviewSmall.Image = (new Icon(GitExtensionsForm.GetApplicationIcon("Small", GetSelectedApplicationIconColor()), 16, 16)).ToBitmap();
                     break;
+
                 case 1:
                     icon = GitExtensionsForm.GetApplicationIcon("Small", GetSelectedApplicationIconColor());
                     IconPreview.Image = (new Icon(icon, 32, 32)).ToBitmap();
                     IconPreviewSmall.Image = (new Icon(icon, 16, 16)).ToBitmap();
                     break;
+
                 case 2:
                     icon = GitExtensionsForm.GetApplicationIcon("Large", GetSelectedApplicationIconColor());
                     IconPreview.Image = (new Icon(icon, 32, 32)).ToBitmap();
                     IconPreviewSmall.Image = (new Icon(icon, 16, 16)).ToBitmap();
                     break;
+
                 case 3:
                     icon = GitExtensionsForm.GetApplicationIcon("Cow", GetSelectedApplicationIconColor());
                     IconPreview.Image = (new Icon(icon, 32, 32)).ToBitmap();
@@ -228,12 +236,12 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
 
         private void ColorLabel_Click(object sender, EventArgs e)
         {
-            PickColor((Label) sender);
+            PickColor((Label)sender);
         }
 
         private void PickColor(Control targetColorControl)
         {
-            using (var colorDialog = new ColorDialog {Color = targetColorControl.BackColor})
+            using (var colorDialog = new ColorDialog { Color = targetColorControl.BackColor })
             {
                 colorDialog.ShowDialog(this);
                 targetColorControl.BackColor = colorDialog.Color;

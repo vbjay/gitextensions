@@ -23,8 +23,10 @@ namespace GitUI
     {
         private readonly TranslationString _UnsupportedMultiselectAction =
             new TranslationString("Operation not supported");
+
         private readonly TranslationString _DiffWithParent =
             new TranslationString("Diff with parent");
+
         public readonly TranslationString CombinedDiff =
             new TranslationString("Combined Diff");
 
@@ -170,7 +172,8 @@ namespace GitUI
         }
 
 #if !__MonoCS__ // TODO Drag'n'Drop doesnt work on Mono/Linux
-        void FileStatusListView_MouseDown(object sender, MouseEventArgs e)
+
+        private void FileStatusListView_MouseDown(object sender, MouseEventArgs e)
         {
             //SELECT
             if (e.Button == MouseButtons.Right)
@@ -206,6 +209,7 @@ namespace GitUI
                     dragBoxFromMouseDown = Rectangle.Empty;
             }
         }
+
 #endif
 
         public override ContextMenuStrip ContextMenuStrip
@@ -235,7 +239,7 @@ namespace GitUI
 #if !__MonoCS__ // TODO Drag'n'Drop doesnt work on Mono/Linux
         private Rectangle dragBoxFromMouseDown;
 
-        void FileStatusListView_MouseMove(object sender, MouseEventArgs e)
+        private void FileStatusListView_MouseMove(object sender, MouseEventArgs e)
         {
             ListView listView = sender as ListView;
 
@@ -292,6 +296,7 @@ namespace GitUI
                 }
             }
         }
+
 #endif
 
         [Browsable(false)]
@@ -300,7 +305,7 @@ namespace GitUI
             get
             {
                 return (FileStatusListView.Items.Cast<ListViewItem>().
-                    Select(selectedItem => (GitItemStatus) selectedItem.Tag));
+                    Select(selectedItem => (GitItemStatus)selectedItem.Tag));
             }
         }
 
@@ -339,7 +344,7 @@ namespace GitUI
                 if (FileStatusListView.SelectedItems.Count > 0)
                 {
                     ListViewItem item = FileStatusListView.SelectedItems[0];
-                    return (GitItemStatus) item.Tag;
+                    return (GitItemStatus)item.Tag;
                 }
                 return null;
             }
@@ -362,7 +367,6 @@ namespace GitUI
                             newSelected = item;
                             break;
                         }
-
                     }
                 }
                 if (newSelected != null)
@@ -435,12 +439,14 @@ namespace GitUI
         }
 
         public event EventHandler SelectedIndexChanged;
+
         public event EventHandler DataSourceChanged;
 
         public new event EventHandler DoubleClick;
+
         public new event KeyEventHandler KeyDown;
 
-        void FileStatusListView_DoubleClick(object sender, EventArgs e)
+        private void FileStatusListView_DoubleClick(object sender, EventArgs e)
         {
             if (DoubleClick == null)
                 UICommands.StartFileHistoryDialog(this, SelectedItem.Name, Revision);
@@ -448,7 +454,7 @@ namespace GitUI
                 DoubleClick(sender, e);
         }
 
-        void FileStatusListView_SelectedIndexChanged()
+        private void FileStatusListView_SelectedIndexChanged()
         {
             if (SelectedIndexChanged != null)
                 SelectedIndexChanged(this, EventArgs.Empty);
@@ -531,12 +537,13 @@ namespace GitUI
 
         public void SetGitItemStatuses(string parentRev, IList<GitItemStatus> items)
         {
-            var dictionary = new Dictionary<string, IList<GitItemStatus>> {{parentRev ?? "", items}};
+            var dictionary = new Dictionary<string, IList<GitItemStatus>> { { parentRev ?? "", items } };
             GitItemStatusesWithParents = dictionary;
         }
 
         private GitItemsWithParents _itemsDictionary = new Dictionary<string, IList<GitItemStatus>>();
         private bool _itemsChanging = false;
+
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         [Browsable(false)]
         public GitItemsWithParents GitItemStatusesWithParents
@@ -673,22 +680,22 @@ namespace GitUI
             switch (e.KeyCode)
             {
                 case Keys.A:
-                {
-                    if (!e.Control)
+                    {
+                        if (!e.Control)
+                            break;
+                        FileStatusListView.BeginUpdate();
+                        try
+                        {
+                            for (var i = 0; i < FileStatusListView.Items.Count; i++)
+                                FileStatusListView.Items[i].Selected = true;
+                            e.Handled = true;
+                        }
+                        finally
+                        {
+                            FileStatusListView.EndUpdate();
+                        }
                         break;
-                    FileStatusListView.BeginUpdate();
-                    try
-                    {
-                        for (var i = 0; i < FileStatusListView.Items.Count; i++)
-                            FileStatusListView.Items[i].Selected = true;
-                        e.Handled = true;
                     }
-                    finally
-                    {
-                        FileStatusListView.EndUpdate();
-                    }
-                    break;
-                }
                 default:
                     if (KeyDown != null)
                         KeyDown(sender, e);
@@ -804,5 +811,4 @@ namespace GitUI
             }
         }
     }
-
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using GitUIPluginInterfaces.BuildServerIntegration;
 using System.Text.RegularExpressions;
 
 namespace TfsInterop.Interface
@@ -30,7 +29,9 @@ namespace TfsInterop.Interface
     public interface ITfsHelper : IDisposable
     {
         bool IsDependencyOk();
+
         void ConnectToTfsServer(string hostname, string teamCollection, string projectName, Regex buildDefinitionFilter = null);
+
         IList<IBuild> QueryBuilds(DateTime? sinceDate, bool? running);
     }
 }

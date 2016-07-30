@@ -26,7 +26,7 @@ namespace GitUI.RevisionGridClasses
             public bool IsLoading { get; private set; }
         }
 
-        #endregion
+        #endregion Delegates
 
         #region DataType enum
 
@@ -39,7 +39,7 @@ namespace GitUI.RevisionGridClasses
             Filtered = 4,
         }
 
-        #endregion
+        #endregion DataType enum
 
         #region FilterType enum
 
@@ -50,7 +50,7 @@ namespace GitUI.RevisionGridClasses
             Hide,
         }
 
-        #endregion
+        #endregion FilterType enum
 
         private int _nodeDimension = 8;
         private int _laneWidth = 13;
@@ -113,11 +113,11 @@ namespace GitUI.RevisionGridClasses
             _graphData = new Graph();
 
             _backgroundThread = new Thread(BackgroundThreadEntry)
-                                   {
-                                       IsBackground = true,
-                                       Priority = ThreadPriority.Normal,
-                                       Name = "DvcsGraph.backgroundThread"
-                                   };
+            {
+                IsBackground = true,
+                Priority = ThreadPriority.Normal,
+                Name = "DvcsGraph.backgroundThread"
+            };
             _backgroundThread.Start();
 
             InitializeComponent();
@@ -264,32 +264,32 @@ namespace GitUI.RevisionGridClasses
             set
             {
                 lock (_backgroundEvent)
-                lock (_graphData)
-                {
-                    ClearSelection();
-                    CurrentCell = null;
-                    if (value == null)
-                        return;
-
-                    ClearSelection();
-                    CurrentCell = null;
-
-                    foreach (string rowItem in value)
+                    lock (_graphData)
                     {
-                        int row = FindRow(rowItem);
-                        if (row >= 0 && Rows.Count > row)
+                        ClearSelection();
+                        CurrentCell = null;
+                        if (value == null)
+                            return;
+
+                        ClearSelection();
+                        CurrentCell = null;
+
+                        foreach (string rowItem in value)
                         {
-                            Rows[row].Selected = true;
-                            if (CurrentCell == null)
+                            int row = FindRow(rowItem);
+                            if (row >= 0 && Rows.Count > row)
                             {
-                                // Set the current cell to the first item. We use cell
-                                // 1 because cell 0 could be hidden if they've chosen to
-                                // not see the graph
-                                CurrentCell = Rows[row].Cells[1];
+                                Rows[row].Selected = true;
+                                if (CurrentCell == null)
+                                {
+                                    // Set the current cell to the first item. We use cell
+                                    // 1 because cell 0 could be hidden if they've chosen to
+                                    // not see the graph
+                                    CurrentCell = Rows[row].Cells[1];
+                                }
                             }
                         }
                     }
-                }
             }
         }
 
@@ -509,7 +509,6 @@ namespace GitUI.RevisionGridClasses
                     {
                         RowCount = count;
                     }
-
                 }
                 finally
                 {
@@ -722,7 +721,7 @@ namespace GitUI.RevisionGridClasses
                 if (_graphData != null)
                 {
                     int width = 1;
-                    int start = VerticalScrollBar.Value/_rowHeight;
+                    int start = VerticalScrollBar.Value / _rowHeight;
                     int stop = start + DisplayedRowCount(true);
                     lock (_graphData)
                     {
@@ -734,8 +733,8 @@ namespace GitUI.RevisionGridClasses
 
                     laneCount = Math.Min(Math.Max(laneCount, width), MaxLanes);
                 }
-                if (GraphColumn.Width != _laneWidth*laneCount && _laneWidth*laneCount > GraphColumn.MinimumWidth)
-                    GraphColumn.Width = _laneWidth*laneCount;
+                if (GraphColumn.Width != _laneWidth * laneCount && _laneWidth * laneCount > GraphColumn.MinimumWidth)
+                    GraphColumn.Width = _laneWidth * laneCount;
             }
         }
 
@@ -757,8 +756,8 @@ namespace GitUI.RevisionGridClasses
             return colors;
         }
 
-
         private RevisionGraphDrawStyleEnum _revisionGraphDrawStyle;
+
         [DefaultValue(RevisionGraphDrawStyleEnum.DrawNonRelativesGray)]
         [Browsable(false)]
         public RevisionGraphDrawStyleEnum RevisionGraphDrawStyle
@@ -896,7 +895,7 @@ namespace GitUI.RevisionGridClasses
                 }
             }
 
-            #endregion
+            #endregion Make sure the graph cache bitmap is setup
 
             // Compute how much the head needs to move to show the requested item.
             int neededHeadAdjustment = aNeededRow - _cacheHead;
@@ -1024,6 +1023,7 @@ namespace GitUI.RevisionGridClasses
         // end drawGraph
 
         private RevisionGraphDrawStyleEnum revisionGraphDrawStyleCache;
+
         private bool DrawItem(Graphics wa, Graph.ILaneRow row)
         {
             if (row == null || row.NodeLane == -1)
@@ -1087,7 +1087,6 @@ namespace GitUI.RevisionGridClasses
                         {
                             Color lastRealColor = curColors.LastOrDefault(c => c != _nonRelativeColor);
 
-
                             if (lastRealColor.IsEmpty)
                             {
                                 brushLineColor = new SolidBrush(_nonRelativeColor);
@@ -1128,17 +1127,19 @@ namespace GitUI.RevisionGridClasses
                             Pen penLine;
                             switch (i)
                             {
-                              case 0:
-                                penLine = _whiteBorderPen;
-                                break;
-                              case 1:
-                                penLine = _blackBorderPen;
-                                break;
-                              default:
-                                if (brushLineColorPen == null)
-                                  brushLineColorPen = new Pen(brushLineColor, _laneLineWidth);
-                                penLine = brushLineColorPen;
-                                break;
+                                case 0:
+                                    penLine = _whiteBorderPen;
+                                    break;
+
+                                case 1:
+                                    penLine = _blackBorderPen;
+                                    break;
+
+                                default:
+                                    if (brushLineColorPen == null)
+                                        brushLineColorPen = new Pen(brushLineColor, _laneLineWidth);
+                                    penLine = brushLineColorPen;
+                                    break;
                             }
 
                             if (singleLane)
@@ -1280,8 +1281,6 @@ namespace GitUI.RevisionGridClasses
             return childrenIds;
         }
 
-
-
         private void dataGrid_Resize(object sender, EventArgs e)
         {
             _rowHeight = RowTemplate.Height;
@@ -1374,7 +1373,7 @@ namespace GitUI.RevisionGridClasses
             }
         }
 
-        #endregion
+        #endregion Nested type: Node
     }
 
     // end of class DvcsGraph

@@ -83,8 +83,8 @@ namespace GitUI.Script
             {
                 Scripts = new BindingList<ScriptInfo>();
                 DeserializeFromOldFormat(xml);
-                
-                Trace.WriteLine(ex.Message);                
+
+                Trace.WriteLine(ex.Message);
             }
         }
 
@@ -149,7 +149,6 @@ namespace GitUI.Script
             FetchAll.AddToRevisionGridContextMenu = true;
             FetchAll.Enabled = false;
             Scripts.Add(FetchAll);
-
         }
 
         private static void DeserializeFromOldFormat(string inputString)

@@ -45,7 +45,7 @@ namespace GitCommands
             {
                 throw new ArgumentNullException("encoding");
             }
-            
+
             string outputString = "";
             if (output != null && output.Length > 0)
             {

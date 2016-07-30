@@ -58,7 +58,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
                 Filter = "Git.cmd (git.cmd)|git.cmd|Git.exe (git.exe)|git.exe|Git (git)|git"
             })
             {
-
                 if (browseDialog.ShowDialog(this) == DialogResult.OK)
                 {
                     GitPath.Text = browseDialog.FileName;
@@ -72,7 +71,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
 
             using (var browseDialog = new FolderBrowserDialog { SelectedPath = AppSettings.GitBinDir })
             {
-
                 if (browseDialog.ShowDialog(this) == DialogResult.OK)
                 {
                     GitBinPath.Text = browseDialog.SelectedPath;

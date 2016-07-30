@@ -8,9 +8,6 @@ using GitCommands;
 using GitCommands.Config;
 using GitCommands.Repository;
 
-using JetBrains.Annotations;
-using GitUI.UserControls;
-
 using ResourceManager;
 
 namespace GitUI.CommandsDialogs
@@ -18,7 +15,7 @@ namespace GitUI.CommandsDialogs
     public partial class FormClone : GitModuleForm
     {
         private readonly TranslationString _infoNewRepositoryLocation =
-            new TranslationString("The repository will be cloned to a new directory located here:"  + Environment.NewLine +
+            new TranslationString("The repository will be cloned to a new directory located here:" + Environment.NewLine +
                                   "{0}");
 
         private readonly TranslationString _infoDirectoryExists =
@@ -56,7 +53,7 @@ namespace GitUI.CommandsDialogs
             Translate();
             this.openedFromProtocolHandler = openedFromProtocolHandler;
             this.url = url;
-            _defaultBranchItems = new[] {_branchDefaultRemoteHead.Text, _branchNone.Text};
+            _defaultBranchItems = new[] { _branchDefaultRemoteHead.Text, _branchNone.Text };
             _NO_TRANSLATE_Branches.DataSource = _defaultBranchItems;
         }
 
@@ -116,7 +113,6 @@ namespace GitUI.CommandsDialogs
                         pushUrl = Module.GetPathSetting(string.Format(SettingKeyString.RemoteUrl, currentBranchRemote));
                     }
 
-
                     _NO_TRANSLATE_From.Text = pushUrl;
                 }
             }
@@ -150,7 +146,7 @@ namespace GitUI.CommandsDialogs
                 // Shallow clone params
                 int? depth = null;
                 bool? isSingleBranch = null;
-                if(!cbDownloadFullHistory.Checked)
+                if (!cbDownloadFullHistory.Checked)
                 {
                     depth = 1;
                     // Single branch considerations:
@@ -163,11 +159,11 @@ namespace GitUI.CommandsDialogs
 
                 // Branch name param
                 string branch = _NO_TRANSLATE_Branches.Text;
-                if(branch == _branchDefaultRemoteHead.Text)
+                if (branch == _branchDefaultRemoteHead.Text)
                     branch = "";
-                else if(branch == _branchNone.Text)
+                else if (branch == _branchNone.Text)
                     branch = null;
-                
+
                 var cloneCmd = GitCommandHelpers.CloneCmd(_NO_TRANSLATE_From.Text, dirTo,
                             CentralRepository.Checked, cbIntializeAllSubmodules.Checked, branch, depth, isSingleBranch);
                 using (var fromProcess = new FormRemoteProcess(Module, AppSettings.GitCommand, cloneCmd))
@@ -249,7 +245,6 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-
         private void LoadSshKeyClick(object sender, EventArgs e)
         {
             BrowseForPrivateKey.BrowseAndLoad(this);
@@ -260,7 +255,6 @@ namespace GitUI.CommandsDialogs
             if (!GitCommandHelpers.Plink())
                 LoadSSHKey.Visible = false;
         }
-
 
         private void FromSelectedIndexChanged(object sender, EventArgs e)
         {
@@ -273,11 +267,11 @@ namespace GitUI.CommandsDialogs
 
             if (path != "")
             {
-              _NO_TRANSLATE_NewDirectory.Text = path;
+                _NO_TRANSLATE_NewDirectory.Text = path;
             }
 
             _NO_TRANSLATE_Branches.DataSource = _defaultBranchItems;
-            _NO_TRANSLATE_Branches.Select(0,0);   // Kill full selection on the default branch text
+            _NO_TRANSLATE_Branches.Select(0, 0);   // Kill full selection on the default branch text
 
             ToTextUpdate(sender, e);
         }

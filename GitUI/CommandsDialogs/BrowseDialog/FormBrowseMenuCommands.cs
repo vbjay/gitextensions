@@ -1,15 +1,17 @@
-﻿using GitUI.CommandsDialogs.BrowseDialog;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using GitUI.CommandsDialogs.BrowseDialog;
 
 namespace GitUI.CommandsDialogs
 {
-    class FormBrowseMenuCommands : MenuCommandsBase
+    internal class FormBrowseMenuCommands : MenuCommandsBase
     {
-        FormBrowse _formBrowse;
-        GitUICommands UICommands { get { return _formBrowse.UICommands; } }
+        private FormBrowse _formBrowse;
+
+        private GitUICommands UICommands
+        { get { return _formBrowse.UICommands; } }
 
         // must be created only once because of translation
-        IEnumerable<MenuCommand> _navigateMenuCommands;
+        private IEnumerable<MenuCommand> _navigateMenuCommands;
 
         public FormBrowseMenuCommands(FormBrowse formBrowse)
         {

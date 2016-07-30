@@ -125,7 +125,7 @@ namespace ResourceManager
             {
                 info =
                     RemoveField(info, Strings.GetCommitDateText() + ":").Replace(
-                        (string) FillToLength(Strings.GetAuthorDateText() + ":", COMMITHEADER_STRING_LENGTH),
+                        (string)FillToLength(Strings.GetAuthorDateText() + ":", COMMITHEADER_STRING_LENGTH),
                         FillToLength(Strings.GetDateText() + ":", COMMITHEADER_STRING_LENGTH));
             }
 

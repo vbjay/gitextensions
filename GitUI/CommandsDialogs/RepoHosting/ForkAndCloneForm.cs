@@ -32,9 +32,10 @@ namespace GitUI.CommandsDialogs.RepoHosting
         private readonly TranslationString _strSearching = new TranslationString(" : SEARCHING : ");
         private readonly TranslationString _strSelectOneItem = new TranslationString("You must select exactly one item");
         private readonly TranslationString _strCloneFolderCanNotBeEmpty = new TranslationString("Clone folder can not be empty");
-        #endregion
 
-        readonly IRepositoryHostPlugin _gitHoster;
+        #endregion Translation
+
+        private readonly IRepositoryHostPlugin _gitHoster;
         private EventHandler<GitModuleEventArgs> GitModuleChanged;
 
         public ForkAndCloneForm(IRepositoryHostPlugin gitHoster, EventHandler<GitModuleEventArgs> GitModuleChanged)
@@ -98,12 +99,13 @@ namespace GitUI.CommandsDialogs.RepoHosting
                 ex =>
                 {
                     _myReposLV.Items.Clear();
-                    _helpTextLbl.Text = string.Format(_strFailedToGetRepos.Text, _gitHoster.Description) + 
+                    _helpTextLbl.Text = string.Format(_strFailedToGetRepos.Text, _gitHoster.Description) +
                         "\r\n\r\nException: " + ex.Exception.Message + "\r\n\r\n" + _helpTextLbl.Text;
                 });
         }
 
         #region GUI Handlers
+
         private void _searchBtn_Click(object sender, EventArgs e)
         {
             var search = _searchTB.Text;
@@ -122,6 +124,7 @@ namespace GitUI.CommandsDialogs.RepoHosting
                     _searchBtn.Enabled = true;
                 });
         }
+
         private void _getFromUserBtn_Click(object sender, EventArgs e)
         {
             var search = _searchTB.Text;
@@ -142,7 +145,6 @@ namespace GitUI.CommandsDialogs.RepoHosting
                     _searchBtn.Enabled = true;
                 });
         }
-
 
         private void PrepareSearch(object sender, EventArgs e)
         {
@@ -165,7 +167,6 @@ namespace GitUI.CommandsDialogs.RepoHosting
             }
             _searchBtn.Enabled = true;
         }
-
 
         private void _forkBtn_Click(object sender, EventArgs e)
         {
@@ -219,7 +220,6 @@ namespace GitUI.CommandsDialogs.RepoHosting
 
             using (var browseDialog = new FolderBrowserDialog { SelectedPath = initialDir })
             {
-
                 if (browseDialog.ShowDialog(this) == DialogResult.OK)
                 {
                     _destinationTB.Text = browseDialog.SelectedPath;
@@ -275,7 +275,8 @@ namespace GitUI.CommandsDialogs.RepoHosting
         {
             UpdateCloneInfo(false);
         }
-        #endregion
+
+        #endregion GUI Handlers
 
         private void Clone(IHostedRepository repo)
         {

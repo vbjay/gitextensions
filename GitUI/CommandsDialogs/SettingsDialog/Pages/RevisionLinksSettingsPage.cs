@@ -1,12 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
-using GitCommands;
 using GitCommands.GitExtLinks;
 
 namespace GitUI.CommandsDialogs.SettingsDialog.Pages
@@ -23,7 +15,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             LinksGrid.AutoGenerateColumns = false;
         }
 
-        protected override void  SettingsToPage() 	
+        protected override void SettingsToPage()
         {
             parser = new GitExtLinksParser(CurrentSettings);
             ReloadCategories();
@@ -107,7 +99,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             parser.AddLinkDef(newCategory);
             ReloadCategories();
             _NO_TRANSLATE_Categories.SelectedItem = newCategory;
-            CategoryChanged();           
+            CategoryChanged();
         }
 
         private void Remove_Click(object sender, EventArgs e)
@@ -149,7 +141,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
 
         private void MessageChx_CheckedChanged(object sender, EventArgs e)
         {
-
             if (SelectedCategory != null)
             {
                 if (MessageChx.Checked)

@@ -13,19 +13,26 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
     public partial class DashboardCategory : GitExtensionsControl
     {
         #region Translation
+
         private readonly TranslationString _moveToCategory =
             new TranslationString("Move to category");
+
         private readonly TranslationString _moveCategoryUp =
             new TranslationString("Move up");
+
         private readonly TranslationString _moveCategoryDown =
             new TranslationString("Move down");
+
         private readonly TranslationString _removeCategory =
             new TranslationString("Remove");
+
         private readonly TranslationString _editCategory =
             new TranslationString("Edit");
+
         private readonly TranslationString _newCategory =
             new TranslationString("New category");
-        #endregion
+
+        #endregion Translation
 
         private RepositoryCategory m_repositoryCategory;
 
@@ -113,7 +120,7 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
 
             SuspendLayout();
             flowLayoutPanel.SuspendLayout();
-            
+
             foreach (Repository repository in m_repositoryCategory.Repositories)
             {
                 var dashboardItem = new DashboardItem(repository);
@@ -131,7 +138,7 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
 
         private Repository repository;
 
-        void contextMenu_Opening(object sender, EventArgs e)
+        private void contextMenu_Opening(object sender, EventArgs e)
         {
             repository = (Repository)(((ContextMenuStrip)sender).SourceControl.Tag);
         }

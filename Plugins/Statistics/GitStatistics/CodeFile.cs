@@ -35,7 +35,6 @@ namespace GitStatistics
 
         internal bool IsTestFile { get; private set; }
 
-
         private bool IsDesignerFile()
         {
             return
@@ -152,7 +151,7 @@ namespace GitStatistics
                 File.Extension.Equals(".cshtml", StringComparison.OrdinalIgnoreCase) ||
                 File.Extension.Equals(".htm", StringComparison.OrdinalIgnoreCase))
             {
-                if(line.Contains("<!--"))
+                if (line.Contains("<!--"))
                 {
                     _inCommentBlock = true;
                 }

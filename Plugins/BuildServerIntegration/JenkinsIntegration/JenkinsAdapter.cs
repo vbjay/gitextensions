@@ -64,7 +64,7 @@ namespace JenkinsIntegration
                                      ? new Uri(hostName, UriKind.Absolute)
                                      : new Uri(string.Format("{0}://{1}:8080", Uri.UriSchemeHttp, hostName), UriKind.Absolute);
 
-                _httpClient = new HttpClient(new HttpClientHandler(){ UseDefaultCredentials = true});
+                _httpClient = new HttpClient(new HttpClientHandler() { UseDefaultCredentials = true });
                 _httpClient.Timeout = TimeSpan.FromMinutes(2);
                 _httpClient.BaseAddress = baseAdress;
 
@@ -213,14 +213,14 @@ namespace JenkinsIntegration
             var status = ParseBuildStatus(statusValue);
             var statusText = isRunning ? string.Empty : status.ToString("G");
             var buildInfo = new BuildInfo
-                {
-                    Id = idValue,
-                    StartDate = TimestampToDateTime(startDateTicks),
-                    Status = isRunning ? BuildInfo.BuildStatus.InProgress : status,
-                    Description = displayName + " " + statusText + testResults,
-                    CommitHashList = commitHashList.ToArray(),
-                    Url = webUrl
-                };
+            {
+                Id = idValue,
+                StartDate = TimestampToDateTime(startDateTicks),
+                Status = isRunning ? BuildInfo.BuildStatus.InProgress : status,
+                Description = displayName + " " + statusText + testResults,
+                CommitHashList = commitHashList.ToArray(),
+                Url = webUrl
+            };
             return buildInfo;
         }
 
@@ -241,12 +241,16 @@ namespace JenkinsIntegration
             {
                 case "SUCCESS":
                     return BuildInfo.BuildStatus.Success;
+
                 case "FAILURE":
                     return BuildInfo.BuildStatus.Failure;
+
                 case "UNSTABLE":
                     return BuildInfo.BuildStatus.Unstable;
+
                 case "ABORTED":
                     return BuildInfo.BuildStatus.Stopped;
+
                 default:
                     return BuildInfo.BuildStatus.Unknown;
             }

@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Microsoft.TeamFoundation.Client;
+using System.Text.RegularExpressions;
 using Microsoft.TeamFoundation.Build.Client;
+using Microsoft.TeamFoundation.Client;
 using TfsInterop.Interface;
 using BuildStatus = TfsInterop.Interface.BuildStatus;
-using System.Text.RegularExpressions;
 
 namespace TfsInterop
 {
@@ -85,7 +85,7 @@ namespace TfsInterop
 
         public IList<IBuild> QueryBuilds(DateTime? sinceDate, bool? running)
         {
-            var result=new List<IBuild>();
+            var result = new List<IBuild>();
             foreach (var _buildDefinition in _buildDefinitions)
             {
                 var buildSpec = _buildServer.CreateBuildDetailSpec(_buildDefinition);
@@ -110,18 +110,18 @@ namespace TfsInterop
                     }
 
                     return new BuildInfo
-                        {
-                            Id = id,
-                            Label = b.BuildNumber,
-                            StartDate = b.StartTime,
-                            Status = ConvertStatus(b.Status),
-                            IsFinished = b.BuildFinished,
-                            Description = GetStatus(b) + duration,
-                            Revision = b.SourceGetVersion,
-                            Url = _urlPrefix + (_isWebServer
+                    {
+                        Id = id,
+                        Label = b.BuildNumber,
+                        StartDate = b.StartTime,
+                        Status = ConvertStatus(b.Status),
+                        IsFinished = b.BuildFinished,
+                        Description = GetStatus(b) + duration,
+                        Revision = b.SourceGetVersion,
+                        Url = _urlPrefix + (_isWebServer
                                       ? Uri.EscapeDataString(b.Uri.AbsoluteUri) + "&_a=summary"
                                       : id),
-                        };
+                    };
                 }).Cast<IBuild>().ToList());
             }
             return result;
@@ -168,14 +168,19 @@ namespace TfsInterop
             {
                 case Microsoft.TeamFoundation.Build.Client.BuildStatus.Succeeded:
                     return BuildStatus.Success;
+
                 case Microsoft.TeamFoundation.Build.Client.BuildStatus.Stopped:
                     return BuildStatus.Stopped;
+
                 case Microsoft.TeamFoundation.Build.Client.BuildStatus.Failed:
                     return BuildStatus.Failure;
+
                 case Microsoft.TeamFoundation.Build.Client.BuildStatus.PartiallySucceeded:
                     return BuildStatus.Unstable;
+
                 case Microsoft.TeamFoundation.Build.Client.BuildStatus.InProgress:
                     return BuildStatus.InProgress;
+
                 default:
                     return BuildStatus.Unknown;
             }

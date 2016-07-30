@@ -1,8 +1,5 @@
-﻿using GitUIPluginInterfaces;
-
-namespace GitCommands.Settings
+﻿namespace GitCommands.Settings
 {
-
     public class StringSetting : Setting<string>
     {
         public StringSetting(string aName, SettingsPath settingsSource, string aDefaultValue)
@@ -53,7 +50,6 @@ namespace GitCommands.Settings
                 return DefaultValue.Value;
             }
         }
-
     }
 
     public class BoolSetting : Setting<bool>

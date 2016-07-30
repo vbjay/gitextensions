@@ -33,7 +33,6 @@ namespace GitCommands.Repository
             else if (DirInfo != null)
                 ShortName = DirInfo.Name;
 
-
             if (DirInfo != null)
                 DirInfo = DirInfo.Parent;
 
@@ -62,8 +61,10 @@ namespace GitCommands.Repository
         public bool SortMostRecentRepos { get; set; }
         public bool SortLessRecentRepos { get; set; }
         public int RecentReposComboMinWidth { get; set; }
+
         //need to be set before shortening using middleDots strategy
         public Graphics Graphics { get; set; }
+
         public Font MeasureFont { get; set; }
 
         public RecentRepoSplitter()
@@ -103,7 +104,7 @@ namespace GitCommands.Repository
             }
             int r = mostRecentRepos.Count - 1;
             //remove not anchored repos if there is more than maxRecentRepositories repos
-            while (mostRecentRepos.Count > n && r >= 0 )
+            while (mostRecentRepos.Count > n && r >= 0)
             {
                 var repo = mostRecentRepos[r];
                 if (repo.Repo.Anchor == Repository.RepositoryAnchor.MostRecent)
@@ -115,7 +116,7 @@ namespace GitCommands.Repository
                 }
             }
 
-            Action<bool, List<RecentRepoInfo>> addSortedRepos = delegate(bool mostRecent, List<RecentRepoInfo> addToList)
+            Action<bool, List<RecentRepoInfo>> addSortedRepos = delegate (bool mostRecent, List<RecentRepoInfo> addToList)
             {
                 foreach (string caption in orderedRepos.Keys)
                 {
@@ -126,7 +127,7 @@ namespace GitCommands.Repository
                 }
             };
 
-            Action<List<RecentRepoInfo>, List<RecentRepoInfo>> addNotSortedRepos = delegate(List<RecentRepoInfo> list, List<RecentRepoInfo> addToList)
+            Action<List<RecentRepoInfo>, List<RecentRepoInfo>> addNotSortedRepos = delegate (List<RecentRepoInfo> list, List<RecentRepoInfo> addToList)
             {
                 foreach (RecentRepoInfo repo in list)
                     addToList.Add(repo);
@@ -221,12 +222,10 @@ namespace GitCommands.Repository
             }
             else
             {
-
                 string root = null;
                 string company = null;
                 string repository = null;
                 string workingDir = null;
-
 
                 workingDir = dirInfo.Name;
                 dirInfo = dirInfo.Parent;
@@ -249,7 +248,7 @@ namespace GitCommands.Repository
                         root = dirInfo.Parent.Name;
                 }
 
-                Func<int, bool> shortenPathWithCompany = delegate(int skipCount)
+                Func<int, bool> shortenPathWithCompany = delegate (int skipCount)
                 {
                     bool result = false;
                     string c = null;
@@ -282,15 +281,13 @@ namespace GitCommands.Repository
                     return result && addDots;
                 };
 
-
-                Func<int, bool> shortenPath = delegate(int skipCount)
+                Func<int, bool> shortenPath = delegate (int skipCount)
                 {
                     string path = repoInfo.Repo.Path;
                     string fistDir = (root ?? company) ?? repository;
                     string lastDir = workingDir;
                     if (fistDir != null && path.Length - lastDir.Length - fistDir.Length - skipCount > 0)
                     {
-
                         int middle = (path.Length - lastDir.Length) / 2 + (path.Length - lastDir.Length) % 2;
                         int leftEnd = middle - skipCount / 2;
                         int rightStart = middle + skipCount / 2 + skipCount % 2;
@@ -338,6 +335,5 @@ namespace GitCommands.Repository
             }
             list.Add(repoInfo);
         }
-
     }
 }

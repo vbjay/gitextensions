@@ -41,7 +41,6 @@ namespace ResourceManager
 
         protected virtual void OnRuntimeLoad(EventArgs e)
         {
-
         }
 
         protected override void OnLoad(EventArgs e)
@@ -54,7 +53,7 @@ namespace ResourceManager
 
         private bool translated;
 
-        void GitExtensionsControl_Load(object sender, EventArgs e)
+        private void GitExtensionsControl_Load(object sender, EventArgs e)
         {
             // find out if the value is a component and is currently in design mode
             bool isComponentInDesignMode = CheckComponent(this);
@@ -113,6 +112,6 @@ namespace ResourceManager
             return false;
         }
 
-        #endregion
+        #endregion Hotkeys
     }
 }

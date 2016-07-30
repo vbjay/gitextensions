@@ -1,14 +1,12 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using GitCommands;
 using GitCommands.Utils;
-using ResourceManager;
 using GitUI.UserControls.RevisionGridClasses;
+using ResourceManager;
 
 namespace GitUI.CommandsDialogs
 {
@@ -156,7 +154,8 @@ namespace GitUI.CommandsDialogs
             if (AppSettings.FollowRenamesInFileHistory && !Directory.Exists(fullFilePath))
             {
                 // git log --follow is not working as expected (see  http://kerneltrap.org/mailarchive/git/2009/1/30/4856404/thread)
-                FollowParentRewriter hrw = new FollowParentRewriter(fileName, delegate(string arg){
+                FollowParentRewriter hrw = new FollowParentRewriter(fileName, delegate (string arg)
+                {
                     Process p = Module.RunGitCmdDetached(arg);
                     return p.StandardOutput;
                 });
@@ -434,12 +433,10 @@ namespace GitUI.CommandsDialogs
 
         private void DiffContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
         {
-
         }
 
         private void ToolStrip_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
         {
-
         }
 
         private void followFileHistoryRenamesToolStripMenuItem_Click(object sender, EventArgs e)

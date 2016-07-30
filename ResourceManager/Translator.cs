@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using ResourceManager.Xliff;
 
@@ -9,8 +8,10 @@ namespace ResourceManager
     public static class Translator
     {
         private static readonly string EnglishTranslationName = "English";
+
         //Try to cache the translation as long as possible
         private static IDictionary<string, TranslationFile> _translation = new Dictionary<string, TranslationFile>();
+
         private static string _name;
 
         public static IDictionary<string, TranslationFile> GetTranslation(string translationName)
@@ -60,9 +61,9 @@ namespace ResourceManager
                         continue;
                     translations.Add(name);
                 }
-            } catch
+            }
+            catch
             {
-
             }
             return translations.ToArray();
         }

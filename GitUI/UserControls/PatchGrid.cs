@@ -15,14 +15,12 @@ namespace GitUI
             Patches.CellPainting += Patches_CellPainting;
         }
 
-        static void Patches_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+        private static void Patches_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
         {
-
         }
 
         private static void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-
         }
 
         protected override void OnRuntimeLoad(EventArgs e)

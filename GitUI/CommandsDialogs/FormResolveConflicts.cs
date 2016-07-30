@@ -14,6 +14,7 @@ namespace GitUI.CommandsDialogs
     public partial class FormResolveConflicts : GitModuleForm
     {
         #region Translation
+
         private readonly TranslationString uskUseCustomMergeScript = new TranslationString("There is a custom merge script ({0}) for this file type." + Environment.NewLine + Environment.NewLine + "Do you want to use this custom merge script?");
         private readonly TranslationString uskUseCustomMergeScriptCaption = new TranslationString("Custom merge script");
         private readonly TranslationString fileUnchangedAfterMerge = new TranslationString("The file has not been modified by the merge. Usually this means that the file has been saved to the wrong location." + Environment.NewLine + Environment.NewLine + "The merge conflict will not be marked as solved. Please try again.");
@@ -67,6 +68,7 @@ namespace GitUI.CommandsDialogs
 
         private readonly TranslationString _currentFormatFilter =
             new TranslationString("Current format (*.{0})");
+
         private readonly TranslationString _allFilesFilter =
             new TranslationString("All files (*.*)");
 
@@ -85,7 +87,8 @@ namespace GitUI.CommandsDialogs
 
         private readonly TranslationString _failureWhileOpenFile = new TranslationString("Open temporary file failed.");
         private readonly TranslationString _failureWhileSaveFile = new TranslationString("Save file failed.");
-        #endregion
+
+        #endregion Translation
 
         public FormResolveConflicts(GitUICommands aCommands)
             : this(aCommands, true)
@@ -273,7 +276,6 @@ namespace GitUI.CommandsDialogs
                 FixPath(Path.Combine(Module.WorkingDir, fileName))), askMergeConflictSolvedCaption.Text,
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
-
                 DateTime lastWriteTimeAfterMerge = lastWriteTimeBeforeMerge;
                 if (File.Exists(Path.Combine(Module.WorkingDir, fileName)))
                     lastWriteTimeAfterMerge = File.GetLastWriteTime(Path.Combine(Module.WorkingDir, fileName));
@@ -301,10 +303,12 @@ namespace GitUI.CommandsDialogs
                 case "beyondcompare3":
                     arguments = arguments.Replace("\"$BASE\"", "");
                     break;
+
                 case "araxis":
                     arguments = arguments.Replace("-merge -3", "-merge");
                     arguments = arguments.Replace("\"$BASE\"", "");
                     break;
+
                 case "tortoisemerge":
                     arguments = arguments.Replace("-base:\"$BASE\"", "").Replace("/base:\"$BASE\"", "");
                     arguments = arguments.Replace("mine:\"$LOCAL\"", "base:\"$LOCAL\"");
@@ -312,7 +316,7 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-        enum ItemType
+        private enum ItemType
         {
             File,
             Directory,
@@ -388,12 +392,12 @@ namespace GitUI.CommandsDialogs
                     //Check if there is a base file. If not, ask user to fall back to 2-way merge.
                     //git doesn't support 2-way merge, but we can try to adjust attributes to fix this.
                     //For kdiff3 this is easy; just remove the 3rd file from the arguments. Since the
-                    //filenames are quoted, this takes a little extra effort. We need to remove these 
+                    //filenames are quoted, this takes a little extra effort. We need to remove these
                     //quotes also. For tortoise and araxis a little bit more magic is needed.
                     if (item.Base.Filename == null)
                     {
                         var text = string.Format(noBaseRevision.Text, item.Filename);
-                        DialogResult result = MessageBox.Show(this, text, _noBaseFileMergeCaption.Text, 
+                        DialogResult result = MessageBox.Show(this, text, _noBaseFileMergeCaption.Text,
                             MessageBoxButtons.YesNoCancel);
                         if (result == DialogResult.Yes)
                             Use2WayMerge(ref arguments);
@@ -517,6 +521,7 @@ namespace GitUI.CommandsDialogs
             bool inTheMiddleOfRebase = Module.InTheMiddleOfRebase();
             return inTheMiddleOfRebase ? ours.Text : theirs.Text;
         }
+
         private string GetLocalSideString()
         {
             bool inTheMiddleOfRebase = Module.InTheMiddleOfRebase();
@@ -592,7 +597,7 @@ namespace GitUI.CommandsDialogs
         private void ContextChooseLocal_Click(object sender, EventArgs e)
         {
             Cursor.Current = Cursors.WaitCursor;
-            
+
             var item = GetConflict();
             if (CheckForLocalRevision(item))
             {
@@ -787,11 +792,11 @@ namespace GitUI.CommandsDialogs
             fileName = PathUtil.GetFileName(fileName);
 
             using (var fileDialog = new SaveFileDialog
-                                 {
-                                     FileName = fileName,
-                                     InitialDirectory = Module.WorkingDir + PathUtil.GetDirectoryName(conflictData.Filename),
-                                     AddExtension = true
-                                 })
+            {
+                FileName = fileName,
+                InitialDirectory = Module.WorkingDir + PathUtil.GetDirectoryName(conflictData.Filename),
+                AddExtension = true
+            })
             {
                 fileDialog.DefaultExt = GitCommandHelpers.GetFileExtension(fileDialog.FileName);
                 fileDialog.Filter = string.Format(_currentFormatFilter.Text, GitCommandHelpers.GetFileExtension(fileDialog.FileName)) + "|*." +
@@ -878,7 +883,6 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
             string fileName = GetFileName();
@@ -895,7 +899,7 @@ namespace GitUI.CommandsDialogs
         {
             var processStart = new FormStatus.ProcessStart
                 (
-                    delegate(FormStatus form)
+                    delegate (FormStatus form)
                     {
                         form.AddMessageLine(string.Format(stageFilename.Text, filename));
                         string output = Module.RunGitCmd("add -- \"" + filename + "\"");
@@ -909,7 +913,6 @@ namespace GitUI.CommandsDialogs
 
         private void conflictDescription_Click(object sender, EventArgs e)
         {
-
         }
 
         private void merge_Click(object sender, EventArgs e)
@@ -961,6 +964,6 @@ namespace GitUI.CommandsDialogs
             return true;
         }
 
-        #endregion
+        #endregion Hotkey commands
     }
 }

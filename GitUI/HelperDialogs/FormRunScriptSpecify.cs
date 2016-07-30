@@ -10,12 +10,13 @@ namespace GitUI.HelperDialogs
         public FormRunScriptSpecify(IEnumerable<GitRef> options, string label)
         {
             InitializeComponent();
-            specifyLabel.Text = "Specify '" + label+"':";
+            specifyLabel.Text = "Specify '" + label + "':";
             foreach (GitRef head in options)
             {
                 branchesListView.Items.Add(head.Name);
             }
         }
+
         public FormRunScriptSpecify(IEnumerable<string> options, string label)
         {
             InitializeComponent();
@@ -25,6 +26,7 @@ namespace GitUI.HelperDialogs
                 branchesListView.Items.Add(head);
             }
         }
+
         public string ret { get; private set; }
 
         private void button1_Click(object sender, EventArgs e)

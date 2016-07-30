@@ -10,8 +10,10 @@ namespace GitUI.CommandsDialogs
     {
         private readonly TranslationString _noRevisionSelected =
             new TranslationString("Select 1 revision to create the branch on.");
+
         private readonly TranslationString _branchNameIsEmpty =
             new TranslationString("Enter branch name.");
+
         private readonly TranslationString _branchNameIsNotValud =
             new TranslationString("“{0}” is not valid branch name.");
 
@@ -78,7 +80,7 @@ namespace GitUI.CommandsDialogs
                     UICommands.UpdateSubmodules(this);
                 }
 
-                DialogResult = wasSuccessFul? DialogResult.OK : DialogResult.None;
+                DialogResult = wasSuccessFul ? DialogResult.OK : DialogResult.None;
             }
             catch (Exception ex)
             {
@@ -86,11 +88,11 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-        void Orphan_CheckedChanged(object sender, EventArgs e)
+        private void Orphan_CheckedChanged(object sender, EventArgs e)
         {
             bool isOrphan = Orphan.Checked;
             ClearOrphan.Enabled = isOrphan;
-            
+
             CheckoutAfterCreate.Enabled = (isOrphan == false);// auto-checkout for orphan
             if (isOrphan)
             {

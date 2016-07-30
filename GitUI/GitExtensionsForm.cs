@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
@@ -8,8 +7,11 @@ using System.Windows.Forms;
 using GitUI.Properties;
 using ResourceManager;
 using Settings = GitCommands.AppSettings;
+
 #if !__MonoCS__
+
 using Microsoft.WindowsAPICodePack.Taskbar;
+
 #endif
 
 namespace GitUI
@@ -23,7 +25,7 @@ namespace GitUI
         internal static Icon ApplicationIcon = GetApplicationIcon(Settings.IconStyle, Settings.IconColor);
 
         /// <summary>indicates whether the <see cref="Form"/>'s position will be restored</summary>
-        readonly bool _enablePositionRestore;
+        private readonly bool _enablePositionRestore;
 
         /// <summary>Creates a new <see cref="GitExtensionsForm"/> without position restore.</summary>
         public GitExtensionsForm()
@@ -53,7 +55,7 @@ namespace GitUI
             Close();
         }
 
-        void GitExtensionsForm_FormClosing(object sender, FormClosingEventArgs e)
+        private void GitExtensionsForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (_enablePositionRestore)
                 SavePosition(GetType().Name);
@@ -97,18 +99,25 @@ namespace GitUI
             {
                 case "default":
                     return ColorIndex.Default;
+
                 case "blue":
                     return ColorIndex.Blue;
+
                 case "green":
                     return ColorIndex.Green;
+
                 case "lightblue":
                     return ColorIndex.LightBlue;
+
                 case "purple":
                     return ColorIndex.Purple;
+
                 case "red":
                     return ColorIndex.Red;
+
                 case "yellow":
                     return ColorIndex.Yellow;
+
                 case "random":
                     return (ColorIndex)new Random(DateTime.Now.Millisecond).Next(7);
             }
@@ -118,7 +127,7 @@ namespace GitUI
         public static Icon GetApplicationIcon(string iconStyle, string iconColor)
         {
             var colorIndex = (int)GetColorIndexByName(iconColor);
-            if (colorIndex == (int) ColorIndex.Unknown)
+            if (colorIndex == (int)ColorIndex.Unknown)
                 colorIndex = 0;
 
             Icon appIcon;
@@ -184,14 +193,12 @@ namespace GitUI
 
         #endregion icon
 
-
         /// <summary>Sets <see cref="AutoScaleMode"/>,
         /// restores position, raises the <see cref="Form.Load"/> event,
         /// and .
         /// </summary>
         protected override void OnLoad(EventArgs e)
         {
-
             base.OnLoad(e);
 
             if (_enablePositionRestore)
@@ -204,7 +211,6 @@ namespace GitUI
         /// <summary>Invoked at runtime during the <see cref="OnLoad"/> method.</summary>
         protected virtual void OnRuntimeLoad(EventArgs e)
         {
-
         }
 
         private bool _windowCentred;
@@ -247,11 +253,11 @@ namespace GitUI
                 Location = new Point(Owner.Left + Owner.Width / 2 - Width / 2,
                     Math.Max(0, Owner.Top + Owner.Height / 2 - Height / 2));
             }
-            if(WindowState != position.State)
+            if (WindowState != position.State)
                 WindowState = position.State;
         }
 
-        static Rectangle? FindWindowScreen(Point location)
+        private static Rectangle? FindWindowScreen(Point location)
         {
             SortedDictionary<float, Rectangle> distance = new SortedDictionary<float, Rectangle>();
             foreach (var rect in (from screen in Screen.AllScreens
@@ -277,6 +283,7 @@ namespace GitUI
         }
 
         private static WindowPositionList _windowPositionList;
+
         /// <summary>
         ///   Save the position of a form to the user settings. Hides the window
         ///   as a side-effect.
@@ -299,7 +306,7 @@ namespace GitUI
 
                 // Write to the user settings:
                 if (_windowPositionList == null)
-                    _windowPositionList = WindowPositionList.Load(); 
+                    _windowPositionList = WindowPositionList.Load();
                 WindowPosition windowPosition = _windowPositionList.Get(name);
                 // Don't save location when we center modal form
                 if (windowPosition != null && Owner != null && _windowCentred)

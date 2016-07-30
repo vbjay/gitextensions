@@ -38,7 +38,6 @@ namespace GitExtensions
 
                     AppDomain.CurrentDomain.UnhandledException += NBug.Handler.UnhandledException;
                     Application.ThreadException += NBug.Handler.ThreadException;
-
                 }
                 catch (TypeInitializationException tie)
                 {
@@ -62,9 +61,9 @@ namespace GitExtensions
             AppSettings.LoadSettings();
             if (EnvUtils.RunningOnWindows())
             {
-              WebBrowserEmulationMode.SetBrowserFeatureControl();
+                WebBrowserEmulationMode.SetBrowserFeatureControl();
 
-              //Quick HOME check:
+                //Quick HOME check:
                 FormSplash.SetAction("Checking home path...");
                 Application.DoEvents();
 
@@ -84,7 +83,7 @@ namespace GitExtensions
 
             try
             {
-                if (AppSettings.CheckSettings 
+                if (AppSettings.CheckSettings
                     || string.IsNullOrEmpty(AppSettings.GitCommandValue)
                     || !File.Exists(AppSettings.GitCommandValue))
                 {
@@ -226,6 +225,5 @@ namespace GitExtensions
                 System.Environment.Exit(1);
             }
         }
-
     }
 }

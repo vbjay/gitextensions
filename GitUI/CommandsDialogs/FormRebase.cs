@@ -19,6 +19,7 @@ namespace GitUI.CommandsDialogs
 
         private readonly TranslationString _branchUpToDateText =
             new TranslationString("Current branch a is up to date." + Environment.NewLine + "Nothing to rebase.");
+
         private readonly TranslationString _branchUpToDateCaption = new TranslationString("Rebase");
 
         private readonly TranslationString _hoverShowImageLabelText = new TranslationString("Hover to see scenario when fast forward is possible.");
@@ -208,7 +209,7 @@ namespace GitUI.CommandsDialogs
             }
             else
             {
-                rebaseCmd = GitCommandHelpers.RebaseCmd(Branches.Text, chkInteractive.Checked, 
+                rebaseCmd = GitCommandHelpers.RebaseCmd(Branches.Text, chkInteractive.Checked,
                                                         chkPreserveMerges.Checked, chkAutosquash.Checked,
                                                         chkStash.Checked);
             }

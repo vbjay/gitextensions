@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Windows.Forms;
 
-
 namespace GitUIPluginInterfaces
 {
     public abstract class GitUIBaseEventArgs : CancelEventArgs
@@ -28,9 +27,6 @@ namespace GitUIPluginInterfaces
             {
                 return GitUICommands.GitModule;
             }
-            
         }
-
     }
-
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Windows.Forms;
 using GitCommands;
 using GitCommands.Repository;
@@ -24,7 +23,6 @@ namespace GitUI.CommandsDialogs.SubmodulesDialog
         {
             using (var browseDialog = new FolderBrowserDialog { SelectedPath = Directory.Text })
             {
-
                 if (browseDialog.ShowDialog(this) == DialogResult.OK)
                     Directory.Text = browseDialog.SelectedPath;
             }

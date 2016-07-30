@@ -30,6 +30,7 @@ namespace GitCommands
     public sealed class RevisionGraph : IDisposable
     {
         public event EventHandler Exited;
+
         public event EventHandler<AsyncErrorEventArgs> Error
         {
             add
@@ -42,8 +43,11 @@ namespace GitCommands
                 _backgroundLoader.LoadingError -= value;
             }
         }
+
         public event EventHandler Updated;
+
         public event EventHandler BeginUpdate;
+
         public int RevisionCount { get; set; }
 
         public class RevisionGraphUpdatedEventArgs : EventArgs
@@ -106,7 +110,7 @@ namespace GitCommands
         public string BranchFilter = String.Empty;
         public RevisionGraphInMemFilter InMemFilter;
         private string _selectedBranchName;
-        static char[] ShellGlobCharacters = new[] { '?', '*', '[' };
+        private static char[] ShellGlobCharacters = new[] { '?', '*', '[' };
 
         public void Execute()
         {
@@ -135,7 +139,7 @@ namespace GitCommands
                     /* Committer Email         */ "%cE%n" +
                     /* Committer Date          */ "%ct%n" +
                     /* Commit message encoding */ "%e%x00" + //there is a bug: git does not recode commit message when format is given
-                    /* Commit Subject          */ "%s%x00" +
+                                                             /* Commit Subject          */ "%s%x00" +
                     /* Commit Body             */ "%B%x00";
             }
 
@@ -229,7 +233,7 @@ namespace GitCommands
 
                 int lastDataBlockIndex = dataBlocks.Length - 1;
 
-                // Return all the blocks until the last one 
+                // Return all the blocks until the last one
                 for (int i = 1; i < lastDataBlockIndex; i++)
                 {
                     yield return dataBlocks[i];
@@ -281,7 +285,7 @@ namespace GitCommands
 
         private string _previousFileName;
 
-        void FinishRevision()
+        private void FinishRevision()
         {
             if (_revision != null && _revision.Guid == null)
                 _revision = null;
@@ -306,7 +310,7 @@ namespace GitCommands
             }
         }
 
-        void DataReceived(string data)
+        private void DataReceived(string data)
         {
             if (data.StartsWith(CommitBegin))
             {
@@ -367,7 +371,7 @@ namespace GitCommands
                 case ReadStep.FileName:
                     if (!string.IsNullOrEmpty(data))
                     {
-                        // Git adds \n between the format string (ends with \0 in our case) 
+                        // Git adds \n between the format string (ends with \0 in our case)
                         // and the first file name. So, we need to remove it from the file name.
                         _revision.Name = data.TrimStart(new char[] { '\n' });
                     }

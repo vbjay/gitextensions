@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using GitCommands;
 using System.IO;
+using System.Linq;
+using GitCommands;
 
 namespace GitUI.UserControls.RevisionGridClasses
 {
@@ -11,19 +10,19 @@ namespace GitUI.UserControls.RevisionGridClasses
     /// Created as a substitute to rewrite parents while following file renames
     /// The general idea is as follows:
     /// * A single _fileName is processed
-    /// * EnsureHistoryLoaded() checkes whether there were any renames in file's history. 
+    /// * EnsureHistoryLoaded() checkes whether there were any renames in file's history.
     ///   If there were no renames, no further processing is needed.
-    /// * If there were renames, LoadParents() creates an in-memory graph of all commits leading up to 
+    /// * If there were renames, LoadParents() creates an in-memory graph of all commits leading up to
     ///   interesting commits (i.e. commits modifying any of the current or historical file names)
-    /// * The RevisionGrid fetches revisions while following renames and passes them to PushRevision() 
-    ///   These revisions are called "Seen" revisions. They are a subset of revisions processed during 
+    /// * The RevisionGrid fetches revisions while following renames and passes them to PushRevision()
+    ///   These revisions are called "Seen" revisions. They are a subset of revisions processed during
     ///   the LoadParents() phase.
-    /// * Each time a revision is queued, the _historyGraph is passes trhough to reach to rev's ancestors to 
-    ///   find another descendent Seen revision. That revision's parent is rewritten to point to currently 
+    /// * Each time a revision is queued, the _historyGraph is passes trhough to reach to rev's ancestors to
+    ///   find another descendent Seen revision. That revision's parent is rewritten to point to currently
     ///   processed revision (UpdateDescendants()).
     /// * When all parents of a revision point to a Seen revision, than it is safe to pass it further with
     ///   rewritten parents Flush(false)
-    /// * Redundant parents are removed to prevent excessive lane count in graph  
+    /// * Redundant parents are removed to prevent excessive lane count in graph
     /// * A final Flush(true) passes on any pending revisions even if they weren't completely rewritten
     public class FollowParentRewriter
     {
@@ -31,16 +30,20 @@ namespace GitUI.UserControls.RevisionGridClasses
         {
             // original parents
             internal List<string> parents = new List<string>();
+
             // original children
             internal List<string> children = new List<string>();
+
             // rewritten parents (Empty == no rewriting necessary)
             internal List<string> rewrittenParents = new List<string>();
+
             // null  == mentioned as parent only
             // !null == received GitRevision data (==seen)
             internal GitRevision rev = null;
+
             // true == all ancestors were seen
             internal bool allAncectorsSeen = false;
-            
+
             internal void AddParent(string parentId)
             {
                 if (!parents.Contains(parentId))
@@ -73,11 +76,11 @@ namespace GitUI.UserControls.RevisionGridClasses
                 {
                     return rewrittenParents.ToArray();
                 }
-                else if (WasSeen()) 
+                else if (WasSeen())
                 {
                     return rev.ParentGuids;
                 }
-                else 
+                else
                 {
                     return parents.ToArray();
                 }
@@ -86,6 +89,7 @@ namespace GitUI.UserControls.RevisionGridClasses
 
         private Func<string, StreamReader> _gitExecFunc;
         private string _fileName;
+
         public FollowParentRewriter(String fileName, Func<string, StreamReader> gitExecFunc)
         {
             _fileName = fileName;
@@ -199,9 +203,11 @@ namespace GitUI.UserControls.RevisionGridClasses
         }
 
         private bool _historyLoaded = false;
+
         private void EnsureHistoryLoaded()
         {
-            if (!_historyLoaded) {
+            if (!_historyLoaded)
+            {
                 LoadPreviousNames();
                 _historyLoaded = true;
                 if (RewriteNecessary)
@@ -215,8 +221,10 @@ namespace GitUI.UserControls.RevisionGridClasses
         /// Returns whether the rewrite process is needed (i.e. the file had more than one name throughout its history)
         /// </summary>
         /// <returns></returns>
-        public bool RewriteNecessary {
-            get {
+        public bool RewriteNecessary
+        {
+            get
+            {
                 EnsureHistoryLoaded();
                 return _previousNames.Count() > 1;
             }
@@ -232,14 +240,15 @@ namespace GitUI.UserControls.RevisionGridClasses
             Queue<Tuple<string, string>> toCheck = new Queue<Tuple<string, string>>();
             // pairs (child, parent) already passed through toCheck
             HashSet<Tuple<string, string>> toCheckDuplicates = new HashSet<Tuple<string, string>>();
-            ProvideCommitData(rev.Guid).children.ForEach((g) => {
+            ProvideCommitData(rev.Guid).children.ForEach((g) =>
+            {
                 Tuple<string, string> t = new Tuple<string, string>(g, rev.Guid);
                 toCheck.Enqueue(t);
                 toCheckDuplicates.Add(t);
             });
             while (toCheck.Any())
             {
-                Tuple<string,string> ct = toCheck.Dequeue();
+                Tuple<string, string> ct = toCheck.Dequeue();
                 string checkChild = ct.Item1;
                 string checkParent = ct.Item2;
 
@@ -269,7 +278,7 @@ namespace GitUI.UserControls.RevisionGridClasses
                 }
                 if (!cdta.WasSeen())
                 {
-                    // If cdta is an unseen revision, then we must continue along its descendants to find 
+                    // If cdta is an unseen revision, then we must continue along its descendants to find
                     // a seen revision
                     cdta.children.ForEach((g) =>
                     {
@@ -347,10 +356,10 @@ namespace GitUI.UserControls.RevisionGridClasses
             {
                 return parentsToCheck;
             }
-                           // parentsToKeep should not to be considered for removal
+            // parentsToKeep should not to be considered for removal
             var toRemove = from removalCandidateParent in parentsToCheck.Except(parentsToKeep)
                            from reachabilityCheckedParent in parentsToCheck
-                           // parents to check different from parents to removal
+                               // parents to check different from parents to removal
                            where (removalCandidateParent != reachabilityCheckedParent)
                            // and reachable
                            && RemoveRedundantParentsIsReachable(removalCandidateParent, reachabilityCheckedParent)
@@ -389,7 +398,7 @@ namespace GitUI.UserControls.RevisionGridClasses
                 while (_revisionQueue.Any())
                 {
                     GitRevision r = _revisionQueue.Peek();
-                    if ((r == null)  || ProvideCommitData(r.Guid).allAncectorsSeen)
+                    if ((r == null) || ProvideCommitData(r.Guid).allAncectorsSeen)
                     {
                         DequeueAndProcessRevision(processRevision);
                     }

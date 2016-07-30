@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace GitCommands.Core
 {
     /// <summary>
     /// class that provides Equals and ToString methods based on objects returned by InlinedStructure
-    /// Warning: it doesn't provide GetHashCode, 
+    /// Warning: it doesn't provide GetHashCode,
     /// so obj1.Equals(obj2) == true does not imply obj1.GetHashCode() == obj2.GetHashCode()
     /// to satisfy above implication you have to provide custom implementation for GetHashCode
     /// </summary>
@@ -76,7 +74,6 @@ namespace GitCommands.Core
                     IEnumerable eo = obj as IEnumerable;
                     if (eo != null)
                         return eo.Cast<object>().Select(o => ToString(o, indent + "  ")).Join("\n");
-
                 }
                 SimpleStructured ss = obj as SimpleStructured;
                 if (ss != null)

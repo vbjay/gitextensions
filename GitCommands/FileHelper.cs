@@ -113,6 +113,7 @@ namespace GitCommands
         }
 
         #region binary file check
+
         public static bool IsBinaryFileAccordingToContent(byte[] content)
         {
             //Check for binary file.
@@ -152,6 +153,7 @@ namespace GitCommands
 
             return false;
         }
-        #endregion
+
+        #endregion binary file check
     }
 }

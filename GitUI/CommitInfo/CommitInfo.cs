@@ -8,8 +8,8 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 using GitCommands;
-using GitCommands.Utils;
 using GitCommands.GitExtLinks;
+using GitCommands.Utils;
 using GitUI.Editor.RichTextBoxExtension;
 using ResourceManager;
 
@@ -69,14 +69,13 @@ namespace GitUI.CommitInfo
                 }
                 catch (UriFormatException)
                 {
-
                 }
 
                 using (var process = new Process
-                    {
-                        EnableRaisingEvents = false,
-                        StartInfo = { FileName = url }
-                    })
+                {
+                    EnableRaisingEvents = false,
+                    StartInfo = { FileName = url }
+                })
                     process.Start();
             }
             catch (Exception ex)
@@ -87,6 +86,7 @@ namespace GitUI.CommitInfo
 
         private GitRevision _revision;
         private List<string> _children;
+
         public void SetRevisionWithChildren(GitRevision revision, List<string> children)
         {
             _revision = revision;
@@ -193,6 +193,7 @@ namespace GitUI.CommitInfo
         }
 
         private int[] _revisionHeaderTabStops;
+
         private int[] GetRevisionHeaderTabStops()
         {
             if (_revisionHeaderTabStops != null)
@@ -237,18 +238,19 @@ namespace GitUI.CommitInfo
             foreach (GitRef gitRef in revision.Refs)
             {
                 #region Note on annotated tags
-                // Notice that for the annotated tags, gitRef's come in pairs because they're produced 
-                // by the "show-ref --dereference" command. GitRef's in such pair have the same Name, 
+
+                // Notice that for the annotated tags, gitRef's come in pairs because they're produced
+                // by the "show-ref --dereference" command. GitRef's in such pair have the same Name,
                 // a bit different CompleteName's, and completely different checksums:
                 //      GitRef_1:
-                //      { 
+                //      {
                 //          Name: "some_tag"
                 //          CompleteName: "refs/tags/some_tag"
                 //          Guid: <some_tag_checksum>
                 //      },
-                //       
+                //
                 //      GitRef_2:
-                //      { 
+                //      {
                 //          Name: "some_tag"
                 //          CompleteName: "refs/tags/some_tag^{}"   <- by "^{}", IsDereference is true.
                 //          Guid: <target_object_checksum>
@@ -256,10 +258,11 @@ namespace GitUI.CommitInfo
                 //
                 // The 2nd one is a dereference: a link between the tag and the object which it references.
                 // GitRevions.Refs by design contains GitRef's where Guid's are equal to the GitRevision.Guid,
-                // so this collection contains only derefencing GitRef's - just because GitRef_2 has the same 
+                // so this collection contains only derefencing GitRef's - just because GitRef_2 has the same
                 // Guid as the GitRevision, while GitRef_1 doesn't. So annotated tag's GitRef would always be
                 // of 2nd type in GitRevision.Refs collection, i.e. the one that has IsDereference==true.
-                #endregion
+
+                #endregion Note on annotated tags
 
                 if (gitRef.IsTag && gitRef.IsDereference)
                 {
@@ -559,6 +562,5 @@ namespace GitUI.CommitInfo
                 DoCommandClick("navigateforward", null);
             }
         }
-
     }
 }

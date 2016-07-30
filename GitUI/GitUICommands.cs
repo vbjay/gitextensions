@@ -35,129 +35,171 @@ namespace GitUI
         #region IGitUICommands Members
 
         public event GitUIEventHandler PreBrowse;
+
         public event GitUIEventHandler PostBrowse;
 
         public event GitUIEventHandler PreDeleteBranch;
+
         public event GitUIPostActionEventHandler PostDeleteBranch;
 
         public event GitUIEventHandler PreCheckoutRevision;
+
         public event GitUIPostActionEventHandler PostCheckoutRevision;
 
         public event GitUIEventHandler PreCheckoutBranch;
+
         public event GitUIPostActionEventHandler PostCheckoutBranch;
 
         public event GitUIEventHandler PreFileHistory;
+
         public event GitUIPostActionEventHandler PostFileHistory;
 
         public event GitUIEventHandler PreCompareRevisions;
+
         public event GitUIPostActionEventHandler PostCompareRevisions;
 
         public event GitUIEventHandler PreAddFiles;
+
         public event GitUIPostActionEventHandler PostAddFiles;
 
         public event GitUIEventHandler PreCreateBranch;
+
         public event GitUIPostActionEventHandler PostCreateBranch;
 
         public event GitUIEventHandler PreClone;
+
         public event GitUIPostActionEventHandler PostClone;
 
         public event GitUIEventHandler PreSvnClone;
+
         public event GitUIPostActionEventHandler PostSvnClone;
 
         public event GitUIEventHandler PreCommit;
+
         public event GitUIPostActionEventHandler PostCommit;
 
         public event GitUIEventHandler PreSvnDcommit;
+
         public event GitUIPostActionEventHandler PostSvnDcommit;
 
         public event GitUIEventHandler PreSvnRebase;
+
         public event GitUIPostActionEventHandler PostSvnRebase;
 
         public event GitUIEventHandler PreSvnFetch;
+
         public event GitUIPostActionEventHandler PostSvnFetch;
 
         public event GitUIEventHandler PreInitialize;
+
         public event GitUIPostActionEventHandler PostInitialize;
 
         public event GitUIEventHandler PrePush;
+
         public event GitUIPostActionEventHandler PostPush;
 
         public event GitUIEventHandler PrePull;
+
         public event GitUIPostActionEventHandler PostPull;
 
         public event GitUIEventHandler PreViewPatch;
+
         public event GitUIPostActionEventHandler PostViewPatch;
 
         public event GitUIEventHandler PreApplyPatch;
+
         public event GitUIPostActionEventHandler PostApplyPatch;
 
         public event GitUIEventHandler PreFormatPatch;
+
         public event GitUIPostActionEventHandler PostFormatPatch;
 
         public event GitUIEventHandler PreStash;
+
         public event GitUIPostActionEventHandler PostStash;
 
         public event GitUIEventHandler PreResolveConflicts;
+
         public event GitUIPostActionEventHandler PostResolveConflicts;
 
         public event GitUIEventHandler PreCherryPick;
+
         public event GitUIPostActionEventHandler PostCherryPick;
 
         public event GitUIEventHandler PreRevertCommit;
+
         public event GitUIPostActionEventHandler PostRevertCommit;
 
         public event GitUIEventHandler PreMergeBranch;
+
         public event GitUIPostActionEventHandler PostMergeBranch;
 
         public event GitUIEventHandler PreCreateTag;
+
         public event GitUIPostActionEventHandler PostCreateTag;
 
         public event GitUIEventHandler PreDeleteTag;
+
         public event GitUIPostActionEventHandler PostDeleteTag;
 
         public event GitUIEventHandler PreEditGitIgnore;
+
         public event GitUIPostActionEventHandler PostEditGitIgnore;
 
         public event GitUIEventHandler PreSettings;
+
         public event GitUIPostActionEventHandler PostSettings;
 
         public event GitUIEventHandler PreArchive;
+
         public event GitUIPostActionEventHandler PostArchive;
 
         public event GitUIEventHandler PreMailMap;
+
         public event GitUIPostActionEventHandler PostMailMap;
 
         public event GitUIEventHandler PreVerifyDatabase;
+
         public event GitUIPostActionEventHandler PostVerifyDatabase;
 
         public event GitUIEventHandler PreRemotes;
+
         public event GitUIPostActionEventHandler PostRemotes;
 
         public event GitUIEventHandler PreRebase;
+
         public event GitUIPostActionEventHandler PostRebase;
 
         public event GitUIEventHandler PreRename;
+
         public event GitUIPostActionEventHandler PostRename;
 
         public event GitUIEventHandler PreSubmodulesEdit;
+
         public event GitUIPostActionEventHandler PostSubmodulesEdit;
 
         public event GitUIEventHandler PreUpdateSubmodules;
+
         public event GitUIPostActionEventHandler PostUpdateSubmodules;
 
         public event GitUIEventHandler PreSyncSubmodules;
+
         public event GitUIPostActionEventHandler PostSyncSubmodules;
 
         public event GitUIEventHandler PreBlame;
+
         public event GitUIPostActionEventHandler PostBlame;
 
         public event GitUIEventHandler PreEditGitAttributes;
+
         public event GitUIPostActionEventHandler PostEditGitAttributes;
 
         public event GitUIEventHandler PreBrowseInitialize;
+
         public event GitUIEventHandler PostBrowseInitialize;
 
         public event GitUIEventHandler PreSparseWorkingCopy;
+
         public event GitUIPostActionEventHandler PostSparseWorkingCopy;
 
         /// <summary>
@@ -170,7 +212,7 @@ namespace GitUI
         public ILockableNotifier RepoChangedNotifier { get; private set; }
         public IBrowseRepo BrowseRepo { get; set; }
 
-        #endregion
+        #endregion IGitUICommands Members
 
         public string GitCommand(string arguments)
         {
@@ -362,7 +404,6 @@ namespace GitUI
             return DoActionOnRepo(owner, true, true, null, null, action);
         }
 
-
         public bool StashDrop(IWin32Window owner, string stashName)
         {
             Func<bool> action = () =>
@@ -392,7 +433,6 @@ namespace GitUI
             {
                 InvokeEvent(form == null ? null : form.Owner, ev);
             };
-
         }
 
         public void ShowModelessForm(IWin32Window owner, bool requiresValidWorkingDir,
@@ -915,7 +955,7 @@ namespace GitUI
         {
             Func<bool> action = () =>
             {
-                using(var form = new FormSparseWorkingCopy(this))
+                using (var form = new FormSparseWorkingCopy(this))
                     form.ShowDialog(owner);
 
                 return true;
@@ -1001,7 +1041,7 @@ namespace GitUI
             if (resetAction == FormResetChanges.ActionEnum.Cancel)
             {
                 return false;
-        }
+            }
 
             Cursor.Current = Cursors.WaitCursor;
 
@@ -1035,7 +1075,7 @@ namespace GitUI
 
         public bool StartResetChangesDialog()
         {
-            return StartResetChangesDialog((IWin32Window) null);
+            return StartResetChangesDialog((IWin32Window)null);
         }
 
         public bool StartRevertCommitDialog(IWin32Window owner, GitRevision revision)
@@ -1149,7 +1189,6 @@ namespace GitUI
         /// <param name="branch">Branch to merge into the current branch.</param>
         public bool StartMergeBranchDialog(IWin32Window owner, string branch)
         {
-
             Func<bool> action = () =>
             {
                 using (var form = new FormMergeBranch(this, branch))
@@ -1194,7 +1233,6 @@ namespace GitUI
                 {
                     return form.ShowDialog(owner) == DialogResult.OK;
                 }
-
             };
 
             return DoActionOnRepo(owner, true, true, PreDeleteTag, PostDeleteTag, action);
@@ -1230,7 +1268,6 @@ namespace GitUI
 
         public bool StartAddToGitIgnoreDialog(IWin32Window owner, params string[] filePattern)
         {
-
             Func<bool> action = () =>
             {
                 using (var frm = new FormAddToGitIgnore(this, filePattern))
@@ -1387,7 +1424,6 @@ namespace GitUI
             return StartRebaseDialog(null, branch);
         }
 
-
         public bool StartRenameDialog(string branch)
         {
             return StartRenameDialog(null, branch);
@@ -1399,10 +1435,8 @@ namespace GitUI
             {
                 using (var form = new FormRenameBranch(this, branch))
                 {
-
                     return form.ShowDialog(owner) == DialogResult.OK;
                 }
-
             };
 
             return DoActionOnRepo(owner, true, true, PreRename, PostRename, action);
@@ -1660,7 +1694,6 @@ namespace GitUI
 
         private void InvokePostEvent(IWin32Window ownerForm, bool actionDone, GitUIPostActionEventHandler gitUIEventHandler)
         {
-
             if (gitUIEventHandler != null)
             {
                 var e = new GitUIPostActionEventArgs(ownerForm, this, actionDone);
@@ -1749,7 +1782,7 @@ namespace GitUI
             WrapRepoHostingCall("View pull requests", gitHoster,
                                 gh =>
                                 {
-                                    var frm = new ViewPullRequestsForm(this, gitHoster) {ShowInTaskbar = true};
+                                    var frm = new ViewPullRequestsForm(this, gitHoster) { ShowInTaskbar = true };
                                     frm.Show();
                                 });
         }
@@ -1839,7 +1872,6 @@ namespace GitUI
             RunCommandBasedOnArgument(args, arguments);
         }
 
-
         // Please update FormCommandlineHelp if you add or change commands
         private void RunCommandBasedOnArgument(string[] args, Dictionary<string, string> arguments)
         {
@@ -1850,116 +1882,151 @@ namespace GitUI
                     frm.StartPosition = FormStartPosition.CenterScreen;
                     Application.Run(frm);
                     return;
+
                 case "add":
                 case "addfiles":
                     StartAddFilesDialog(args.Length == 3 ? args[2] : ".");
                     return;
+
                 case "apply":       // [filename]
                 case "applypatch":
                     StartApplyPatchDialog(args.Length == 3 ? args[2] : "");
                     return;
+
                 case "blame":       // filename
                     RunBlameCommand(args);
                     return;
+
                 case "branch":
                     StartCreateBranchDialog();
                     return;
+
                 case "browse":      // [path] [-filter]
                     RunBrowseCommand(args);
                     return;
+
                 case "checkout":
                 case "checkoutbranch":
                     StartCheckoutBranch();
                     return;
+
                 case "checkoutrevision":
                     StartCheckoutRevisionDialog();
                     return;
+
                 case "cherry":
                     StartCherryPickDialog();
                     return;
+
                 case "cleanup":
                     StartCleanupRepositoryDialog();
                     return;
+
                 case "clone":       // [path]
                     RunCloneCommand(args);
                     return;
+
                 case "commit":      // [--quiet]
                     Commit(arguments);
                     return;
+
                 case "difftool":      // filename
                     Module.OpenWithDifftool(args[2]);
                     return;
+
                 case "filehistory": // filename
                     if (Module.WorkingDir.TrimEnd('\\') == Path.GetFullPath(args[2]) && Module.SuperprojectModule != null)
                         Module = Module.SuperprojectModule;
                     RunFileHistoryCommand(args);
                     return;
+
                 case "fileeditor":  // filename
                     if (!StartFileEditorDialog(args[2]))
                         System.Environment.ExitCode = -1;
                     return;
+
                 case "formatpatch":
                     StartFormatPatchDialog();
                     return;
+
                 case "gitbash":
                     Module.RunBash();
                     return;
+
                 case "gitignore":
                     StartEditGitIgnoreDialog();
                     return;
+
                 case "init":        // [path]
                     RunInitCommand(args);
                     return;
+
                 case "merge":       // [--branch name]
                     RunMergeCommand(arguments);
                     return;
+
                 case "mergeconflicts": // [--quiet]
                 case "mergetool":
                     RunMergeToolOrConflictCommand(arguments);
                     return;
+
                 case "openrepo":    // [path]
                     RunOpenRepoCommand(args);
                     return;
+
                 case "pull":        //  [--rebase] [--merge] [--fetch] [--quiet] [--remotebranch name]
                     Pull(arguments);
                     return;
+
                 case "push":        // [--quiet]
                     Push(arguments);
                     return;
+
                 case "rebase":      // [--branch name]
                     RunRebaseCommand(arguments);
                     return;
+
                 case "remotes":
                     StartRemotesDialog();
                     return;
+
                 case "revert":
                 case "reset":
                     StartResetChangesDialog(args.Length == 3 ? args[2] : "");
                     return;
+
                 case "searchfile":
                     RunSearchFileCommand();
                     return;
+
                 case "settings":
                     StartSettingsDialog();
                     return;
+
                 case "stash":
                     StartStashDialog();
                     return;
+
                 case "synchronize": // [--rebase] [--merge] [--fetch] [--quiet]
                     RunSynchronizeCommand(arguments);
                     return;
+
                 case "tag":
                     StartCreateTagDialog();
                     return;
+
                 case "viewdiff":
                     StartCompareRevisionsDialog();
                     return;
+
                 case "viewpatch":   // [filename]
                     StartViewPatchDialog(args.Length == 3 ? args[2] : "");
                     return;
+
                 case "uninstall":
                     Uninstall();
                     return;
+
                 default:
                     if (args[1].StartsWith("git://") || args[1].StartsWith("http://") || args[1].StartsWith("https://"))
                     {
@@ -2254,7 +2321,7 @@ namespace GitUI
             return (other != null) && Equals(other);
         }
 
-        bool Equals(GitUICommands other)
+        private bool Equals(GitUICommands other)
         {
             return Equals(Module, other.Module);
         }

@@ -41,22 +41,24 @@ namespace GitUI.Editor
         }
 
         public new event MouseEventHandler MouseMove;
+
         public new event EventHandler MouseEnter;
+
         public new event EventHandler MouseLeave;
 
-        void TextArea_MouseEnter(object sender, EventArgs e)
+        private void TextArea_MouseEnter(object sender, EventArgs e)
         {
             if (MouseEnter != null)
                 MouseEnter(sender, e);
         }
 
-        void TextArea_MouseLeave(object sender, EventArgs e)
+        private void TextArea_MouseLeave(object sender, EventArgs e)
         {
             if (MouseLeave != null)
                 MouseLeave(sender, e);
         }
 
-        void TextArea_MouseMove(object sender, MouseEventArgs e)
+        private void TextArea_MouseMove(object sender, MouseEventArgs e)
         {
             if (MouseMove != null)
                 MouseMove(sender, e);
@@ -95,19 +97,19 @@ namespace GitUI.Editor
 
         public event EventHandler<SelectedLineEventArgs> SelectedLineChanged;
 
-        void OnSelectedLineChanged(int selectedLine)
+        private void OnSelectedLineChanged(int selectedLine)
         {
             if (SelectedLineChanged != null)
                 SelectedLineChanged(this, new SelectedLineEventArgs(selectedLine));
         }
 
-        void VScrollBar_ValueChanged(object sender, EventArgs e)
+        private void VScrollBar_ValueChanged(object sender, EventArgs e)
         {
             if (ScrollPosChanged != null)
                 ScrollPosChanged(sender, e);
         }
 
-        void TextEditor_TextChanged(object sender, EventArgs e)
+        private void TextEditor_TextChanged(object sender, EventArgs e)
         {
             if (TextChanged != null)
                 TextChanged(sender, e);
@@ -116,6 +118,7 @@ namespace GitUI.Editor
         #region IFileViewer Members
 
         public event EventHandler ScrollPosChanged;
+
         public new event EventHandler TextChanged;
 
         public string GetText()
@@ -199,7 +202,6 @@ namespace GitUI.Editor
 
             return 0;
         }
-
 
         public void EnableScrollBars(bool enable)
         {
@@ -347,6 +349,6 @@ namespace GitUI.Editor
             _findAndReplaceForm.SetFileLoader(fileLoader);
         }
 
-        #endregion
+        #endregion IFileViewer Members
     }
 }

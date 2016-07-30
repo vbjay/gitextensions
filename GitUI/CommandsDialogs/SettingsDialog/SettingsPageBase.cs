@@ -12,6 +12,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog
     public class SettingsPageBase : GitExtensionsControl, ISettingsPage
     {
         private ISettingsPageHost _PageHost;
+
         protected ISettingsPageHost PageHost
         {
             get
@@ -25,7 +26,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog
 
         protected CheckSettingsLogic CheckSettingsLogic { get { return PageHost.CheckSettingsLogic; } }
         protected CommonLogic CommonLogic { get { return CheckSettingsLogic.CommonLogic; } }
-
 
         protected GitModule Module { get { return this.CommonLogic.Module; } }
 
@@ -91,7 +91,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog
         {
         }
 
-        IList<string> childrenText;
+        private IList<string> childrenText;
 
         /// <summary>
         /// override to provide search keywords
@@ -102,7 +102,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog
         }
 
         /// <summary>Recursively gets the text from all <see cref="Control"/>s within the specified <paramref name="control"/>.</summary>
-        static IList<string> GetChildrenText(Control control)
+        private static IList<string> GetChildrenText(Control control)
         {
             if (control.HasChildren == false) { return new string[0]; }
 

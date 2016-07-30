@@ -21,7 +21,7 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             if (_NO_TRANSLATE_Categories.SelectedItem == null)
                 return;
 
-            var repositoryCategory = (RepositoryCategory) _NO_TRANSLATE_Categories.SelectedItem;
+            var repositoryCategory = (RepositoryCategory)_NO_TRANSLATE_Categories.SelectedItem;
             repositoryCategory.SetIcon();
         }
 
@@ -70,7 +70,7 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             if (_NO_TRANSLATE_Categories.SelectedItem == null)
                 return;
 
-            Repositories.RepositoryCategories.Remove((RepositoryCategory) _NO_TRANSLATE_Categories.SelectedItem);
+            Repositories.RepositoryCategories.Remove((RepositoryCategory)_NO_TRANSLATE_Categories.SelectedItem);
             Categories_SelectedIndexChanged(null, null);
         }
 
@@ -79,7 +79,7 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             if (_NO_TRANSLATE_Categories.SelectedItem == null)
                 return;
 
-            var repositoryCategory = (RepositoryCategory) _NO_TRANSLATE_Categories.SelectedItem;
+            var repositoryCategory = (RepositoryCategory)_NO_TRANSLATE_Categories.SelectedItem;
             repositoryCategory.Description = _NO_TRANSLATE_Caption.Text;
             Initialize();
         }
@@ -89,8 +89,7 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             if (_NO_TRANSLATE_Categories.SelectedItem == null)
                 return;
 
-            var repositoryCategory = (RepositoryCategory) _NO_TRANSLATE_Categories.SelectedItem;
-
+            var repositoryCategory = (RepositoryCategory)_NO_TRANSLATE_Categories.SelectedItem;
 
             if (RssFeedType.Checked)
             {
@@ -118,7 +117,7 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             if (_NO_TRANSLATE_Categories.SelectedItem == null)
                 return;
 
-            var repositoryCategory = (RepositoryCategory) _NO_TRANSLATE_Categories.SelectedItem;
+            var repositoryCategory = (RepositoryCategory)_NO_TRANSLATE_Categories.SelectedItem;
             repositoryCategory.RssFeedUrl = _NO_TRANSLATE_RssFeed.Text;
         }
 
@@ -127,7 +126,7 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             if (_NO_TRANSLATE_Categories.SelectedItem == null)
                 return;
 
-            var repositoryCategory = (RepositoryCategory) _NO_TRANSLATE_Categories.SelectedItem;
+            var repositoryCategory = (RepositoryCategory)_NO_TRANSLATE_Categories.SelectedItem;
             if (repositoryCategory.CategoryType == RepositoryCategoryType.RssFeed)
                 repositoryCategory.DownloadRssFeed();
         }
@@ -137,7 +136,7 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             if (_NO_TRANSLATE_Categories.SelectedItem == null)
                 return;
 
-            var repositoryCategory = (RepositoryCategory) _NO_TRANSLATE_Categories.SelectedItem;
+            var repositoryCategory = (RepositoryCategory)_NO_TRANSLATE_Categories.SelectedItem;
             repositoryCategory.SetIcon();
         }
 
@@ -146,7 +145,7 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             if (_NO_TRANSLATE_Categories.SelectedItem == null)
                 return;
 
-            var repositoryCategory = (RepositoryCategory) _NO_TRANSLATE_Categories.SelectedItem;
+            var repositoryCategory = (RepositoryCategory)_NO_TRANSLATE_Categories.SelectedItem;
             repositoryCategory.SetIcon();
         }
 
@@ -155,7 +154,7 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             if (_NO_TRANSLATE_Categories.SelectedItem == null)
                 return;
 
-            var repositoryCategory = (RepositoryCategory) _NO_TRANSLATE_Categories.SelectedItem;
+            var repositoryCategory = (RepositoryCategory)_NO_TRANSLATE_Categories.SelectedItem;
             repositoryCategory.SetIcon();
         }
 
@@ -164,7 +163,7 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             if (_NO_TRANSLATE_Categories.SelectedItem == null)
                 return;
 
-            var repositoryCategory = (RepositoryCategory) _NO_TRANSLATE_Categories.SelectedItem;
+            var repositoryCategory = (RepositoryCategory)_NO_TRANSLATE_Categories.SelectedItem;
             repositoryCategory.SetIcon();
         }
 
@@ -175,8 +174,8 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             if (e.Row.DataBoundItem == null)
                 return;
 
-            var datasource = ((BindingList<Repository>) ((DataGridView) sender).DataSource);
-            var repositoryToRemove = (Repository) e.Row.DataBoundItem;
+            var datasource = ((BindingList<Repository>)((DataGridView)sender).DataSource);
+            var repositoryToRemove = (Repository)e.Row.DataBoundItem;
 
             RepositoriesGrid.DataSource = null;
             datasource.Remove(repositoryToRemove);

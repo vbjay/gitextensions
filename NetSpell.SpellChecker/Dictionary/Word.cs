@@ -5,7 +5,7 @@ namespace NetSpell.SpellChecker.Dictionary
     /// <summary>
     /// The Word class represents a base word in the dictionary
     /// </summary>
-    public sealed class Word  : IComparable<Word>
+    public sealed class Word : IComparable<Word>
     {
         private string _AffixKeys = "";
         private int _editDistance;
@@ -137,17 +137,15 @@ namespace NetSpell.SpellChecker.Dictionary
             return result; // * -1; // sorts desc order
         }
 
-
         /// <summary>
         ///     The affix keys that can be applied to this base word
         /// </summary>
         public string AffixKeys
         {
-            get {return _AffixKeys;}
-            set {_AffixKeys = value;}
+            get { return _AffixKeys; }
+            set { _AffixKeys = value; }
         }
 
-        
         /// <summary>
         ///     The index position of where this word appears
         /// </summary>
@@ -162,8 +160,8 @@ namespace NetSpell.SpellChecker.Dictionary
         /// </summary>
         public string PhoneticCode
         {
-            get {return _PhoneticCode;}
-            set {_PhoneticCode = value;}
+            get { return _PhoneticCode; }
+            set { _PhoneticCode = value; }
         }
 
         /// <summary>
@@ -173,17 +171,16 @@ namespace NetSpell.SpellChecker.Dictionary
         {
             get { return _text; }
             set { _text = value; }
-        }	
-
+        }
 
         /// <summary>
-        ///     Used for sorting suggestions by its edit distance for 
+        ///     Used for sorting suggestions by its edit distance for
         ///     the misspelled word
         /// </summary>
         internal int EditDistance
         {
-            get {return _editDistance;}
-            set {_editDistance = value;}
+            get { return _editDistance; }
+            set { _editDistance = value; }
         }
 
         /// <summary>

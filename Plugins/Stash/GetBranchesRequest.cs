@@ -3,7 +3,7 @@ using RestSharp;
 
 namespace Stash
 {
-    class GetBranchesRequest : StashRequestBase<JObject>
+    internal class GetBranchesRequest : StashRequestBase<JObject>
     {
         private readonly Repository _repo;
 

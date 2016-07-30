@@ -1,6 +1,6 @@
-﻿using GitCommands.Config;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using GitCommands.Config;
 
 namespace GitCommands.Settings
 {
@@ -97,6 +97,5 @@ namespace GitCommands.Settings
                 _configFile.Value.RemoveConfigSection(configSectionName);
             });
         }
-
     }
 }

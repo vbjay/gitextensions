@@ -8,7 +8,7 @@ namespace Stash
         public string Slug { get; set; }
     }
 
-    class GetUserRequest : StashRequestBase<JObject>
+    internal class GetUserRequest : StashRequestBase<JObject>
     {
         public GetUserRequest(Settings settings)
             : base(settings)

@@ -5,31 +5,35 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using GitCommands;
 using GitCommands.Git;
-using ResourceManager;
-using System.Drawing;
-using GitUI.Script;
 using GitCommands.Utils;
+using GitUI.Script;
+using ResourceManager;
 
 namespace GitUI.CommandsDialogs
 {
-
     public partial class FormCheckoutBranch : GitModuleForm
     {
         #region Translation
+
         private readonly TranslationString _customBranchNameIsEmpty =
             new TranslationString("Custom branch name is empty.\nEnter valid branch name or select predefined value.");
+
         private readonly TranslationString _customBranchNameIsNotValid =
             new TranslationString("“{0}” is not valid branch name.\nEnter valid branch name or select predefined value.");
+
         private readonly TranslationString _createBranch =
             new TranslationString("Create local branch with the name:");
+
         private readonly TranslationString _applyShashedItemsAgainCaption =
             new TranslationString("Auto stash");
+
         private readonly TranslationString _applyShashedItemsAgain =
             new TranslationString("Apply stashed items to working directory again?");
 
         private readonly TranslationString _dontShowAgain =
             new TranslationString("Don't show me this message again.");
-        #endregion
+
+        #endregion Translation
 
         private readonly string[] _containRevisons;
         private readonly bool _isLoading;
@@ -112,11 +116,11 @@ namespace GitUI.CommandsDialogs
         /// <summary>
         /// This functions applies docking properties of controls in a way
         /// that is compatible with both Windows and Linux:
-        /// 
+        ///
         /// 1. Remember container size.
         /// 2. Turn AutoSize off.
         /// 3. Apply docking properties of child controls.
-        /// 
+        ///
         /// This helps to avoid containers size issues on Linux.
         /// </summary>
         private void FinishFormLayout()
@@ -423,7 +427,6 @@ namespace GitUI.CommandsDialogs
                         .Where(a => !GitModule.IsDetachedHead(a) &&
                                     !a.EndsWith("/HEAD"));
                 result.UnionWith(branches);
-
             }
             for (int index = 1; index < _containRevisons.Length; index++)
             {

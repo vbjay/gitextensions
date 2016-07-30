@@ -12,6 +12,7 @@ namespace GitUI.CommandsDialogs.RepoHosting
     public partial class ViewPullRequestsForm : GitModuleForm
     {
         #region Translation
+
         private readonly TranslationString _strFailedToFetchPullData = new TranslationString("Failed to fetch pull data!");
         private readonly TranslationString _strFailedToLoadDiscussionItem = new TranslationString("Failed to post discussion item!");
         private readonly TranslationString _strFailedToClosePullRequest = new TranslationString("Failed to close pull request!");
@@ -22,7 +23,8 @@ namespace GitUI.CommandsDialogs.RepoHosting
         private readonly TranslationString _strUnableUnderstandPatch = new TranslationString("Error: Unable to understand patch");
         private readonly TranslationString _strRemoteAlreadyExist = new TranslationString("ERROR: Remote with name {0} already exists but it does not point to the same repository!\r\nDetails: Is {1} expected {2}");
         private readonly TranslationString _strCouldNotAddRemote = new TranslationString("Could not add remote with name {0} and URL {1}");
-        #endregion
+
+        #endregion Translation
 
         private readonly IRepositoryHostPlugin _gitHoster;
         private bool _isFirstLoad;
@@ -45,16 +47,15 @@ namespace GitUI.CommandsDialogs.RepoHosting
                 };
         }
 
-
         public ViewPullRequestsForm(GitUICommands aCommands, IRepositoryHostPlugin gitHoster)
             : this(aCommands)
         {
             _gitHoster = gitHoster;
         }
 
-        List<IHostedRemote> _hostedRemotes;
-        List<IPullRequestInformation> _pullRequestsInfo;
-        IPullRequestInformation _currentPullRequestInfo;
+        private List<IHostedRemote> _hostedRemotes;
+        private List<IPullRequestInformation> _pullRequestsInfo;
+        private IPullRequestInformation _currentPullRequestInfo;
 
         private void ViewPullRequestsForm_Load(object sender, EventArgs e)
         {
@@ -148,7 +149,7 @@ namespace GitUI.CommandsDialogs.RepoHosting
                 _selectHostedRepoCB.SelectedItem = hostedRemote;
             }
         }
-        
+
         private void SelectNextHostedRepository()
         {
             if (_selectHostedRepoCB.Items.Count == 0)
@@ -178,10 +179,10 @@ namespace GitUI.CommandsDialogs.RepoHosting
             foreach (var info in _pullRequestsInfo)
             {
                 var lvi = new ListViewItem
-                              {
-                                  Text = info.Id,
-                                  Tag = info
-                              };
+                {
+                    Text = info.Id,
+                    Tag = info
+                };
                 lvi.SubItems.Add(info.Title);
                 lvi.SubItems.Add(info.Owner);
                 lvi.SubItems.Add(info.Created.ToString());
@@ -235,7 +236,7 @@ namespace GitUI.CommandsDialogs.RepoHosting
             _discussionWB.DocumentText = t;
         }
 
-        void _discussionWB_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
+        private void _discussionWB_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
             if (_discussionWB.Document != null)
             {
@@ -253,7 +254,8 @@ namespace GitUI.CommandsDialogs.RepoHosting
                                     _strError.Text));
         }
 
-        Dictionary<string, string> _diffCache;
+        private Dictionary<string, string> _diffCache;
+
         private void SplitAndLoadDiff(string diffData)
         {
             _diffCache = new Dictionary<string, string>();
@@ -271,13 +273,13 @@ namespace GitUI.CommandsDialogs.RepoHosting
                 }
 
                 var gis = new GitItemStatus
-                              {
-                                  IsChanged = true,
-                                  IsNew = false,
-                                  IsDeleted = false,
-                                  IsTracked = true,
-                                  Name = match.Groups[2].Value.Trim()
-                              };
+                {
+                    IsChanged = true,
+                    IsNew = false,
+                    IsDeleted = false,
+                    IsTracked = true,
+                    Name = match.Groups[2].Value.Trim()
+                };
 
                 giss.Add(gis);
                 _diffCache.Add(gis.Name, match.Groups[3].Value);
@@ -308,11 +310,10 @@ namespace GitUI.CommandsDialogs.RepoHosting
         {
             if (_currentPullRequestInfo == null)
                 return;
-            
+
             UICommands.RepoChangedNotifier.Lock();
             try
             {
-
                 var remoteName = _currentPullRequestInfo.Owner;
                 var remoteUrl = _currentPullRequestInfo.HeadRepo.CloneReadOnlyUrl;
                 var remoteRef = _currentPullRequestInfo.HeadRef;
@@ -357,7 +358,7 @@ namespace GitUI.CommandsDialogs.RepoHosting
             Close();
         }
 
-        void _fileStatusList_SelectedIndexChanged(object sender, EventArgs e)
+        private void _fileStatusList_SelectedIndexChanged(object sender, EventArgs e)
         {
             var gis = _fileStatusList.SelectedItem;
             if (gis == null)

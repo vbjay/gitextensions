@@ -90,12 +90,11 @@ namespace GitPlugin.Commands
                 }
                 else
                     if (sel.Project != null)
-                        return sel.Project.FullName;
+                    return sel.Project.FullName;
             }
             if (application.Solution.IsOpen)
                 return application.Solution.FullName;
             return string.Empty;
         }
     }
-
 }

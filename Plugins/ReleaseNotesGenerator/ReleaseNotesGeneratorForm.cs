@@ -82,7 +82,7 @@ namespace ReleaseNotesGenerator
             Clipboard.SetText(result);
         }
 
-        const string mostRecentHint = "most recent changes are listed on top";
+        private const string mostRecentHint = "most recent changes are listed on top";
 
         private void buttonCopyAsHtml_Click(object sender, EventArgs e)
         {
@@ -173,6 +173,7 @@ namespace ReleaseNotesGenerator
         {
             MessageLines = new List<string>();
         }
+
         public string Commit;
         public IList<string> MessageLines;
     }

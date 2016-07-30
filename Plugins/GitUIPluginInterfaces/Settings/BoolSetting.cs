@@ -1,10 +1,9 @@
-﻿using System;
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 using GitUI;
 
 namespace GitUIPluginInterfaces
 {
-    public class BoolSetting: ISetting
+    public class BoolSetting : ISetting
     {
         public BoolSetting(string aName, bool aDefaultValue)
             : this(aName, aName, aDefaultValue)

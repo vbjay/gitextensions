@@ -3,7 +3,7 @@ using RestSharp;
 
 namespace Stash
 {
-    class Commit
+    internal class Commit
     {
         public static Commit Parse(JObject json)
         {
@@ -15,12 +15,14 @@ namespace Stash
                 IsMerge = ((JArray)json["parents"]).Count > 1
             };
         }
+
         public string Hash { get; set; }
         public string Message { get; set; }
         public string AuthorName { get; set; }
         public bool IsMerge { get; set; }
     }
-    class GetHeadCommitRequest : StashRequestBase<Commit>
+
+    internal class GetHeadCommitRequest : StashRequestBase<Commit>
     {
         private readonly Repository _repo;
         private readonly string _branch;

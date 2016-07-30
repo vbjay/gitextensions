@@ -1,12 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Collections.Generic;
 using System.Threading;
 using System.Windows.Forms;
 using Git.hub;
-using GitCommands.Config;
 using GitCommands;
+using GitCommands.Config;
 using ResourceManager;
 
 namespace GitUI.CommandsDialogs.BrowseDialog
@@ -14,11 +14,14 @@ namespace GitUI.CommandsDialogs.BrowseDialog
     public partial class FormUpdates : GitExtensionsForm
     {
         #region Translation
+
         private readonly TranslationString _newVersionAvailable =
             new TranslationString("There is a new version {0} of Git Extensions available");
+
         private readonly TranslationString _noUpdatesFound =
             new TranslationString("No updates found");
-        #endregion
+
+        #endregion Translation
 
         public IWin32Window OwnerWindow;
         public Version CurrentVersion;
@@ -85,10 +88,9 @@ namespace GitUI.CommandsDialogs.BrowseDialog
                     }, null);
                 Done();
             }
-
         }
 
-        void CheckForNewerVersion(string releases)
+        private void CheckForNewerVersion(string releases)
         {
             var versions = ReleaseVersion.Parse(releases);
             var updates = ReleaseVersion.GetNewerVersions(CurrentVersion, AppSettings.CheckForReleaseCandidates, versions);
@@ -182,7 +184,6 @@ namespace GitUI.CommandsDialogs.BrowseDialog
             Enum.TryParse<ReleaseType>(section.GetValue("ReleaseType"), true, out version.ReleaseType);
 
             return version;
-
         }
 
         public static IEnumerable<ReleaseVersion> Parse(string versionsStr)
@@ -207,7 +208,5 @@ namespace GitUI.CommandsDialogs.BrowseDialog
 
             return versions.Where(version => version.Version.CompareTo(currentVersion) > 0);
         }
-
     }
-
 }

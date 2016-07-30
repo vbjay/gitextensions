@@ -37,7 +37,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog
         }
 
         public IEnumerable<string> GetSearchKeywords()
-        {            
+        {
             return new string[] { };
         }
 
@@ -50,6 +50,5 @@ namespace GitUI.CommandsDialogs.SettingsDialog
         {
             get { return new SettingsPageReferenceByType(GetType()); }
         }
-
     }
 }

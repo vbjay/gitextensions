@@ -25,6 +25,7 @@ namespace GitCommands.Statistics
         public bool RespectMailmap { get; set; }
 
         public event EventHandler Exited;
+
         public event EventHandler<CommitEventArgs> Updated;
 
         public struct DataPoint
@@ -105,6 +106,7 @@ namespace GitCommands.Statistics
         }
 
         private bool showSubmodules;
+
         public bool ShowSubmodules
         {
             get { return showSubmodules; }
@@ -156,7 +158,7 @@ namespace GitCommands.Statistics
                     continue;
                 }
 
-                // Strip "--- " 
+                // Strip "--- "
                 line = line.Substring(4);
 
                 // Split date and author

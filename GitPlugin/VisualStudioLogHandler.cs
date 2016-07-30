@@ -21,6 +21,6 @@ namespace GitPlugin
             _outputWindowPane.OutputString(formattedLine);
         }
 
-        #endregion
+        #endregion Handler Members
     }
 }

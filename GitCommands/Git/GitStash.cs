@@ -7,20 +7,25 @@ namespace GitCommands
     {
         /// <summary>Name of the stash. <remarks>Usually, "stash@{n}"</remarks></summary>
         public string Name { get; set; }
+
         /// <summary>Short description of the commit the stash was based on.</summary>
         public string Message { get; set; }
+
         /// <summary>Name of the branch that was current when the stash was made.</summary>
         public string Branch { get; set; }
+
         /// <summary>Gets the index of the stash in the list.</summary>
         public int Index { get; set; }
-        readonly string _stash;
+
+        private readonly string _stash;
 
         /// <summary>"stash@{i}"</summary>
-        const string NameFormat = "stash@{{{0}}}";
-        const string DefaultFormat = "WIP on ";
-        const string CustomFormat = "On ";
-        static int DefaultFormatLength = DefaultFormat.Length;
-        static int CustomFormatLength = CustomFormat.Length;
+        private const string NameFormat = "stash@{{{0}}}";
+
+        private const string DefaultFormat = "WIP on ";
+        private const string CustomFormat = "On ";
+        private static int DefaultFormatLength = DefaultFormat.Length;
+        private static int CustomFormatLength = CustomFormat.Length;
 
         /// <summary>Initializes a new <see cref="GitStash"/> with all properties null.</summary>
         public GitStash() { }
@@ -48,7 +53,7 @@ namespace GitCommands
             }
         }
 
-        void FindBranch()
+        private void FindBranch()
         {
             int trimLength = Message.StartsWith(DefaultFormat)
                 ? DefaultFormatLength // "WIP on "
@@ -57,7 +62,10 @@ namespace GitCommands
             Branch = branchStart.Substring(0, branchStart.IndexOf(':'));
         }
 
-        public override string ToString() { return Name; }
+        public override string ToString()
+        {
+            return Name;
+        }
 
         public override bool Equals(object obj)
         {

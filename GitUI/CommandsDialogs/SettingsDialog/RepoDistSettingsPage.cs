@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using GitCommands.Settings;
+﻿using GitCommands.Settings;
 
 namespace GitUI.CommandsDialogs.SettingsDialog
 {
@@ -60,13 +56,12 @@ namespace GitUI.CommandsDialogs.SettingsDialog
         private void InitializeComponent()
         {
             this.SuspendLayout();
-            // 
+            //
             // RepoDistSettingsPage
-            // 
+            //
             this.Name = "RepoDistSettingsPage";
             this.Size = new System.Drawing.Size(951, 518);
             this.ResumeLayout(false);
-
         }
     }
 }

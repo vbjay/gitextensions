@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Security.Policy;
 using System.Windows.Forms;
 using GitCommands;
 using GitCommands.Config;
@@ -14,7 +12,7 @@ namespace GitUI.Script
     /// <summary>Runs scripts.</summary>
     public static class ScriptRunner
     {
-        /// <summary>Tries to run scripts identified by a <paramref name="command"/> 
+        /// <summary>Tries to run scripts identified by a <paramref name="command"/>
         /// and returns true if any executed.</summary>
         public static bool ExecuteScriptCommand(IWin32Window owner, GitModule aModule, int command, RevisionGrid revisionGrid = null)
         {
@@ -57,7 +55,7 @@ namespace GitUI.Script
                     continue;
                 if (revisionGrid != null)
                     continue;
-                MessageBox.Show(owner, 
+                MessageBox.Show(owner,
                     string.Format("Option {0} is only supported when started from revision grid.", option),
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
@@ -134,6 +132,7 @@ namespace GitUI.Script
                         argument = argument.Replace(option,
                             string.Join(" ", allSelectedRevisions.Select(revision => revision.Guid).ToArray()));
                         break;
+
                     case "{sTag}":
                         if (selectedTags.Count == 1)
                             argument = argument.Replace(option, selectedTags[0].Name);
@@ -142,6 +141,7 @@ namespace GitUI.Script
                         else
                             argument = argument.Replace(option, "");
                         break;
+
                     case "{sBranch}":
                         if (selectedBranches.Count == 1)
                             argument = argument.Replace(option, selectedBranches[0].Name);
@@ -151,6 +151,7 @@ namespace GitUI.Script
                         else
                             argument = argument.Replace(option, "");
                         break;
+
                     case "{sLocalBranch}":
                         if (selectedLocalBranches.Count == 1)
                             argument = argument.Replace(option, selectedLocalBranches[0].Name);
@@ -161,6 +162,7 @@ namespace GitUI.Script
                         else
                             argument = argument.Replace(option, "");
                         break;
+
                     case "{sRemoteBranch}":
                         if (selectedRemoteBranches.Count == 1)
                             argument = argument.Replace(option, selectedRemoteBranches[0].Name);
@@ -171,6 +173,7 @@ namespace GitUI.Script
                         else
                             argument = argument.Replace(option, "");
                         break;
+
                     case "{sRemote}":
                         if (selectedRemotes.Count == 0)
                         {
@@ -183,6 +186,7 @@ namespace GitUI.Script
                             remote = askToSpecify(selectedRemotes, "Selected Revision Remote");
                         argument = argument.Replace(option, remote);
                         break;
+
                     case "{sRemoteUrl}":
                         if (selectedRemotes.Count == 0)
                         {
@@ -196,6 +200,7 @@ namespace GitUI.Script
                         url = aModule.GetPathSetting(string.Format(SettingKeyString.RemoteUrl, remote));
                         argument = argument.Replace(option, url);
                         break;
+
                     case "{sRemotePathFromUrl}":
                         if (selectedRemotes.Count == 0)
                         {
@@ -209,24 +214,31 @@ namespace GitUI.Script
                         url = aModule.GetPathSetting(string.Format(SettingKeyString.RemoteUrl, remote));
                         argument = argument.Replace(option, GetRemotePath(url));
                         break;
+
                     case "{sHash}":
                         argument = argument.Replace(option, selectedRevision.Guid);
                         break;
+
                     case "{sMessage}":
                         argument = argument.Replace(option, selectedRevision.Subject);
                         break;
+
                     case "{sAuthor}":
                         argument = argument.Replace(option, selectedRevision.Author);
                         break;
+
                     case "{sCommitter}":
                         argument = argument.Replace(option, selectedRevision.Committer);
                         break;
+
                     case "{sAuthorDate}":
                         argument = argument.Replace(option, selectedRevision.AuthorDate.ToString());
                         break;
+
                     case "{sCommitDate}":
                         argument = argument.Replace(option, selectedRevision.CommitDate.ToString());
                         break;
+
                     case "{cTag}":
                         if (currentTags.Count == 1)
                             argument = argument.Replace(option, currentTags[0].Name);
@@ -235,6 +247,7 @@ namespace GitUI.Script
                         else
                             argument = argument.Replace(option, "");
                         break;
+
                     case "{cBranch}":
                         if (currentBranches.Count == 1)
                             argument = argument.Replace(option, currentBranches[0].Name);
@@ -244,6 +257,7 @@ namespace GitUI.Script
                         else
                             argument = argument.Replace(option, "");
                         break;
+
                     case "{cLocalBranch}":
                         if (currentLocalBranches.Count == 1)
                             argument = argument.Replace(option, currentLocalBranches[0].Name);
@@ -254,6 +268,7 @@ namespace GitUI.Script
                         else
                             argument = argument.Replace(option, "");
                         break;
+
                     case "{cRemoteBranch}":
                         if (currentRemoteBranches.Count == 1)
                             argument = argument.Replace(option, currentRemoteBranches[0].Name);
@@ -264,24 +279,31 @@ namespace GitUI.Script
                         else
                             argument = argument.Replace(option, "");
                         break;
+
                     case "{cHash}":
                         argument = argument.Replace(option, currentRevision.Guid);
                         break;
+
                     case "{cMessage}":
                         argument = argument.Replace(option, currentRevision.Subject);
                         break;
+
                     case "{cAuthor}":
                         argument = argument.Replace(option, currentRevision.Author);
                         break;
+
                     case "{cCommitter}":
                         argument = argument.Replace(option, currentRevision.Committer);
                         break;
+
                     case "{cAuthorDate}":
                         argument = argument.Replace(option, currentRevision.AuthorDate.ToString());
                         break;
+
                     case "{cCommitDate}":
                         argument = argument.Replace(option, currentRevision.CommitDate.ToString());
                         break;
+
                     case "{cDefaultRemote}":
                         if (string.IsNullOrEmpty(currentRemote))
                         {
@@ -290,6 +312,7 @@ namespace GitUI.Script
                         }
                         argument = argument.Replace(option, currentRemote);
                         break;
+
                     case "{cDefaultRemoteUrl}":
                         if (string.IsNullOrEmpty(currentRemote))
                         {
@@ -299,6 +322,7 @@ namespace GitUI.Script
                         url = aModule.GetPathSetting(string.Format(SettingKeyString.RemoteUrl, currentRemote));
                         argument = argument.Replace(option, url);
                         break;
+
                     case "{cDefaultRemotePathFromUrl}":
                         if (string.IsNullOrEmpty(currentRemote))
                         {
@@ -308,6 +332,7 @@ namespace GitUI.Script
                         url = aModule.GetPathSetting(string.Format(SettingKeyString.RemoteUrl, currentRemote));
                         argument = argument.Replace(option, GetRemotePath(url));
                         break;
+
                     case "{UserInput}":
                         using (SimplePrompt Prompt = new SimplePrompt())
                         {
@@ -315,12 +340,13 @@ namespace GitUI.Script
                             argument = argument.Replace(option, Prompt.UserInput);
                         }
                         break;
+
                     case "{WorkingDir}":
                         argument = argument.Replace(option, aModule.WorkingDir);
                         break;
                 }
             }
-            command = ExpandCommandVariables(command,aModule);
+            command = ExpandCommandVariables(command, aModule);
 
             if (!scriptInfo.RunInBackground)
                 FormProcess.ShowDialog(owner, command, argument, aModule.WorkingDir, null, true);
@@ -337,7 +363,6 @@ namespace GitUI.Script
         private static string ExpandCommandVariables(string originalCommand, GitModule aModule)
         {
             return originalCommand.Replace("{WorkingDir}", aModule.WorkingDir);
-           
         }
 
         private static GitRevision CalculateSelectedRevision(RevisionGrid revisionGrid, List<GitRef> selectedRemoteBranches,
@@ -349,7 +374,6 @@ namespace GitUI.Script
             {
                 if (head.IsTag)
                     selectedTags.Add(head);
-
                 else if (head.IsHead || head.IsRemote)
                 {
                     selectedBranches.Add(head);

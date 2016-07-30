@@ -28,6 +28,7 @@ namespace GitCommands.Repository
 
         public string Title { get; set; }
         private string _path;
+
         public string Path
         {
             get
@@ -39,6 +40,7 @@ namespace GitCommands.Repository
                 _path = value;
             }
         }
+
         public string Description { get; set; }
         public RepositoryAnchor Anchor { get; set; }
 
@@ -63,7 +65,7 @@ namespace GitCommands.Repository
 
         public override string ToString()
         {
-            return Path + " ("+ Anchor.ToString() +")";
+            return Path + " (" + Anchor.ToString() + ")";
         }
 
         public static bool PathIsUrl(string path)

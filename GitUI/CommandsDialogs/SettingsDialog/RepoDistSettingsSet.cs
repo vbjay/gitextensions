@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using GitCommands;
-using GitCommands.Settings;
+﻿using GitCommands.Settings;
 
 namespace GitUI.CommandsDialogs.SettingsDialog
 {
@@ -25,7 +20,5 @@ namespace GitUI.CommandsDialogs.SettingsDialog
             RepoDistSettings = aPulledSettings;
             GlobalSettings = aGlobalSettings;
         }
-
-
     }
 }

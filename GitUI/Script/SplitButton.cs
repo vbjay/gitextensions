@@ -4,20 +4,19 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 
-
 /* Get the latest version of SplitButton at: http://wyday.com/splitbutton/
- * 
+ *
  * Copyright (c) 2010, wyDay
  * All rights reserved.
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *  * Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  *  * Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -30,28 +29,25 @@ using System.Windows.Forms.VisualStyles;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 namespace GitUI.Script
 {
     public class SplitButton : Button
     {
-        PushButtonState _state;
+        private PushButtonState _state;
 
+        private const int SplitSectionWidth = 18;
 
-        const int SplitSectionWidth = 18;
+        private static int BorderSize = SystemInformation.Border3DSize.Width * 2;
+        private bool skipNextOpen;
+        private Rectangle dropDownRectangle;
+        private bool showSplit;
 
-        static int BorderSize = SystemInformation.Border3DSize.Width * 2;
-        bool skipNextOpen;
-        Rectangle dropDownRectangle;
-        bool showSplit;
+        private bool isSplitMenuVisible;
 
-        bool isSplitMenuVisible;
+        private ContextMenuStrip m_SplitMenuStrip;
+        private ContextMenu m_SplitMenu;
 
-
-        ContextMenuStrip m_SplitMenuStrip;
-        ContextMenu m_SplitMenu;
-
-        TextFormatFlags textFormatFlags = TextFormatFlags.Default;
+        private TextFormatFlags textFormatFlags = TextFormatFlags.Default;
 
         public SplitButton()
         {
@@ -124,7 +120,6 @@ namespace GitUI.Script
                 else
                     ShowSplit = false;
 
-
                 m_SplitMenuStrip = value;
             }
         }
@@ -196,7 +191,6 @@ namespace GitUI.Script
                 {
                     ShowContextMenuStrip();
                 }
-
                 else if (kevent.KeyCode.Equals(Keys.Space) && kevent.Modifiers == Keys.None)
                 {
                     State = PushButtonState.Pressed;
@@ -247,7 +241,7 @@ namespace GitUI.Script
             }
         }
 
-        bool isMouseEntered;
+        private bool isMouseEntered;
 
         protected override void OnMouseEnter(EventArgs e)
         {
@@ -263,7 +257,6 @@ namespace GitUI.Script
             {
                 State = PushButtonState.Hot;
             }
-               
         }
 
         protected override void OnMouseLeave(EventArgs e)
@@ -294,7 +287,7 @@ namespace GitUI.Script
             if (m_SplitMenu != null && e.Button == MouseButtons.Left && !isMouseEntered)
                 skipNextOpen = true;
 
-            if ((dropDownRectangle.Contains(e.Location) || this.WholeButtonDropdown) && 
+            if ((dropDownRectangle.Contains(e.Location) || this.WholeButtonDropdown) &&
                 !isSplitMenuVisible && e.Button == MouseButtons.Left)
             {
                 ShowContextMenuStrip();
@@ -365,7 +358,6 @@ namespace GitUI.Script
                               bounds.Height - (internalBorder * 2) + 2);
 
             bool drawSplitLine = (State == PushButtonState.Hot || State == PushButtonState.Pressed || !Application.RenderWithVisualStyles);
-
 
             if (RightToLeft == RightToLeft.Yes)
             {
@@ -459,7 +451,7 @@ namespace GitUI.Script
             {
                 if (AutoSize)
                     return CalculateButtonAutoSize();
-                
+
                 if (!string.IsNullOrEmpty(Text) && TextRenderer.MeasureText(Text, Font).Width + SplitSectionWidth > preferredSize.Width)
                     return preferredSize + new Size(SplitSectionWidth + BorderSize * 2, 0);
             }
@@ -486,11 +478,13 @@ namespace GitUI.Script
                     ret_size.Height = Math.Max(Text.Length == 0 ? 0 : text_size.Height, image_size.Height);
                     ret_size.Width = Math.Max(text_size.Width, image_size.Width);
                     break;
+
                 case TextImageRelation.ImageAboveText:
                 case TextImageRelation.TextAboveImage:
                     ret_size.Height = text_size.Height + image_size.Height;
                     ret_size.Width = Math.Max(text_size.Width, image_size.Width);
                     break;
+
                 case TextImageRelation.ImageBeforeText:
                 case TextImageRelation.TextBeforeImage:
                     ret_size.Height = Math.Max(text_size.Height, image_size.Height);
@@ -511,8 +505,8 @@ namespace GitUI.Script
 
         #region Button Layout Calculations
 
-        //The following layout functions were taken from Mono's Windows.Forms 
-        //implementation, specifically "ThemeWin32Classic.cs", 
+        //The following layout functions were taken from Mono's Windows.Forms
+        //implementation, specifically "ThemeWin32Classic.cs",
         //then modified to fit the context of this splitButton
 
         private void CalculateButtonTextAndImageLayout(ref Rectangle content_rect, out Rectangle textRectangle, out Rectangle imageRectangle)
@@ -538,18 +532,22 @@ namespace GitUI.Script
                         imageRectangle = OverlayObjectRect(ref content_rect, ref image_size, ImageAlign);
 
                     break;
+
                 case TextImageRelation.ImageAboveText:
                     content_rect.Inflate(-4, -4);
                     LayoutTextAboveOrBelowImage(content_rect, false, text_size, image_size, out textRectangle, out imageRectangle);
                     break;
+
                 case TextImageRelation.TextAboveImage:
                     content_rect.Inflate(-4, -4);
                     LayoutTextAboveOrBelowImage(content_rect, true, text_size, image_size, out textRectangle, out imageRectangle);
                     break;
+
                 case TextImageRelation.ImageBeforeText:
                     content_rect.Inflate(-4, -4);
                     LayoutTextBeforeOrAfterImage(content_rect, false, text_size, image_size, out textRectangle, out imageRectangle);
                     break;
+
                 case TextImageRelation.TextBeforeImage:
                     content_rect.Inflate(-4, -4);
                     LayoutTextBeforeOrAfterImage(content_rect, true, text_size, image_size, out textRectangle, out imageRectangle);
@@ -567,38 +565,47 @@ namespace GitUI.Script
                     x = 4;
                     y = 4;
                     break;
+
                 case System.Drawing.ContentAlignment.TopCenter:
                     x = (container.Width - sizeOfObject.Width) / 2;
                     y = 4;
                     break;
+
                 case System.Drawing.ContentAlignment.TopRight:
                     x = container.Width - sizeOfObject.Width - 4;
                     y = 4;
                     break;
+
                 case System.Drawing.ContentAlignment.MiddleLeft:
                     x = 4;
                     y = (container.Height - sizeOfObject.Height) / 2;
                     break;
+
                 case System.Drawing.ContentAlignment.MiddleCenter:
                     x = (container.Width - sizeOfObject.Width) / 2;
                     y = (container.Height - sizeOfObject.Height) / 2;
                     break;
+
                 case System.Drawing.ContentAlignment.MiddleRight:
                     x = container.Width - sizeOfObject.Width - 4;
                     y = (container.Height - sizeOfObject.Height) / 2;
                     break;
+
                 case System.Drawing.ContentAlignment.BottomLeft:
                     x = 4;
                     y = container.Height - sizeOfObject.Height - 4;
                     break;
+
                 case System.Drawing.ContentAlignment.BottomCenter:
                     x = (container.Width - sizeOfObject.Width) / 2;
                     y = container.Height - sizeOfObject.Height - 4;
                     break;
+
                 case System.Drawing.ContentAlignment.BottomRight:
                     x = container.Width - sizeOfObject.Width - 4;
                     y = container.Height - sizeOfObject.Height - 4;
                     break;
+
                 default:
                     x = 4;
                     y = 4;
@@ -718,10 +725,12 @@ namespace GitUI.Script
                 case System.Drawing.ContentAlignment.MiddleLeft:
                 case System.Drawing.ContentAlignment.TopLeft:
                     return HorizontalAlignment.Left;
+
                 case System.Drawing.ContentAlignment.BottomCenter:
                 case System.Drawing.ContentAlignment.MiddleCenter:
                 case System.Drawing.ContentAlignment.TopCenter:
                     return HorizontalAlignment.Center;
+
                 case System.Drawing.ContentAlignment.BottomRight:
                 case System.Drawing.ContentAlignment.MiddleRight:
                 case System.Drawing.ContentAlignment.TopRight:
@@ -739,10 +748,12 @@ namespace GitUI.Script
                 case System.Drawing.ContentAlignment.TopCenter:
                 case System.Drawing.ContentAlignment.TopRight:
                     return VerticalAlignment.Top;
+
                 case System.Drawing.ContentAlignment.MiddleLeft:
                 case System.Drawing.ContentAlignment.MiddleCenter:
                 case System.Drawing.ContentAlignment.MiddleRight:
                     return VerticalAlignment.Center;
+
                 case System.Drawing.ContentAlignment.BottomLeft:
                 case System.Drawing.ContentAlignment.BottomCenter:
                 case System.Drawing.ContentAlignment.BottomRight:
@@ -775,7 +786,6 @@ namespace GitUI.Script
 
         #endregion Button Layout Calculations
 
-
         private void ShowContextMenuStrip()
         {
             if (skipNextOpen)
@@ -798,12 +808,12 @@ namespace GitUI.Script
             }
         }
 
-        void SplitMenuStrip_Opening(object sender, CancelEventArgs e)
+        private void SplitMenuStrip_Opening(object sender, CancelEventArgs e)
         {
             isSplitMenuVisible = true;
         }
 
-        void SplitMenuStrip_Closing(object sender, ToolStripDropDownClosingEventArgs e)
+        private void SplitMenuStrip_Closing(object sender, ToolStripDropDownClosingEventArgs e)
         {
             isSplitMenuVisible = false;
 
@@ -815,8 +825,7 @@ namespace GitUI.Script
             }
         }
 
-
-        void SplitMenu_Popup(object sender, EventArgs e)
+        private void SplitMenu_Popup(object sender, EventArgs e)
         {
             isSplitMenuVisible = true;
         }

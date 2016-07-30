@@ -11,20 +11,25 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
         private readonly TranslationString _gitGlobalConfigNotFound =
             new TranslationString("The environment variable HOME does not point to a directory that contains the global git config file:" + Environment.NewLine +
                 "\" {0} \"" + Environment.NewLine + Environment.NewLine + "Do you want Git Extensions to help locate the correct folder?");
+
         private readonly TranslationString _gitGlobalConfigNotFoundCaption =
             new TranslationString("Global config");
 
         private readonly TranslationString _gitconfigFoundHome =
             new TranslationString("Located .gitconfig in %HOME% ({0}). This setting has been chosen automatically.");
+
         private readonly TranslationString _gitconfigFoundHomedrive =
             new TranslationString("Located .gitconfig in %HOMEDRIVE%%HOMEPATH% ({0}). This setting has been chosen automatically.");
+
         private readonly TranslationString _gitconfigFoundUserprofile =
             new TranslationString("Located .gitconfig in %USERPROFILE% ({0}). This setting has been chosen automatically.");
+
         private readonly TranslationString _gitconfigFoundPersonalFolder =
             new TranslationString("Located .gitconfig in personal folder ({0}). This setting has been chosen automatically.");
 
         private readonly TranslationString _noHomeDirectorySpecified =
             new TranslationString("Please enter a HOME directory.");
+
         private readonly TranslationString _homeNotAccessible =
             new TranslationString("The environment variable HOME points to a directory that is not accessible:" + Environment.NewLine +
                                 "\"{0}\"");
@@ -69,7 +74,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             }
             catch
             {
-                //Exception occurred while checking for home dir. 
+                //Exception occurred while checking for home dir.
                 //Could be a security issue. Just return true to let the user fix
                 //this manually.
                 return true;
@@ -134,7 +139,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             }
             catch
             {
-                //Exception occured while checking for home dir. 
+                //Exception occured while checking for home dir.
                 //Could be a security issue. Just ignore and let the user choose
                 //manually.
             }
@@ -151,7 +156,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             }
             catch
             {
-                //Exception occured while checking for home dir. 
+                //Exception occured while checking for home dir.
                 //Could be a security issue. Just ignore and let the user choose
                 //manually.
             }
@@ -167,7 +172,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             }
             catch
             {
-                //Exception occured while checking for home dir. 
+                //Exception occured while checking for home dir.
                 //Could be a security issue. Just ignore and let the user choose
                 //manually.
             }
@@ -184,16 +189,14 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             }
             catch
             {
-                //Exception occured while checking for home dir. 
+                //Exception occured while checking for home dir.
                 //Could be a security issue. Just ignore and let the user choose
                 //manually.
             }
-
         }
 
         private void ok_Click(object sender, EventArgs e)
         {
-
             if (otherHome.Checked)
             {
                 if (string.IsNullOrEmpty(otherHomeDir.Text))

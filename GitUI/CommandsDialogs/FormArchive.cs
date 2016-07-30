@@ -26,6 +26,7 @@ namespace GitUI.CommandsDialogs
                     new TranslationString("Error");
 
         private GitRevision _selectedRevision;
+
         public GitRevision SelectedRevision
         {
             get { return _selectedRevision; }
@@ -37,6 +38,7 @@ namespace GitUI.CommandsDialogs
         }
 
         private GitRevision _diffSelectedRevision;
+
         private GitRevision DiffSelectedRevision
         {
             get { return _diffSelectedRevision; }
@@ -157,7 +159,6 @@ namespace GitUI.CommandsDialogs
             }
             else if (checkboxRevisionFilter.Checked)
             {
-
                 // 1. get all files changed between current revision and selected revision from diff
                 var files = UICommands.Module.GetDiffFiles(this.SelectedRevision.Guid, this.DiffSelectedRevision.Guid);
                 // 2. wrap names with ""

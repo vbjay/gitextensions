@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using GitUIPluginInterfaces;
-
-namespace GitCommands.Settings
+﻿namespace GitCommands.Settings
 {
     public abstract class Setting<T>
     {

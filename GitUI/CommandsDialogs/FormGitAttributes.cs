@@ -9,18 +9,21 @@ namespace GitUI.CommandsDialogs
 {
     public partial class FormGitAttributes : GitModuleForm
     {
-        private readonly TranslationString noWorkingDir = 
+        private readonly TranslationString noWorkingDir =
             new TranslationString(".gitattributes is only supported when there is a working directory.");
+
         private readonly TranslationString _noWorkingDirCaption =
             new TranslationString("No working directory");
 
         private readonly TranslationString _cannotAccessGitattributes =
             new TranslationString("Failed to save .gitattributes." + Environment.NewLine + "Check if file is accessible.");
+
         private readonly TranslationString _cannotAccessGitattributesCaption =
             new TranslationString("Failed to save .gitattributes");
 
         private readonly TranslationString _saveFileQuestion =
             new TranslationString("Save changes to .gitattributes?");
+
         private readonly TranslationString _saveFileQuestionCaption =
             new TranslationString("Save changes?");
 
@@ -98,9 +101,11 @@ namespace GitUI.CommandsDialogs
                         if (SaveFile())
                             needToClose = true;
                         break;
+
                     case DialogResult.No:
                         needToClose = true;
                         break;
+
                     default:
                         break;
                 }
@@ -126,8 +131,7 @@ namespace GitUI.CommandsDialogs
 
         private void GitAttributesFileLoaded(object sender, EventArgs e)
         {
-            GitAttributesFile = _NO_TRANSLATE_GitAttributesText.GetText();           
+            GitAttributesFile = _NO_TRANSLATE_GitAttributesText.GetText();
         }
     }
 }
-

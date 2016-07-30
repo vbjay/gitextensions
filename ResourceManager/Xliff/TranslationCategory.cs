@@ -18,6 +18,7 @@ namespace ResourceManager.Xliff
         }
 
         private string _datatype = "plaintext";
+
         [XmlAttribute("datatype")]
         public string Datatype
         {
@@ -32,6 +33,7 @@ namespace ResourceManager.Xliff
         }
 
         private string _name;
+
         [XmlAttribute("original")]
         public string Name
         {
@@ -46,6 +48,7 @@ namespace ResourceManager.Xliff
         }
 
         private string _source;
+
         [XmlAttribute("source-language")]
         public string Source
         {
@@ -60,6 +63,7 @@ namespace ResourceManager.Xliff
         }
 
         private TranslationBody _body = new TranslationBody();
+
         [XmlElement(ElementName = "body")]
         public TranslationBody Body
         {

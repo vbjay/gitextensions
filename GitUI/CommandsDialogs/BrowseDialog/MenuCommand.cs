@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 
 namespace GitUI.CommandsDialogs.BrowseDialog
@@ -13,7 +12,7 @@ namespace GitUI.CommandsDialogs.BrowseDialog
     /// From a MenuCommand a (theoretically) unlimited number of actual ToolStripItems can
     /// be created that all behave the same.
     /// A MenuCommand can also be a separator
-    /// 
+    ///
     /// Purpose: have methods from specific context menus also available in main menu
     /// </summary>
     internal class MenuCommand
@@ -53,7 +52,7 @@ namespace GitUI.CommandsDialogs.BrowseDialog
             }
         }
 
-        IList<ToolStripMenuItem> _registeredMenuItems = new List<ToolStripMenuItem>();
+        private IList<ToolStripMenuItem> _registeredMenuItems = new List<ToolStripMenuItem>();
 
         /// <summary>
         /// if true all other properties have no meaning

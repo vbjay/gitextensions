@@ -35,6 +35,7 @@ namespace GitCommands
                             wordQuestionMarkCount = 0;
                         }
                         break;
+
                     case '?':
                         if (readingWord)
                         {
@@ -67,6 +68,7 @@ namespace GitCommands
             sb.Append(currentSurroundingText.ToString());
             return sb.ToString();
         }
+
         private static string ParseEncodedWord(string input)
         {
             var sb = new StringBuilder();
@@ -90,6 +92,7 @@ namespace GitCommands
                 case 'q':
                     sb.Append(ParseQuotedPrintable(enc, input, startPosition, true));
                     break;
+
                 case 'b':
                     string baseString = input.Substring(startPosition, input.Length - startPosition - 2);
                     byte[] baseDecoded = Convert.FromBase64String(baseString);
@@ -158,6 +161,7 @@ namespace GitCommands
                             }
                         }
                         break;
+
                     case (byte)'?':
                         if (skipQuestionEquals && workingBytes[i + 1] == (byte)'=')
                         {
@@ -170,6 +174,7 @@ namespace GitCommands
                             ++i;
                         }
                         break;
+
                     default:
                         workingBytes[outputPos] = workingBytes[i];
                         ++outputPos;

@@ -1,16 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using ResourceManager;
 
 namespace GitUI.CommandsDialogs.SettingsDialog
 {
-
     public interface IGlobalSettingsPage : ISettingsPage
     {
         void SetGlobalSettings();
@@ -107,9 +100,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog
                         }
                     };
                 }
-
             }
-
         }
 
         private void GlobalRB_CheckedChanged(object sender, EventArgs e)

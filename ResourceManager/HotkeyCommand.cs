@@ -21,11 +21,12 @@ namespace ResourceManager
         [XmlAttribute]
         public Keys KeyData { get; set; }
 
-        #endregion
+        #endregion Properties
 
         public HotkeyCommand()
         {
         }
+
         public HotkeyCommand(int commandCode, string name)
         {
             this.CommandCode = commandCode;

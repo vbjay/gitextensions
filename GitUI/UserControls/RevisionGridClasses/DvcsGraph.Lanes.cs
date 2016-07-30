@@ -67,7 +67,7 @@ namespace GitUI.RevisionGridClasses
                 return GetEnumerator();
             }
 
-            #endregion
+            #endregion IEnumerable<LaneRow> Members
 
             public void Clear()
             {
@@ -115,7 +115,6 @@ namespace GitUI.RevisionGridClasses
 
             private bool MoveNext()
             {
-
                 // If there are no lanes, there is nothing more to draw
                 if (laneNodes.Count == 0 || sourceGraph.Count <= laneRows.Count)
                 {
@@ -162,10 +161,10 @@ namespace GitUI.RevisionGridClasses
 
                 sourceGraph.ProcessNode(currentRow.Node);
 
-                #endregion
+                #endregion Find current node & index
 
-                // Check for multiple junctions with this node at the top. Remove the 
-                // node from that junction as well. This will happen when there is a branch 
+                // Check for multiple junctions with this node at the top. Remove the
+                // node from that junction as well. This will happen when there is a branch
 
                 #region Check for branches
 
@@ -186,7 +185,7 @@ namespace GitUI.RevisionGridClasses
                     }
 
                     // Remove the item from the lane, since it is being drawn now.
-                    // We need to draw the graph line for this lane. If there are no items 
+                    // We need to draw the graph line for this lane. If there are no items
                     // left in the lane we don't draw it.
                     int intoLane = AdvanceLane(curLane);
                     if (intoLane < curLane)
@@ -201,7 +200,7 @@ namespace GitUI.RevisionGridClasses
                     curLane--;
                 }
 
-                #endregion
+                #endregion Check for branches
 
                 // Look for lanes that cross and reorder to straighten them out if possible,
                 // and keep the lanes that merge next to each other.
@@ -254,7 +253,7 @@ namespace GitUI.RevisionGridClasses
                 //            if (currentRow.LaneInfoCount(laneInfo.ConnectLane) == 0)
                 //            {
                 //                // Remove the row laneInfo.ConnectLane and insert
-                //                // it at currentRow.NodeLane+1. 
+                //                // it at currentRow.NodeLane+1.
                 //                // Then start over searching for others if i != mergeFromCount-1?
                 //                int adjacentLane = currentRow.NodeLane + 1;
                 //                if (adjacentLane >= laneNodes.Count) Debugger.Break();
@@ -269,7 +268,7 @@ namespace GitUI.RevisionGridClasses
                 //    }
                 //}
 
-                #endregion
+                #endregion Straighten out lanes
 
                 if (currentRow.Node != null)
                 {
@@ -461,7 +460,7 @@ namespace GitUI.RevisionGridClasses
                     get { return edges.Current(col, row); }
                 }
 
-                #endregion
+                #endregion LaneRow Members
 
                 public void Add(int lane, Graph.LaneInfo data)
                 {
@@ -575,10 +574,10 @@ namespace GitUI.RevisionGridClasses
                     private readonly List<int> countEnd = new List<int>();
                     private readonly List<int> countStart = new List<int>();
                     private readonly List<Edge> edges = new List<Edge>();
-                    
-                    #pragma warning disable 0649
+
+#pragma warning disable 0649
                     private readonly Graph.LaneInfo emptyItem;
-                    #pragma warning restore 0649
+#pragma warning restore 0649
 
                     public List<Edge> EdgeList
                     {
@@ -725,10 +724,10 @@ namespace GitUI.RevisionGridClasses
                     }
                 }
 
-                #endregion
+                #endregion Nested type: Edges
             }
 
-            #endregion
+            #endregion Nested type: ActiveLaneRow
 
             #region Nested type: Edge
 
@@ -754,7 +753,7 @@ namespace GitUI.RevisionGridClasses
                 }
             }
 
-            #endregion
+            #endregion Nested type: Edge
 
             #region Nested type: LaneEnumerator
 
@@ -796,10 +795,10 @@ namespace GitUI.RevisionGridClasses
                     return index < lanes.laneRows.Count;
                 }
 
-                #endregion
+                #endregion IEnumerator<LaneRow> Members
             }
 
-            #endregion
+            #endregion Nested type: LaneEnumerator
 
             #region Nested type: LaneJunctionDetail
 
@@ -882,7 +881,7 @@ namespace GitUI.RevisionGridClasses
                 }
             }
 
-            #endregion
+            #endregion Nested type: LaneJunctionDetail
 
             #region Nested type: SavedLaneRow
 
@@ -964,7 +963,7 @@ namespace GitUI.RevisionGridClasses
                     return edges.Count(edge => edge.Start == lane);
                 }
 
-                #endregion
+                #endregion LaneRow Members
 
                 public override string ToString()
                 {
@@ -985,7 +984,7 @@ namespace GitUI.RevisionGridClasses
                 // Node information
             }
 
-            #endregion
+            #endregion Nested type: SavedLaneRow
         }
     }
 }

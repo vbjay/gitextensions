@@ -14,6 +14,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
     {
         private readonly TranslationString _noDictFile =
             new TranslationString("None");
+
         private readonly TranslationString _noDictFilesFound =
             new TranslationString("No dictionary files found in: {0}");
 
@@ -41,10 +42,13 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             {
                 case "compact":
                     return 1;
+
                 case "trimstart":
                     return 2;
+
                 case "fileNameOnly":
                     return 3;
+
                 default:
                     return 0;
             }
@@ -56,10 +60,13 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             {
                 case 1:
                     return "compact";
+
                 case 2:
                     return "trimstart";
+
                 case 3:
                     return "fileNameOnly";
+
                 default:
                     return "none";
             }
@@ -99,7 +106,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             SetCurrentApplicationFont(AppSettings.Font);
             SetCurrentDiffFont(AppSettings.DiffFont);
             SetCurrentCommitFont(AppSettings.CommitFont);
-
         }
 
         protected override void PageToSettings()
@@ -114,12 +120,15 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
                 case 1:
                     authorImageSize = 160;
                     break;
+
                 case 2:
                     authorImageSize = 240;
                     break;
+
                 case 3:
                     authorImageSize = 320;
                     break;
+
                 default:
                     authorImageSize = 80;
                     break;

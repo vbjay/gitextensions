@@ -15,7 +15,6 @@ namespace GitCommands.Repository
             Repositories.AllowRemove = true;
         }
 
-
         public RepositoryCategory(string description)
         {
             Description = description;
@@ -80,12 +79,12 @@ namespace GitCommands.Repository
                 Repositories.Clear();
 
                 var repository = new Repository
-                                     {
-                                         Title = "Error loading rssfeed from :" + RssFeedUrl,
-                                         Description = ex.Message,
-                                         Path = RssFeedUrl,
-                                         RepositoryType = RepositoryType.RssFeed
-                                     };
+                {
+                    Title = "Error loading rssfeed from :" + RssFeedUrl,
+                    Description = ex.Message,
+                    Path = RssFeedUrl,
+                    RepositoryType = RepositoryType.RssFeed
+                };
                 Repositories.Add(repository);
             }
         }
@@ -164,7 +163,6 @@ namespace GitCommands.Repository
         {
             Repositories.Remove(repository);
         }
-
 
         public void AddRepository(Repository repo)
         {

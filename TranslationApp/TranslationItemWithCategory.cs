@@ -22,6 +22,7 @@ namespace TranslationApp
         public string Category { get; set; }
 
         private TranslationItem _item;
+
         public TranslationItem GetTranslationItem()
         {
             return _item;
@@ -30,6 +31,7 @@ namespace TranslationApp
         public string Name { get { return _item.Name; } set { _item.Name = value; } }
         public string Property { get { return _item.Property; } set { _item.Property = value; } }
         public string NeutralValue { get { return _item.Source; } set { _item.Source = value; } }
+
         public string TranslatedValue
         {
             get { return _item.Value; }

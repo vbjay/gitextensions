@@ -16,7 +16,9 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
         #region Properties
 
         #region Settings
+
         private HotkeySettings[] _Settings;
+
         private HotkeySettings[] Settings
         {
             get { return _Settings; }
@@ -26,10 +28,13 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
                 UpdateCombobox(value);
             }
         }
-        #endregion
+
+        #endregion Settings
 
         #region SelectedHotkeySettings
+
         private HotkeySettings _SelectedHotkeySettings;
+
         private HotkeySettings SelectedHotkeySettings
         {
             get { return _SelectedHotkeySettings; }
@@ -40,10 +45,12 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             }
         }
 
-        #endregion
+        #endregion SelectedHotkeySettings
 
         #region SelectedHotkeyCommand
+
         private HotkeyCommand _SelectedHotkeyCommand;
+
         private HotkeyCommand SelectedHotkeyCommand
         {
             get { return _SelectedHotkeyCommand; }
@@ -53,9 +60,10 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
                 UpdateTextBox(value);
             }
         }
-        #endregion
 
-        #endregion
+        #endregion SelectedHotkeyCommand
+
+        #endregion Properties
 
         public ControlHotkeys()
         {
@@ -96,7 +104,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
                 {
                     if (cmd != null)
                     {
-                        var item = new ListViewItem(new[] {cmd.Name, cmd.KeyData.ToText() ?? _hotkeyNotSet.Text});
+                        var item = new ListViewItem(new[] { cmd.Name, cmd.KeyData.ToText() ?? _hotkeyNotSet.Text });
                         item.Tag = cmd;
                         this.listMappings.Items.Add(item);
                     }
@@ -162,6 +170,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             this.Settings = HotkeySettingsManager.CreateDefaultSettings();
         }
 
-        #endregion
+        #endregion Methods
     }
 }

@@ -13,24 +13,34 @@ namespace GitUI.CommandsDialogs
     public partial class FormFormatPatch : GitModuleForm
     {
         private readonly TranslationString _currentBranchText = new TranslationString("Current branch:");
+
         private readonly TranslationString _noOutputPathEnteredText =
             new TranslationString("You need to enter an output path.");
+
         private readonly TranslationString _noEmailEnteredText =
             new TranslationString("You need to enter an email address.");
+
         private readonly TranslationString _noSubjectEnteredText =
             new TranslationString("You need to enter a mail subject.");
+
         private readonly TranslationString _wrongSmtpSettingsText =
             new TranslationString("You need to enter a valid smtp in the settings dialog.");
+
         private readonly TranslationString _twoRevisionsNeededText =
             new TranslationString("You need to select two revisions");
+
         private readonly TranslationString _twoRevisionsNeededCaption =
             new TranslationString("Patch error");
+
         private readonly TranslationString _sendMailResult =
             new TranslationString("Send to:");
+
         private readonly TranslationString _sendMailResultFailed =
             new TranslationString("Failed to send mail.");
+
         private readonly TranslationString _patchResultCaption =
             new TranslationString("Patch result");
+
         private readonly TranslationString _noGitMailConfigured =
             new TranslationString("There is no email address configured in the settings dialog.");
 
@@ -71,7 +81,7 @@ namespace GitUI.CommandsDialogs
         private void OutputPath_TextChanged(object sender, EventArgs e)
         {
             if (Directory.Exists(OutputPath.Text))
-               AppSettings.LastFormatPatchDir = OutputPath.Text;
+                AppSettings.LastFormatPatchDir = OutputPath.Text;
         }
 
         private void FormatPatch_Click(object sender, EventArgs e)
@@ -152,10 +162,10 @@ namespace GitUI.CommandsDialogs
             }
             else
                 if (string.IsNullOrEmpty(rev1) || string.IsNullOrEmpty(rev2))
-                {
-                    MessageBox.Show(this, _twoRevisionsNeededText.Text, _twoRevisionsNeededCaption.Text);
-                    return;
-                }
+            {
+                MessageBox.Show(this, _twoRevisionsNeededText.Text, _twoRevisionsNeededCaption.Text);
+                return;
+            }
 
             if (!SaveToDir.Checked)
             {
@@ -164,7 +174,6 @@ namespace GitUI.CommandsDialogs
                     result += _sendMailResult.Text + " " + MailTo.Text;
                 else
                     result += _sendMailResultFailed.Text;
-
 
                 //Clean up
                 if (Directory.Exists(savePatchesToDir))

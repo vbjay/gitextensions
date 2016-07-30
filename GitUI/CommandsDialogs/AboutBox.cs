@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Drawing;
-using GitUI.Properties;
 using GitUI.CommandsDialogs.AboutBoxDialog;
-using ResourceManager;
+using GitUI.Properties;
 
 namespace GitUI.CommandsDialogs
 {
@@ -10,7 +9,7 @@ namespace GitUI.CommandsDialogs
     {
         public AboutBox()
         {
-            _contributersList = string.Join(", ", new []{Coders, Translators,
+            _contributersList = string.Join(", ", new[]{Coders, Translators,
                 Designers, Other})
                 .Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -45,7 +44,6 @@ namespace GitUI.CommandsDialogs
 
         private void labelVersion_Click(object sender, EventArgs e)
         {
-
         }
 
         private void pictureBox1_Click(object sender, EventArgs e)

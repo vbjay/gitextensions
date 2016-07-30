@@ -148,7 +148,7 @@ namespace GitUI.BuildServerIntegration
                         catch (CryptographicException)
                         {
                             // As per MSDN, the ProtectedData.Unprotect method is per user,
-                            // it will throw the CryptographicException if the current user 
+                            // it will throw the CryptographicException if the current user
                             // is not the one who protected the data.
 
                             // Set this variable to false so the user can reset the credentials.
@@ -218,23 +218,23 @@ namespace GitUI.BuildServerIntegration
             if (BuildStatusImageColumnIndex == -1)
             {
                 var buildStatusImageColumn = new DataGridViewImageColumn
-                                                 {
-                                                     AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
-                                                     Width = 16,
-                                                     ReadOnly = true,
-                                                     SortMode = DataGridViewColumnSortMode.NotSortable
-                                                 };
+                {
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
+                    Width = 16,
+                    ReadOnly = true,
+                    SortMode = DataGridViewColumnSortMode.NotSortable
+                };
                 BuildStatusImageColumnIndex = revisions.Columns.Add(buildStatusImageColumn);
             }
 
             if (BuildStatusMessageColumnIndex == -1 && Module.EffectiveSettings.BuildServer.ShowBuildSummaryInGrid.ValueOrDefault)
             {
                 var buildMessageTextBoxColumn = new DataGridViewTextBoxColumn
-                                                {
-                                                    AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                                                    ReadOnly = true,
-                                                    SortMode = DataGridViewColumnSortMode.NotSortable
-                                                };
+                {
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+                    ReadOnly = true,
+                    SortMode = DataGridViewColumnSortMode.NotSortable
+                };
 
                 BuildStatusMessageColumnIndex = revisions.Columns.Add(buildMessageTextBoxColumn);
             }

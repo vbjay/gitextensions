@@ -75,8 +75,8 @@ namespace Gravatar
 
     public class GravatarService
     {
-        static IImageCache cache;
-        static object gravatarServiceLock = new object();
+        private static IImageCache cache;
+        private static object gravatarServiceLock = new object();
 
         /// <summary>
         /// Provides a mapping for the image defaults.
@@ -141,7 +141,6 @@ namespace Gravatar
                 {
                     return cache.LoadImageFromCache(imageFileName, null);
                 }
-
             }
             catch (Exception ex)
             {
@@ -151,13 +150,13 @@ namespace Gravatar
             return null;
         }
 
-        static bool IsValidEmail(string strIn)
+        private static bool IsValidEmail(string strIn)
         {
             // Return true if strIn is in valid e-mail format.
             return Regex.IsMatch(strIn, @"^([\w-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([\w-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$");
         }
 
-        public static void CacheImage(string imageFileName, string email, int imageSize, 
+        public static void CacheImage(string imageFileName, string email, int imageSize,
                                         FallBackService fallBack)
         {
             try
@@ -229,7 +228,6 @@ namespace Gravatar
         {
             return MD5.CalcMD5(email.Trim().ToLowerInvariant());
         }
-
 
         /// <summary>
         /// BuildGravatarUrl with default parameters
@@ -304,10 +302,10 @@ namespace Gravatar
         public static void OpenGravatarRegistration()
         {
             new Process
-                {
-                    EnableRaisingEvents = false,
-                    StartInfo = { FileName = @"http://www.gravatar.com" }
-                }.Start();
+            {
+                EnableRaisingEvents = false,
+                StartInfo = { FileName = @"http://www.gravatar.com" }
+            }.Start();
         }
     }
 }

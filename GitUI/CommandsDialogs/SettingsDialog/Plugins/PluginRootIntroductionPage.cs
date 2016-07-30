@@ -10,7 +10,7 @@
         }
 
         protected override void SettingsToPage()
-        {            
+        {
         }
 
         protected override void PageToSettings()

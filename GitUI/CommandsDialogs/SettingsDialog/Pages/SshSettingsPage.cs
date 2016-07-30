@@ -9,7 +9,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
 {
     public partial class SshSettingsPage : SettingsPageWithHeader
     {
-
         public SshSettingsPage()
         {
             InitializeComponent();

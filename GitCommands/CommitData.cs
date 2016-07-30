@@ -90,7 +90,7 @@ namespace GitCommands
 
             //Do not cache this command, since notes can be added
             string arguments = string.Format(CultureInfo.InvariantCulture,
-                    "log -1 --pretty=\"format:"+LogFormat+"\" {0}", sha1);
+                    "log -1 --pretty=\"format:" + LogFormat + "\" {0}", sha1);
             var info = module.RunGitCmd(arguments, GitModule.LosslessEncoding);
 
             if (info.Trim().StartsWith("fatal"))
@@ -138,7 +138,7 @@ namespace GitCommands
             var treeGuid = lines[1];
 
             // TODO: we can use this to add more relationship info like gitk does if wanted
-            string[] parentLines = lines[2].Split(new char[]{' '});
+            string[] parentLines = lines[2].Split(new char[] { ' ' });
             ReadOnlyCollection<string> parentGuids = parentLines.ToList().AsReadOnly();
 
             var author = aModule.ReEncodeStringFromLossless(lines[3]);

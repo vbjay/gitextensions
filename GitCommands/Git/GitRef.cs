@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using GitCommands.Config;
 using GitCommands.Settings;
 
 namespace GitCommands
@@ -10,18 +9,22 @@ namespace GitCommands
         private readonly string _mergeSettingName;
         private readonly string _remoteSettingName;
         private IList<IGitItem> _subItems;
-       
+
         /// <summary>"refs/tags/"</summary>
         public static readonly string RefsTagsPrefix = "refs/tags/";
+
         /// <summary>"refs/heads/"</summary>
         public static readonly string RefsHeadsPrefix = "refs/heads/";
+
         /// <summary>"refs/remotes/"</summary>
         public static readonly string RefsRemotesPrefix = "refs/remotes/";
+
         /// <summary>"refs/bisect/"</summary>
         public static readonly string RefsBisectPrefix = "refs/bisect/";
+
         /// <summary>"^{}"</summary>
         public static readonly string TagDereferenceSuffix = "^{}";
-       
+
         public GitModule Module { get; private set; }
 
         public GitRef(GitModule module, string guid, string completeName)
@@ -60,8 +63,8 @@ namespace GitCommands
         public bool IsBisect { get; private set; }
 
         /// <summary>
-        /// True when Guid is a checksum of an object (e.g. commit) to which another object 
-        /// with Name (e.g. annotated tag) is applied. 
+        /// True when Guid is a checksum of an object (e.g. commit) to which another object
+        /// with Name (e.g. annotated tag) is applied.
         /// <para>False when Name and Guid are denoting the same object.</para>
         /// </summary>
         public bool IsDereference { get; private set; }
@@ -140,7 +143,6 @@ namespace GitCommands
             return merge.StartsWith(RefsHeadsPrefix) ? merge.Substring(11) : merge;
         }
 
-
         public static GitRef NoHead(GitModule module)
         {
             return new GitRef(module, null, "");
@@ -156,7 +158,7 @@ namespace GitCommands
             get { return _subItems ?? (_subItems = Module.GetTree(Guid, false)); }
         }
 
-        #endregion
+        #endregion IGitItem Members
 
         public override string ToString()
         {
@@ -168,7 +170,7 @@ namespace GitCommands
             if (IsRemote)
             {
                 Name = CompleteName.Substring(CompleteName.LastIndexOf("remotes/") + 8);
-            } 
+            }
             else if (IsTag)
             {
                 // we need the one containing ^{}, because it contains the reference

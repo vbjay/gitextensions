@@ -10,45 +10,53 @@ namespace GitUI.UserControls
     public enum ListViewGroupState : uint
     {
         /// <summary>
-        /// Groups are expanded, the group name is displayed, 
+        /// Groups are expanded, the group name is displayed,
         /// and all items in the group are displayed.
         /// </summary>
         Normal = 0,
+
         /// <summary>
         /// The group is collapsed.
         /// </summary>
         Collapsed = 1,
+
         /// <summary>
         /// The group is hidden.
         /// </summary>
         Hidden = 2,
+
         /// <summary>
         /// Version 6.00 and Windows Vista. The group does not display a header.
         /// </summary>
         NoHeader = 4,
+
         /// <summary>
         /// Version 6.00 and Windows Vista. The group can be collapsed.
         /// </summary>
         Collapsible = 8,
+
         /// <summary>
         /// Version 6.00 and Windows Vista. The group has keyboard focus.
         /// </summary>
         Focused = 16,
+
         /// <summary>
         /// Version 6.00 and Windows Vista. The group is selected.
         /// </summary>
         Selected = 32,
+
         /// <summary>
         /// Version 6.00 and Windows Vista. The group displays only a portion of its items.
         /// </summary>
         SubSeted = 64,
+
         /// <summary>
         /// Version 6.00 and Windows Vista. The subset link of the group has keyboard focus.
         /// </summary>
         SubSetLinkFocused = 128
     }
 
-    class ExListView : ListView
+    internal class ExListView : ListView
     {
         public ExListView()
         {
@@ -56,6 +64,7 @@ namespace GitUI.UserControls
         }
 
 #if !__MonoCS__
+
         #region Win32 Apis
 
         protected class NativeMethods
@@ -134,6 +143,7 @@ namespace GitUI.UserControls
                 public LVHITTESTFLAGS flags;
                 public int iItem;
                 public int iSubItem;
+
                 // Vista/Win7+
                 public int iGroup;
             }
@@ -153,8 +163,10 @@ namespace GitUI.UserControls
                 LVHT_BELOW = 0x00000010,
                 LVHT_TORIGHT = 0x00000020,
                 LVHT_TOLEFT = 0x00000040,
+
                 // Vista/Win7+ only
                 LVHT_EX_GROUP_HEADER = 0x10000000,
+
                 LVHT_EX_GROUP_FOOTER = 0x20000000,
                 LVHT_EX_GROUP_COLLAPSE = 0x40000000,
                 LVHT_EX_GROUP_BACKGROUND = 0x80000000,
@@ -186,11 +198,15 @@ namespace GitUI.UserControls
             {
                 public int CbSize;
                 public ListViewGroupMask Mask;
+
                 [MarshalAs(UnmanagedType.LPWStr)]
                 public string PszHeader;
+
                 public int CchHeader;
+
                 [MarshalAs(UnmanagedType.LPWStr)]
                 public string PszFooter;
+
                 public int CchFooter;
                 public int IGroupId;
                 public int StateMask;
@@ -198,7 +214,8 @@ namespace GitUI.UserControls
                 public uint UAlign;
             }
         }
-        #endregion
+
+        #endregion Win32 Apis
 
         private bool _isInWmPaintMsg;
 
@@ -211,6 +228,7 @@ namespace GitUI.UserControls
                     base.WndProc(ref m);
                     _isInWmPaintMsg = false;
                     break;
+
                 case NativeMethods.WM_REFLECT_NOTIFY:
                     var nmhdr = (NativeMethods.NMHDR)m.GetLParam(typeof(NativeMethods.NMHDR));
                     if (nmhdr.code == -12)
@@ -222,6 +240,7 @@ namespace GitUI.UserControls
                     else
                         base.WndProc(ref m);
                     break;
+
                 case NativeMethods.WM_LBUTTONUP:
                 case NativeMethods.WM_LBUTTONDOWN:
                     var info = new NativeMethods.LVHITTESTINFO();
@@ -235,6 +254,7 @@ namespace GitUI.UserControls
                             return;
                     base.WndProc(ref m);
                     break;
+
                 default:
                     base.WndProc(ref m);
                     break;
@@ -277,12 +297,13 @@ namespace GitUI.UserControls
                 NativeMethods.LVM_SETGROUPINFO, (IntPtr)group.IGroupId, ref group);
             Refresh();
         }
+
 #endif
 
         public void SetGroupState(ListViewGroupState state)
         {
 #if !__MonoCS__
-            if (!EnvUtils.RunningOnWindows() || Environment.OSVersion.Version.Major < 6)   //Only Vista and forward 
+            if (!EnvUtils.RunningOnWindows() || Environment.OSVersion.Version.Major < 6)   //Only Vista and forward
                 // allows collapse of ListViewGroups
                 return;
             foreach (ListViewGroup lvg in Groups)

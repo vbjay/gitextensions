@@ -1,10 +1,9 @@
-﻿using System.Collections.Generic;
-
-namespace GitUIPluginInterfaces
+﻿namespace GitUIPluginInterfaces
 {
     public interface IGitPluginSettingsContainer
     {
         ISettingsSource GetSettingsSource();
+
         void SetSettingsSource(ISettingsSource settingsSource);
     }
 }

@@ -47,6 +47,7 @@ namespace GitCommands
             Hash = hash;
             Filename = filename;
         }
+
         public string Hash;
         public string Filename;
     }
@@ -61,6 +62,7 @@ namespace GitCommands
             Local = _local;
             Remote = _remote;
         }
+
         public ConflictedFileData Base;
         public ConflictedFileData Local;
         public ConflictedFileData Remote;
@@ -127,7 +129,7 @@ namespace GitCommands
             }
         }
 
-        #endregion
+        #endregion IGitCommands
 
         private bool _superprojectInit;
         private GitModule _superprojectModule;
@@ -186,6 +188,7 @@ namespace GitCommands
         }
 
         private RepoDistSettings _effectiveSettings;
+
         public RepoDistSettings EffectiveSettings
         {
             get
@@ -206,6 +209,7 @@ namespace GitCommands
         }
 
         private RepoDistSettings _distributedSettings;
+
         public RepoDistSettings DistributedSettings
         {
             get
@@ -221,6 +225,7 @@ namespace GitCommands
         }
 
         private RepoDistSettings _localSettings;
+
         public RepoDistSettings LocalSettings
         {
             get
@@ -236,6 +241,7 @@ namespace GitCommands
         }
 
         private ConfigFileSettings _effectiveConfigFile;
+
         public ConfigFileSettings EffectiveConfigFile
         {
             get
@@ -260,6 +266,7 @@ namespace GitCommands
 
         //encoding for files paths
         private static Encoding _systemEncoding;
+
         public static Encoding SystemEncoding
         {
             get
@@ -490,11 +497,11 @@ namespace GitCommands
             var executionStartTimestamp = DateTime.Now;
 
             var startInfo = new ProcessStartInfo
-                                {
-                                    FileName = fileName,
-                                    Arguments = arguments,
-                                    WorkingDirectory = workingDir
-                                };
+            {
+                FileName = fileName,
+                Arguments = arguments,
+                WorkingDirectory = workingDir
+            };
             if (!showConsole)
             {
                 startInfo.UseShellExecute = false;
@@ -1399,7 +1406,6 @@ namespace GitCommands
             return RunGitCmd("checkout-index --index --force -- \"" + file + "\"");
         }
 
-
         public string FormatPatch(string from, string to, string output, int start)
         {
             output = output.ToPosixPath();
@@ -1534,7 +1540,7 @@ namespace GitCommands
 
             string arguments = fetchTags == true ? " --tags" : fetchTags == false ? " --no-tags" : "";
 
-            if(isUnshallow)
+            if (isUnshallow)
                 arguments += " --unshallow";
 
             return "\"" + remote.Trim() + "\" " + remoteBranchArguments + localBranchArguments + arguments;
@@ -1869,7 +1875,6 @@ namespace GitCommands
             int next;
             int.TryParse(nextFile, out next);
 
-
             var files = new string[0];
             if (Directory.Exists(GetRebaseDir()))
                 files = Directory.GetFiles(GetRebaseDir());
@@ -1883,12 +1888,12 @@ namespace GitCommands
 
                 var patchFile =
                     new PatchFile
-                        {
-                            Name = file,
-                            FullName = fullFileName,
-                            IsNext = n == next,
-                            IsSkipped = n < next
-                        };
+                    {
+                        Name = file,
+                        FullName = fullFileName,
+                        IsNext = n == next,
+                        IsSkipped = n < next
+                    };
 
                 if (File.Exists(GetRebaseDir() + file))
                 {
@@ -1916,12 +1921,14 @@ namespace GitCommands
                                     else
                                         patchFile.Author = value;
                                     break;
+
                                 case "Date":
                                     if (value.IndexOf('+') > 0 && value.IndexOf('<') < value.Length)
                                         patchFile.Date = value.Substring(0, value.IndexOf('+')).Trim();
                                     else
                                         patchFile.Date = value;
                                     break;
+
                                 case "Subject":
                                     patchFile.Subject = value;
                                     break;
@@ -2650,7 +2657,7 @@ namespace GitCommands
         /// </summary>
         public string GetTagMessage(string tag)
         {
-            if( string.IsNullOrWhiteSpace(tag))
+            if (string.IsNullOrWhiteSpace(tag))
                 return null;
 
             tag = tag.Trim();
@@ -2816,7 +2823,6 @@ namespace GitCommands
                 string[] s = blob.Split(new char[] { ' ', '\t' });
                 if (s.Length >= 2)
                     return s[1];
-
             }
             else
             {
@@ -2883,7 +2889,6 @@ namespace GitCommands
                     cm = cm.Substring(idx + 1, cm.Length - idx - 1);
                     cm = ReEncodeCommitMessage(cm, encodingName);
                     return cm;
-
                 });
         }
 
@@ -3122,7 +3127,6 @@ namespace GitCommands
         //characters could be replaced by replacement character while reencoding to LogOutputEncoding
         public string ReEncodeCommitMessage(string s, string toEncodingName)
         {
-
             bool isABug = true;
 
             Encoding encoding;
@@ -3141,7 +3145,6 @@ namespace GitCommands
                 }
                 else//if bug will be fixed, git should recode commit message to LogOutputEncoding
                     encoding = LogOutputEncoding;
-
             }
             catch (Exception)
             {
@@ -3205,7 +3208,7 @@ namespace GitCommands
             return (other != null) && Equals(other);
         }
 
-        bool Equals(GitModule other)
+        private bool Equals(GitModule other)
         {
             return
                 string.Equals(_workingDir, other._workingDir) &&
@@ -3249,7 +3252,7 @@ namespace GitCommands
                 return ret;
             }
 
-            var files = fileList.Split(new []{'\0'}, StringSplitOptions.RemoveEmptyEntries);
+            var files = fileList.Split(new[] { '\0' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var file in files)
             {
                 var item = new GitItemStatus
@@ -3276,7 +3279,7 @@ namespace GitCommands
                 revisionOfMergeCommit.Guid,
                 AppSettings.UsePatienceDiffAlgorithm ? "--patience" : "",
                 filePath,
-                AppSettings.OmitUninterestingDiff? "--cc" : "-c -p");
+                AppSettings.OmitUninterestingDiff ? "--cc" : "-c -p");
 
             var patchManager = new PatchManager();
             var patch = RunCacheableCmd(AppSettings.GitCommand, cmd, LosslessEncoding);

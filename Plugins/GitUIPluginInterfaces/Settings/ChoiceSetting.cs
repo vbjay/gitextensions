@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace GitUIPluginInterfaces
 {
-    public class ChoiceSetting: ISetting
+    public class ChoiceSetting : ISetting
     {
         public ChoiceSetting(string aName, List<string> values, string aDefaultValue = null)
             : this(aName, aName, values, aDefaultValue)
@@ -29,18 +28,17 @@ namespace GitUIPluginInterfaces
         public ISettingControlBinding CreateControlBinding()
         {
             return new ComboBoxBinding(this);
-    }
+        }
 
         private class ComboBoxBinding : SettingControlBinding<ChoiceSetting, ComboBox>
         {
-
             public ComboBoxBinding(ChoiceSetting aSetting)
                 : base(aSetting)
             { }
 
             public override ComboBox CreateControl()
             {
-                var comboBox = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList};
+                var comboBox = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
                 comboBox.Items.AddRange(Setting.Values.ToArray());
                 return comboBox;
             }

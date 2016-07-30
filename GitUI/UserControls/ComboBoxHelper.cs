@@ -13,7 +13,7 @@ namespace GitUI.UserControls
                 foreach (object obj in comboBox.Items)
                 {
                     var area = graphics.MeasureString(obj.ToString(), comboBox.Font);
-                    calculatedWidth = Math.Max((int) area.Width, calculatedWidth);
+                    calculatedWidth = Math.Max((int)area.Width, calculatedWidth);
                 }
             }
             comboBox.DropDownWidth = Math.Min(Math.Max(calculatedWidth, minWidth), maxWidth);

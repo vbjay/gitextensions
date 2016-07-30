@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Windows.Forms;
 using GitCommands;
 using GitCommands.Config;
@@ -16,11 +15,14 @@ namespace GitUI
     public partial class FormRemoteProcess : FormProcess
     {
         #region Translation
+
         private readonly TranslationString _fingerprintNotRegistredText =
             new TranslationString("The fingerprint of this host is not registered by PuTTY." + Environment.NewLine + "This causes this process to hang, and that why it is automatically stopped." + Environment.NewLine + Environment.NewLine + "When the connection is opened detached from Git and GitExtensions, the host's fingerprint can be registered." + Environment.NewLine + "You could also manually add the host's fingerprint or run Test Connection from the remotes dialog." + Environment.NewLine + Environment.NewLine + "Do you want to register the host's fingerprint and restart the process?");
+
         private readonly TranslationString _fingerprintNotRegistredTextCaption =
             new TranslationString("Host Fingerprint not registered");
-        #endregion
+
+        #endregion Translation
 
         public bool Plink { get; set; }
         private bool restart;
@@ -58,6 +60,7 @@ namespace GitUI
         }
 
         private string UrlTryingToConnect = string.Empty;
+
         /// <summary>
         /// When cloning a remote using putty, sometimes an error occurs that the fingerprint is not known.
         /// This is fixed by trying to connect from the command line, and choose yes when asked for storing
@@ -68,15 +71,12 @@ namespace GitUI
             UrlTryingToConnect = url;
         }
 
-
-
         protected override void BeforeProcessStart()
         {
             restart = false;
             Plink = GitCommandHelpers.Plink();
             base.BeforeProcessStart();
         }
-
 
         protected override bool HandleOnExit(ref bool isError)
         {
@@ -85,7 +85,6 @@ namespace GitUI
                 Retry();
                 return true;
             }
-
 
             // An error occurred!
             if (isError && Plink)
@@ -99,14 +98,14 @@ namespace GitUI
                 }
                 */
 
-                // If the authentication failed because of a missing key, ask the user to supply one. 
+                // If the authentication failed because of a missing key, ask the user to supply one.
                 if (GetOutputString().Contains("FATAL ERROR") && GetOutputString().Contains("authentication"))
                 {
                     string loadedKey;
                     if (FormPuttyError.AskForKey(this, out loadedKey))
                     {
                         // To prevent future authentication errors, save this key for this remote.
-                        if (!String.IsNullOrEmpty(loadedKey) && !String.IsNullOrEmpty(this.Remote) && 
+                        if (!String.IsNullOrEmpty(loadedKey) && !String.IsNullOrEmpty(this.Remote) &&
                             String.IsNullOrEmpty(Module.GetPathSetting("remote.{0}.puttykeyfile")))
                             Module.SetPathSetting(string.Format("remote.{0}.puttykeyfile", this.Remote), loadedKey);
 
@@ -177,6 +176,5 @@ namespace GitUI
             }
             base.DataReceived(sender, e);
         }
-
     }
 }

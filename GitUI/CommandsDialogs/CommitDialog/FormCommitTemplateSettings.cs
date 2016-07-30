@@ -45,14 +45,13 @@ namespace GitUI.CommandsDialogs.CommitDialog
             _NO_TRANSLATE_comboBoxCommitTemplates.Items.Clear();
 
             for (int i = 0; i < _commitTemplates.Length; i++)
-            {           
+            {
                 _NO_TRANSLATE_comboBoxCommitTemplates.Items.Add(String.Empty);
                 RefreshLineInListBox(i);
             }
 
             _NO_TRANSLATE_comboBoxCommitTemplates.SelectedIndex = 0;
             checkBoxAutoWrap.Checked = AppSettings.CommitValidationAutoWrap;
-
         }
 
         private void SaveSettings()
@@ -66,7 +65,6 @@ namespace GitUI.CommandsDialogs.CommitDialog
             CommitTemplateItem.SaveToSettings(_commitTemplates);
             AppSettings.CommitValidationAutoWrap = checkBoxAutoWrap.Checked;
         }
-
 
         private void buttonOk_Click(object sender, EventArgs e)
         {

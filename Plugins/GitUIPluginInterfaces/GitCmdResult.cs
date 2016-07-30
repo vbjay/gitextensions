@@ -19,6 +19,5 @@ namespace GitUIPluginInterfaces
                 sb.Append(this.StdError);
             return sb.ToString();
         }
-
     }
 }

@@ -60,7 +60,6 @@ namespace GitCommands.Config
             parser.Parse(str);
         }
 
-
         public static string EscapeValue(string value)
         {
             value = value.Replace("\\", "\\\\");
@@ -106,8 +105,6 @@ namespace GitCommands.Config
 
         public void Save(string fileName)
         {
-
-
             try
             {
                 FileInfoExtensions
@@ -300,8 +297,10 @@ namespace GitCommands.Config
             private ConfigSection _section = null;
             private string FileName { get { return _configFile._fileName; } }
             private string _key = null;
+
             //parsed char
             private int pos;
+
             private StringBuilder token = new StringBuilder();
             private StringBuilder valueToken = new StringBuilder();
 
@@ -372,9 +371,11 @@ namespace GitCommands.Config
                         case '"':
                             token.Append(c);
                             break;
+
                         case 't':
                             token.Append('\t');
                             break;
+
                         default:
                             throw new Exception("Invalid escape character: " + Regex.Escape(c.ToString()));
                     }
@@ -388,9 +389,11 @@ namespace GitCommands.Config
                         case '\\':
                             _escapedSection = true;
                             return ReadSection;
+
                         case ']':
                             NewSection();
                             return ReadUnknown;
+
                         default:
                             token.Append(c);
                             return ReadSection;
@@ -411,6 +414,7 @@ namespace GitCommands.Config
                         }
                         else
                             return ReadUnknown;
+
                     default:
                         token.Append(c);
                         return ReadComment;
@@ -424,11 +428,13 @@ namespace GitCommands.Config
                     case '=':
                         NewKey();
                         return ReadValue;
+
                     case '\n':
                         NewKey();
                         token.Append("true");
                         NewValue();
                         return ReadUnknown;
+
                     default:
                         token.Append(c);
                         return ReadKey;
@@ -448,14 +454,18 @@ namespace GitCommands.Config
                         case '"':
                             valueToken.Append(c);
                             break;
+
                         case 't':
                             valueToken.Append('\t');
                             break;
+
                         case 'n':
                             valueToken.Append('\n');
                             break;
+
                         case '\r':
                             return ReadValue;
+
                         case '\n':
                             //line continuation
                             break;
@@ -473,6 +483,7 @@ namespace GitCommands.Config
                         case '\\':
                             _escapedValue = true;
                             return ReadValue;
+
                         case '"':
                             if (_quotedValue)
                             {
@@ -485,6 +496,7 @@ namespace GitCommands.Config
                             valueToken.Clear();
                             _quotedValue = !_quotedValue;
                             return ReadValue;
+
                         case ';':
                         case '#':
                             if (_quotedValue)
@@ -494,11 +506,14 @@ namespace GitCommands.Config
                             }
                             NewValue();
                             return ReadComment;
+
                         case '\r':
                             return ReadValue;
+
                         case '\n':
                             NewValue();
                             return ReadUnknown;
+
                         default:
                             valueToken.Append(c);
                             return ReadValue;
@@ -514,21 +529,24 @@ namespace GitCommands.Config
                 {
                     case '[':
                         return ReadSection;
+
                     case ' ':
                     case '\t':
                     case '\n':
                     case '\r':
                         return ReadUnknown;
+
                     case ';':
                     case '#':
                         return ReadComment;
+
                     default:
                         token.Append(c);
                         return ReadKey;
                 }
             }
-
         }
-        #endregion
+
+        #endregion ConfigFileParser
     }
 }

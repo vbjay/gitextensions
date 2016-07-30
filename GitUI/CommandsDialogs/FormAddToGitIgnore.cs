@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Windows.Forms;
 using GitCommands;
 using ResourceManager;
@@ -85,7 +84,7 @@ namespace GitUI.CommandsDialogs
             _ignoredFilesLoader.Cancel();
             if (_NO_TRANSLATE_Preview.Enabled)
             {
-                _ignoredFilesLoader.Delay = 300;           
+                _ignoredFilesLoader.Delay = 300;
                 _NO_TRANSLATE_filesWillBeIgnored.Text = _updateStatusString.Text;
                 _NO_TRANSLATE_Preview.DataSource = new List<string> { _updateStatusString.Text };
                 _NO_TRANSLATE_Preview.Enabled = false;
@@ -93,7 +92,5 @@ namespace GitUI.CommandsDialogs
 
             _ignoredFilesLoader.Load(() => Module.GetIgnoredFiles(GetCurrentPatterns()), UpdatePreviewPanel);
         }
-
-
     }
 }

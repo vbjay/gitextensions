@@ -15,7 +15,7 @@ namespace TeamCityIntegration.Settings
             LoadProjects(teamCityServerUrl);
         }
 
-        struct Node
+        private struct Node
         {
             public string Name;
             public bool Loaded;
@@ -34,12 +34,12 @@ namespace TeamCityIntegration.Settings
             treeViewTeamCityProjects.Nodes.Clear();
             treeViewTeamCityProjects.Nodes.AddRange(projects.Select(p => new TreeNode(p)
             {
-                Tag = new Node {IsProject = true, Loaded = false, Name = p},
+                Tag = new Node { IsProject = true, Loaded = false, Name = p },
             }).ToArray());
 
             foreach (TreeNode node in treeViewTeamCityProjects.Nodes)
             {
-                node.Nodes.Add((TreeNode) loadingNode.Clone());
+                node.Nodes.Add((TreeNode)loadingNode.Clone());
             }
         }
 
@@ -76,7 +76,7 @@ namespace TeamCityIntegration.Settings
             if (treeViewTeamCityProjects.SelectedNode == null)
                 return;
 
-            var node = (Node) treeViewTeamCityProjects.SelectedNode.Tag;
+            var node = (Node)treeViewTeamCityProjects.SelectedNode.Tag;
             if (node.IsProject)
                 return;
             TeamCityProjectName = node.ParentProject;

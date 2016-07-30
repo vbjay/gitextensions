@@ -48,8 +48,8 @@ namespace GitCommands
 
                 process.Exited += (sender, args) =>
                 {
-                  var executionEndTimestamp = DateTime.Now;
-                  AppSettings.GitLog.Log (quotedCmd + " " + arguments, executionStartTimestamp, executionEndTimestamp);
+                    var executionEndTimestamp = DateTime.Now;
+                    AppSettings.GitLog.Log(quotedCmd + " " + arguments, executionStartTimestamp, executionEndTimestamp);
                 };
 
                 process.Start();
@@ -102,6 +102,7 @@ namespace GitCommands
         }
 
         public event DataReceivedEventHandler DataReceived;
+
         public event EventHandler Exited;
 
         private void ProcessExited(object sender, EventArgs e)
@@ -116,7 +117,7 @@ namespace GitCommands
                         //The process is exited already, but this command waits also until all output is received.
                         //Only WaitForExit when someone is connected to the exited event. For some reason a
                         //null reference is thrown sometimes when staging/unstaging in the commit dialog when
-                        //we wait for exit, probably a timing issue... 
+                        //we wait for exit, probably a timing issue...
                         _myProcess.WaitForExit();
 
                         Exited(this, e);

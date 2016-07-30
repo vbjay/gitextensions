@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 
 namespace GitCommands
 {
@@ -42,9 +39,13 @@ namespace GitCommands
         }
 
         protected abstract void SaveImpl();
+
         protected abstract void LoadImpl();
-        protected abstract void SetValueImpl(string key, string value);        
+
+        protected abstract void SetValueImpl(string key, string value);
+
         protected abstract string GetValueImpl(string key);
+
         protected abstract bool NeedRefresh();
 
         protected virtual void ClearImpl()
@@ -73,17 +74,16 @@ namespace GitCommands
 
         public void Import(IEnumerable<Tuple<string, string>> keyValuePairs)
         {
-                LockedAction(() =>
+            LockedAction(() =>
+            {
+                foreach (var pair in keyValuePairs)
                 {
-                    foreach(var pair in keyValuePairs)
-                    {
-                        if (pair.Item2 != null)
-                            SetValueImpl(pair.Item1, pair.Item2);
-                    }
+                    if (pair.Item2 != null)
+                        SetValueImpl(pair.Item1, pair.Item2);
+                }
 
-                    Save();
-                });
-
+                Save();
+            });
         }
 
         protected void EnsureSettingsAreUpToDate()
@@ -95,7 +95,7 @@ namespace GitCommands
         }
 
         protected virtual void SettingsChanged()
-        { 
+        {
         }
 
         private void SetValue(string name, string value)

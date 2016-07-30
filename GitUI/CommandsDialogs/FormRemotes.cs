@@ -48,6 +48,7 @@ namespace GitUI.CommandsDialogs
 
         private readonly TranslationString _labelUrlAsFetch =
             new TranslationString("Fetch Url");
+
         private readonly TranslationString _labelUrlAsFetchPush =
             new TranslationString("Url");
 
@@ -236,11 +237,11 @@ namespace GitUI.CommandsDialogs
         {
             using (var dialog =
                 new OpenFileDialog
-                    {
-                        Filter = _sshKeyOpenFilter.Text + "|*.ppk",
-                        InitialDirectory = ".",
-                        Title = _sshKeyOpenCaption.Text
-                    })
+                {
+                    Filter = _sshKeyOpenFilter.Text + "|*.ppk",
+                    InitialDirectory = ".",
+                    Title = _sshKeyOpenCaption.Text
+                })
             {
                 if (dialog.ShowDialog(this) == DialogResult.OK)
                     PuttySshKey.Text = dialog.FileName;

@@ -1,12 +1,9 @@
-﻿using GitCommands;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
+using GitCommands;
 
 namespace GitUI.UserControls.RevisionGridClasses
 {
-    class GitRefListsForRevision
+    internal class GitRefListsForRevision
     {
         private GitRef[] _allBranches;
         private GitRef[] _localBranches;

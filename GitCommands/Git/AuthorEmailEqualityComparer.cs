@@ -5,7 +5,8 @@ namespace GitCommands.Git
 {
     public sealed class AuthorEmailEqualityComparer : IEqualityComparer<GitRevision>, IEqualityComparer<string>
     {
-        private static readonly AuthorEmailEqualityComparer CachedInstance = new AuthorEmailEqualityComparer(); 
+        private static readonly AuthorEmailEqualityComparer CachedInstance = new AuthorEmailEqualityComparer();
+
         public static AuthorEmailEqualityComparer Instance
         {
             get { return CachedInstance; }
@@ -22,7 +23,7 @@ namespace GitCommands.Git
         public int GetHashCode(GitRevision revision)
         {
             return GetHashCode(revision.AuthorEmail);
-        } 
+        }
 
         public bool Equals(string firstAuthorEmail, string secondAuthorEmail)
         {

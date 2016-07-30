@@ -66,7 +66,7 @@ namespace Gravatar
             return false;
         }
 
-        public Image LoadImageFromCache(string imageFileName, 
+        public Image LoadImageFromCache(string imageFileName,
                                                Bitmap defaultBitmap)
         {
             try
@@ -104,6 +104,5 @@ namespace Gravatar
                     }
             }
         }
-                                
     }
 }

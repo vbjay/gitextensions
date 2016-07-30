@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using GitCommands.Settings;
+﻿using GitCommands.Settings;
 
 namespace GitUI.CommandsDialogs.SettingsDialog
 {
@@ -37,7 +33,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog
         }
 
         private void SetCurrentSettings(ConfigFileSettings settings)
-        {            
+        {
             if (CurrentSettings != null)
                 SaveSettings();
 
@@ -45,6 +41,5 @@ namespace GitUI.CommandsDialogs.SettingsDialog
 
             LoadSettings();
         }
-
     }
 }

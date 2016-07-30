@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
-using GitCommands.Config;
 using GitCommands.Core;
 
 namespace GitCommands.GitExtLinks
@@ -14,23 +12,25 @@ namespace GitCommands.GitExtLinks
     {
         //revision's parts that can be searched for candidates for a link
         public enum RevisionPart
-        { 
+        {
             Message,
             LocalBranches,
             RemoteBranches
         }
-        
+
         /// <summary>Short name for this link def</summary>
         public string Name { get; set; }
+
         /// <summary></summary>
         public HashSet<RevisionPart> SearchInParts = new HashSet<RevisionPart>();
 
         private string _SearchPattern;
+
         /// <summary>
         /// RegEx for revision parts that have to be transformed into links
         /// empty string stands for unconditionally always added link
         /// </summary>
-        public string SearchPattern 
+        public string SearchPattern
         {
             get
             {
@@ -45,7 +45,7 @@ namespace GitCommands.GitExtLinks
                         {
                             return new Regex(SearchPattern, RegexOptions.Compiled);
                         }
-                        catch(Exception e)
+                        catch (Exception e)
                         {
                             System.Diagnostics.Debug.Print(e.ToStringWithData());
                             return null;
@@ -54,10 +54,13 @@ namespace GitCommands.GitExtLinks
                         );
             }
         }
+
         /// <summary>Compiled SearchPattern</summary>
         [XmlIgnore]
         public Lazy<Regex> SearchPatternRegex { get; private set; }
+
         private string _NestedSearchPattern;
+
         /// <summary>
         /// RegEx for revision parts that have to be transformed into links
         /// empty string stands for unconditionally always added link
@@ -84,17 +87,18 @@ namespace GitCommands.GitExtLinks
                     }
                 }
                 );
-                   
-
             }
         }
+
         /// <summary>Compiled SearchPattern</summary>
         [XmlIgnore]
         public Lazy<Regex> NestedSearchPatternRegex { get; private set; }
+
         /// <summary>
         /// Non-local link def can be locally disabled
         /// </summary>
         public bool Enabled { get; set; }
+
         /// <summary>
         /// List of formats to be applied for each revision part matched by SearchPattern
         /// </summary>
@@ -105,7 +109,7 @@ namespace GitCommands.GitExtLinks
         }
 
         public IEnumerable<GitExtLink> Parse(GitRevision revision)
-        { 
+        {
             List<IEnumerable<GitExtLink>> links = new List<IEnumerable<GitExtLink>>();
 
             if (SearchInParts.Contains(RevisionPart.LocalBranches))
@@ -150,7 +154,7 @@ namespace GitCommands.GitExtLinks
                     }
                 }
             }
-            
+
             foreach (var match in allMatches.Where(m => m.Success))
             {
                 foreach (var format in LinkFormats)
@@ -180,13 +184,13 @@ namespace GitCommands.GitExtLinks
             var toRemove = LinkFormats.Where(f => f.Caption.IsNullOrWhiteSpace() && f.Format.IsNullOrWhiteSpace()).ToArray();
             toRemove.ForEach(f => LinkFormats.Remove(f));
         }
-
     }
 
     public class GitExtLinkFormat : SimpleStructured
     {
         public string Caption { get; set; }
         public string Format { get; set; }
+
         [XmlIgnore]
         public bool IsValid { get; private set; }
 

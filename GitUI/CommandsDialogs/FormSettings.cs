@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Windows.Forms;
 using GitCommands;
-using GitCommands.Settings;
 using GitCommands.Utils;
 using GitUI.CommandsDialogs.SettingsDialog;
 using GitUI.CommandsDialogs.SettingsDialog.Pages;
@@ -24,7 +23,7 @@ namespace GitUI.CommandsDialogs
         private readonly TranslationString _cantFindGitMessageCaption =
             new TranslationString("Incorrect path");
 
-        #endregion
+        #endregion Translation
 
         private readonly CommonLogic _commonLogic;
         private readonly CheckSettingsLogic _checkSettingsLogic;
@@ -58,7 +57,7 @@ namespace GitUI.CommandsDialogs
             _commonLogic = new CommonLogic(Module);
             _checkSettingsLogic = new CheckSettingsLogic(_commonLogic);
 
-            var checklistSettingsPage = SettingsPageBase.Create <ChecklistSettingsPage>(this);
+            var checklistSettingsPage = SettingsPageBase.Create<ChecklistSettingsPage>(this);
             settingsTreeView.AddSettingsPage(checklistSettingsPage, gitExtPageRef, true); // as root
 
             settingsTreeView.AddSettingsPage(SettingsPageBase.Create<GitSettingsPage>(this), gitExtPageRef);
@@ -69,7 +68,6 @@ namespace GitUI.CommandsDialogs
 
             settingsTreeView.AddSettingsPage(SettingsPageBase.Create<AppearanceSettingsPage>(this), gitExtPageRef);
             settingsTreeView.AddSettingsPage(SettingsPageBase.Create<RevisionLinksSettingsPage>(this), gitExtPageRef);
-
 
             settingsTreeView.AddSettingsPage(SettingsPageBase.Create<ColorsSettingsPage>(this), gitExtPageRef);
 
@@ -118,15 +116,13 @@ namespace GitUI.CommandsDialogs
 
             using (var form = new FormSettings(uiCommands, initalPage))
             {
-
                 AppSettings.UsingContainer(form._commonLogic.RepoDistSettingsSet.GlobalSettings, () =>
                 {
-                     result = form.ShowDialog(owner);
+                    result = form.ShowDialog(owner);
                 });
-
             }
 
-            return result;            
+            return result;
         }
 
         private void FormSettings_Load(object sender, EventArgs e)
@@ -265,7 +261,7 @@ namespace GitUI.CommandsDialogs
             NothingYet
         }
 
-        #endregion
+        #endregion Hotkey commands
 
         private void buttonCancel_Click(object sender, EventArgs e)
         {
@@ -301,6 +297,6 @@ namespace GitUI.CommandsDialogs
             LoadSettings();
         }
 
-        public CheckSettingsLogic CheckSettingsLogic { get { return _checkSettingsLogic; } } 
+        public CheckSettingsLogic CheckSettingsLogic { get { return _checkSettingsLogic; } }
     }
 }

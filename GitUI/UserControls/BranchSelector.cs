@@ -12,7 +12,9 @@ namespace GitUI.UserControls
         private readonly bool _isLoading;
         private List<string> _localBranches;
         private List<string> _remoteBranches;
+
         public event EventHandler SelectedIndexChanged;
+
         public BranchSelector()
         {
             _isLoading = true;
@@ -88,7 +90,7 @@ namespace GitUI.UserControls
             else
             {
                 var branchName = SelectedBranchName;
-                var currentCheckout = CommitToCompare??Module.GetCurrentCheckout();
+                var currentCheckout = CommitToCompare ?? Module.GetCurrentCheckout();
                 Task.Factory.StartNew(() => this.Module.GetCommitCountString(currentCheckout, branchName))
                     .ContinueWith(t => lbChanges.Text = t.Result, TaskScheduler.FromCurrentSynchronizationContext());
             }
@@ -120,7 +122,6 @@ namespace GitUI.UserControls
                         .Where(a => !GitModule.IsDetachedHead(a) &&
                                     !a.EndsWith("/HEAD"));
                 result.UnionWith(branches);
-
             }
             for (int index = 1; index < _containRevisons.Length; index++)
             {

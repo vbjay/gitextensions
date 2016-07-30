@@ -39,11 +39,12 @@ namespace GitUI
         private string _submodulesPath;
         private int _nextUpdateTime;
         private WorkingStatus _currentStatus;
-        private HashSet<string> _ignoredFiles = new HashSet<string>(); 
+        private HashSet<string> _ignoredFiles = new HashSet<string>();
 
         public string CommitTranslatedString { get; set; }
 
         private IGitUICommandsSource _UICommandsSource;
+
         public IGitUICommandsSource UICommandsSource
         {
             get
@@ -58,8 +59,8 @@ namespace GitUI
                 GitUICommandsChanged(UICommandsSource, new GitUICommandsChangedEventArgs(oldCommands: null));
             }
         }
-        
-        public GitUICommands UICommands 
+
+        public GitUICommands UICommands
         {
             get
             {
@@ -67,7 +68,7 @@ namespace GitUI
             }
         }
 
-        public GitModule Module 
+        public GitModule Module
         {
             get
             {
@@ -172,7 +173,7 @@ namespace GitUI
                 UICommands.PostCheckoutBranch += GitUICommands_PostCheckout;
                 UICommands.PostCheckoutRevision += GitUICommands_PostCheckout;
                 UICommands.PostEditGitIgnore += GitUICommands_PostEditGitIgnore;
-                
+
                 TryStartWatchingChanges(Module.WorkingDir, Module.GetGitDirectory());
             }
         }
@@ -191,7 +192,7 @@ namespace GitUI
         {
             UpdateIgnoredFiles(true);
         }
-        
+
         private void TryStartWatchingChanges(string workTreePath, string gitDirPath)
         {
             // reset status info, it was outdated
@@ -274,9 +275,9 @@ namespace GitUI
         }
 
         private HashSet<string> LoadIgnoredFiles()
-        { 
+        {
             string lsOutput = Module.RunGitCmd("ls-files -o -i --exclude-standard");
-            string[] tab = lsOutput.Split(new char[] {'\n'}, StringSplitOptions.RemoveEmptyEntries);
+            string[] tab = lsOutput.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
             return new HashSet<string>(tab);
         }
 
@@ -286,10 +287,10 @@ namespace GitUI
                 _ignoredFiles = new HashSet<string>();
 
             AsyncLoader.DoAsync(
-                LoadIgnoredFiles, 
+                LoadIgnoredFiles,
                 (ignoredSet) => { _ignoredFiles = ignoredSet; _ignoredFilesAreStale = false; },
                 (e) => { _ignoredFiles = new HashSet<string>(); }
-                );   
+                );
         }
 
         private void timerRefresh_Tick(object sender, EventArgs e)
@@ -302,7 +303,7 @@ namespace GitUI
             if (CurrentStatus != WorkingStatus.Started)
                 return;
 
-            if (Environment.TickCount >= _nextUpdateTime || 
+            if (Environment.TickCount >= _nextUpdateTime ||
                 (Environment.TickCount < 0 && _nextUpdateTime > 0))
             {
                 // If the previous status call hasn't exited yet, we'll wait until it is
@@ -399,7 +400,7 @@ namespace GitUI
             ScheduleImmediateUpdate();
             Update();
         }
-        
+
         private WorkingStatus CurrentStatus
         {
             get { return _currentStatus; }
@@ -415,12 +416,14 @@ namespace GitUI
                         _globalIgnoreWatcher.EnableRaisingEvents = false;
                         Visible = false;
                         return;
+
                     case WorkingStatus.Paused:
                         timerRefresh.Stop();
                         _workTreeWatcher.EnableRaisingEvents = false;
                         _gitDirWatcher.EnableRaisingEvents = false;
                         _globalIgnoreWatcher.EnableRaisingEvents = false;
                         return;
+
                     case WorkingStatus.Started:
                         timerRefresh.Start();
                         _workTreeWatcher.EnableRaisingEvents = true;
@@ -429,6 +432,7 @@ namespace GitUI
                         ScheduleDeferredUpdate();
                         Visible = true;
                         return;
+
                     default:
                         throw new NotSupportedException();
                 }

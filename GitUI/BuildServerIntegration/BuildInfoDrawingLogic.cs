@@ -1,4 +1,3 @@
-using System;
 using System.Drawing;
 using System.Windows.Forms;
 using GitCommands;
@@ -20,18 +19,23 @@ namespace GitUI.BuildServerIntegration
                     case BuildInfo.BuildStatus.Success:
                         buildStatusImage = Resources.BuildSuccessful;
                         break;
+
                     case BuildInfo.BuildStatus.Failure:
                         buildStatusImage = Resources.BuildFailed;
                         break;
+
                     case BuildInfo.BuildStatus.Unknown:
                         buildStatusImage = Resources.BuildCancelled;
                         break;
+
                     case BuildInfo.BuildStatus.InProgress:
                         buildStatusImage = Resources.Icon_77;
                         break;
+
                     case BuildInfo.BuildStatus.Unstable:
                         buildStatusImage = Resources.IconMixed;
                         break;
+
                     case BuildInfo.BuildStatus.Stopped:
                         buildStatusImage = Resources.BuildCancelled;
                         break;
@@ -55,15 +59,19 @@ namespace GitUI.BuildServerIntegration
                     case BuildInfo.BuildStatus.Success:
                         buildStatusForebrush = Brushes.DarkGreen;
                         break;
+
                     case BuildInfo.BuildStatus.Failure:
                         buildStatusForebrush = Brushes.DarkRed;
                         break;
+
                     case BuildInfo.BuildStatus.InProgress:
                         buildStatusForebrush = Brushes.Blue;
                         break;
+
                     case BuildInfo.BuildStatus.Unstable:
                         buildStatusForebrush = Brushes.OrangeRed;
                         break;
+
                     case BuildInfo.BuildStatus.Stopped:
                         buildStatusForebrush = Brushes.Gray;
                         break;

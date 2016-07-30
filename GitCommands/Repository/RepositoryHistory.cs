@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 
 namespace GitCommands.Repository
 {
@@ -16,8 +15,8 @@ namespace GitCommands.Repository
         {
         }
 
-
         private int _maxCount;
+
         public int MaxCount
         {
             get
@@ -78,7 +77,8 @@ namespace GitCommands.Repository
                 break;
             }
 
-            var repository = new Repository(repo, null, null) {
+            var repository = new Repository(repo, null, null)
+            {
                 RepositoryType = RepositoryType.History,
                 Anchor = anchor
             };

@@ -25,7 +25,6 @@ namespace PatchApply
 
         public static byte[] GetResetUnstagedLinesAsPatch(GitModule module, string text, int selectionPosition, int selectionLength, bool staged, Encoding fileContentEncoding)
         {
-
             string header;
 
             ChunkList selectedChunks = ChunkList.GetSelectedChunks(text, selectionPosition, selectionLength, staged, out header);
@@ -48,7 +47,6 @@ namespace PatchApply
 
         public static byte[] GetSelectedLinesAsPatch(GitModule module, string text, int selectionPosition, int selectionLength, bool staged, Encoding fileContentEncoding, bool isNewFile)
         {
-
             string header;
 
             ChunkList selectedChunks = ChunkList.GetSelectedChunks(text, selectionPosition, selectionLength, staged, out header);
@@ -70,7 +68,7 @@ namespace PatchApply
 
         private static string CorrectHeaderForNewFile(string header)
         {
-            string[] headerLines = header.Split(new string[] {"\n"}, StringSplitOptions.RemoveEmptyEntries);
+            string[] headerLines = header.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
             string pppLine = null;
             foreach (string line in headerLines)
                 if (line.StartsWith("+++"))
@@ -217,7 +215,6 @@ namespace PatchApply
         public string WasNoNewLineAtTheEnd = null;
         public string IsNoNewLineAtTheEnd = null;
 
-
         public string ToStagePatch(ref int addedCount, ref int removedCount, ref bool wereSelectedLines, bool staged, bool isWholeFile)
         {
             string diff = null;
@@ -268,7 +265,6 @@ namespace PatchApply
                     addPart = addPart.Combine("\n", addedLine.Text);
                     addedCount++;
                 }
-
                 else if (staged)
                 {
                     if (inPostPart)
@@ -278,7 +274,6 @@ namespace PatchApply
                     addedCount++;
                     removedCount++;
                 }
-
             }
 
             diff = diff.Combine("\n", prePart);
@@ -458,7 +453,6 @@ namespace PatchApply
                     }
                     else
                         inPatch = false;
-
                 }
 
                 currentPos += line.Length + 1;
@@ -530,7 +524,6 @@ namespace PatchApply
             return result;
         }
 
-
         public string ToPatch(SubChunkToPatchFnc subChunkToPatch)
         {
             bool wereSelectedLines = false;
@@ -555,7 +548,6 @@ namespace PatchApply
 
     internal class ChunkList : List<Chunk>
     {
-
         public static ChunkList GetSelectedChunks(string text, int selectionPosition, int selectionLength, bool staged, out string header)
         {
             header = null;
@@ -629,17 +621,12 @@ namespace PatchApply
             foreach (Chunk chunk in this)
                 result = result.Combine("\n", chunk.ToPatch(subChunkToPatch));
 
-
             if (result != null)
             {
                 result = result.Combine("\n", "--");
                 result = result.Combine("\n", Application.ProductName + " " + AppSettings.ProductVersion);
             }
             return result;
-
         }
-
     }
-
-
 }

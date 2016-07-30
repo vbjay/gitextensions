@@ -17,6 +17,7 @@ namespace GitUI.UserControls
         ////public event EventHandler<EventArgs> OnCommitSelected;
 
         private string _selectedCommitHash;
+
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string SelectedCommitHash

@@ -1,4 +1,3 @@
-
 namespace GitUIPluginInterfaces.BuildServerIntegration
 {
     public interface IBuildServerSettingsUserControl
@@ -6,6 +5,7 @@ namespace GitUIPluginInterfaces.BuildServerIntegration
         void Initialize(string defaultProjectName);
 
         void LoadSettings(ISettingsSource buildServerConfig);
+
         void SaveSettings(ISettingsSource buildServerConfig);
     }
 }

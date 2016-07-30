@@ -45,14 +45,17 @@ namespace GitUI.SpellChecker
                     CustomPaint();
 
                     break;
+
                 case WM_IME_STARTCOMPOSITION:
                     IsImeStartingComposition = true;
                     base.WndProc(ref m);
                     break;
+
                 case WM_IME_ENDCOMPOSITION:
                     base.WndProc(ref m);
                     IsImeStartingComposition = false;
                     break;
+
                 default:
                     base.WndProc(ref m);
                     break;
@@ -124,6 +127,7 @@ namespace GitUI.SpellChecker
                             DrawWave(start, new Point(_richTextBox.Width - 3, start.Y));
                             DrawWave(new Point(3, end.Y), end);
                             break;
+
                         case DrawType.Mark:
                             DrawMark(start, new Point(_richTextBox.Width - 3, start.Y));
                             DrawMark(new Point(0, end.Y), end);
@@ -136,6 +140,7 @@ namespace GitUI.SpellChecker
                         case DrawType.Wave:
                             DrawWave(start, end);
                             break;
+
                         case DrawType.Mark:
                             DrawMark(start, end);
                             break;
@@ -154,7 +159,7 @@ namespace GitUI.SpellChecker
                     pl.Add(new Point(i, start.Y));
                     pl.Add(new Point(i + 2, start.Y + 2));
                 }
-                var p = (Point[]) pl.ToArray(typeof (Point));
+                var p = (Point[])pl.ToArray(typeof(Point));
                 _bufferGraphics.DrawLines(pen, p);
             }
             else
@@ -169,8 +174,8 @@ namespace GitUI.SpellChecker
             var linHeight = LineHeight();
             using (var pen = new Pen(col, linHeight))
             {
-                start.Offset(0, -linHeight/2);
-                end.Offset(0, -linHeight/2);
+                start.Offset(0, -linHeight / 2);
+                end.Offset(0, -linHeight / 2);
                 _bufferGraphics.DrawLine(pen, start, end);
             }
         }
@@ -180,9 +185,11 @@ namespace GitUI.SpellChecker
             if (!EnvUtils.RunningOnWindows())
                 return 12;
 
-            if (_lineHeight == 0 && !EnvUtils.RunningOnWindows ()) {
-                if (_richTextBox.Lines.Any (line => line.Length != 0)) {
-                    _lineHeight = TextBoxHelper.GetBaselineOffsetAtCharIndex (_richTextBox, 0);
+            if (_lineHeight == 0 && !EnvUtils.RunningOnWindows())
+            {
+                if (_richTextBox.Lines.Any(line => line.Length != 0))
+                {
+                    _lineHeight = TextBoxHelper.GetBaselineOffsetAtCharIndex(_richTextBox, 0);
                 }
             }
 
@@ -197,7 +204,7 @@ namespace GitUI.SpellChecker
             Mark
         };
 
-        #endregion
+        #endregion Nested type: DrawType
 
         public void Dispose()
         {

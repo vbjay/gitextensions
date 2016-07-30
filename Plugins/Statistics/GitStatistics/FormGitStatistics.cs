@@ -123,7 +123,6 @@ namespace GitStatistics
                     CommitCountPie.ToolTips = commitCountLabels;
 
                     CommitStatistics.Text = builder.ToString();
-
                 }, null);
             };
             a.BeginInvoke(null, null, this);
@@ -153,7 +152,8 @@ namespace GitStatistics
             }
         }
 
-        bool _initializeLinesOfCodeDone;
+        private bool _initializeLinesOfCodeDone;
+
         private void InitializeLinesOfCode()
         {
             if (_initializeLinesOfCodeDone)
@@ -199,7 +199,7 @@ namespace GitStatistics
             _lineCounter.FindAndAnalyzeCodeFiles(_codeFilePattern, DirectoriesToIgnore, filesToCheck);
         }
 
-        void lineCounter_LinesOfCodeUpdated(object sender, EventArgs e)
+        private void lineCounter_LinesOfCodeUpdated(object sender, EventArgs e)
         {
             LineCounter lineCounter = (LineCounter)sender;
 
@@ -236,9 +236,9 @@ namespace GitStatistics
                     lineCounter.NumberCodeLines - lineCounter.NumberTestCodeLines
                 });
 
-            string percent_t = ((double) lineCounter.NumberTestCodeLines/lineCounter.NumberCodeLines).ToString("P1");
+            string percent_t = ((double)lineCounter.NumberTestCodeLines / lineCounter.NumberCodeLines).ToString("P1");
             string percent_p =
-                ((double) (lineCounter.NumberCodeLines - lineCounter.NumberTestCodeLines)/lineCounter.NumberCodeLines).ToString(
+                ((double)(lineCounter.NumberCodeLines - lineCounter.NumberTestCodeLines) / lineCounter.NumberCodeLines).ToString(
                     "P1");
             TestCodePie.ToolTips =
                 new[]
@@ -250,11 +250,10 @@ namespace GitStatistics
             TestCodeText.Text = string.Format(_linesOfTestCodeP.Text, lineCounter.NumberTestCodeLines, percent_t) + Environment.NewLine +
                 string.Format(_linesOfProductionCodeP.Text, (lineCounter.NumberCodeLines - lineCounter.NumberTestCodeLines), percent_p);
 
-
-            string percentBlank = ((double) lineCounter.NumberBlankLines/lineCounter.NumberLines).ToString("P1");
-            string percentComments = ((double) lineCounter.NumberCommentsLines/lineCounter.NumberLines).ToString("P1");
-            string percentCode = ((double) lineCounter.NumberCodeLines/lineCounter.NumberLines).ToString("P1");
-            string percentDesigner = ((double) lineCounter.NumberLinesInDesignerFiles/lineCounter.NumberLines).ToString("P1");
+            string percentBlank = ((double)lineCounter.NumberBlankLines / lineCounter.NumberLines).ToString("P1");
+            string percentComments = ((double)lineCounter.NumberCommentsLines / lineCounter.NumberLines).ToString("P1");
+            string percentCode = ((double)lineCounter.NumberCodeLines / lineCounter.NumberLines).ToString("P1");
+            string percentDesigner = ((double)lineCounter.NumberLinesInDesignerFiles / lineCounter.NumberLines).ToString("P1");
             LinesOfCodePie.SetValues(new decimal[]
                 {
                     lineCounter.NumberBlankLines,
@@ -292,11 +291,9 @@ namespace GitStatistics
             Tabs.Visible = true;
             LoadingLabel.Visible = false;
 
-
             FormGitStatisticsSizeChanged(null, null);
             SizeChanged += FormGitStatisticsSizeChanged;
         }
-
 
         private void TabsSelectedIndexChanged(object sender, EventArgs e)
         {

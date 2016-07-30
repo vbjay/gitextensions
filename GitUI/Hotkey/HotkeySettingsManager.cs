@@ -11,10 +11,12 @@ using ResourceManager;
 
 namespace GitUI.Hotkey
 {
-    class HotkeySettingsManager
+    internal class HotkeySettingsManager
     {
         #region Serializer
+
         private static XmlSerializer _Serializer;
+
         /// <summary>Lazy-loaded Serializer for HotkeySettings[]</summary>
         private static XmlSerializer Serializer
         {
@@ -25,7 +27,8 @@ namespace GitUI.Hotkey
                 return _Serializer;
             }
         }
-        #endregion
+
+        #endregion Serializer
 
         private static List<Keys> UsedKeys = new List<Keys>();
 
@@ -49,22 +52,23 @@ namespace GitUI.Hotkey
 
             GetUsedHotkeys(allSettings);
 
-            foreach(HotkeySettings hs in allSettings)
+            foreach (HotkeySettings hs in allSettings)
             {
-                if(hs.Name == name)
+                if (hs.Name == name)
                     settings = hs;
-                if(hs.Name == "Scripts")
+                if (hs.Name == "Scripts")
                     scriptkeys = hs;
             }
 
             //HotkeyCommand[] scriptkeys = LoadSettings().FirstOrDefault(s => s.Name == name);
 
-            if(settings != null) {
+            if (settings != null)
+            {
                 //append general hotkeys to every form
                 //HotkeyCommand[] scriptkeys = LoadScriptHotkeys();
                 HotkeyCommand[] allkeys = new HotkeyCommand[settings.Commands.Length + scriptkeys.Commands.Length];
-                settings.Commands.CopyTo(allkeys,0);
-                scriptkeys.Commands.CopyTo(allkeys,settings.Commands.Length);
+                settings.Commands.CopyTo(allkeys, 0);
+                scriptkeys.Commands.CopyTo(allkeys, settings.Commands.Length);
 
                 return allkeys;
             }
@@ -174,10 +178,8 @@ namespace GitUI.Hotkey
 
             HotkeyCommand[] j = LoadScriptHotkeys();
 
-
             return new[]
               {
-
                 // FormCommit
                 new HotkeySettings(FormCommit.HotkeySettingsName,
                     hk(FormCommit.Commands.AddToGitIgnore, Keys.None),
@@ -259,7 +261,7 @@ namespace GitUI.Hotkey
              * therefore execute the 'default' action
              */
 
-            int i=0;
+            int i = 0;
             foreach (GitUI.Script.ScriptInfo s in curScripts)
             {
                 if (!string.IsNullOrEmpty(s.Name))
@@ -270,6 +272,5 @@ namespace GitUI.Hotkey
             }
             return scriptKeys;
         }
-
     }
 }

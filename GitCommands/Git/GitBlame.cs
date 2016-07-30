@@ -13,6 +13,7 @@ namespace GitCommands
             Headers = new List<GitBlameHeader>();
             Lines = new List<GitBlameLine>();
         }
+
         public IList<GitBlameHeader> Headers { get; private set; }
         public IList<GitBlameLine> Lines { get; private set; }
 
@@ -26,8 +27,9 @@ namespace GitCommands
     {
         //Line
         public string CommitGuid { get; set; }
-        public int    FinalLineNumber { get; set; }
-        public int    OriginLineNumber { get; set; }
+
+        public int FinalLineNumber { get; set; }
+        public int OriginLineNumber { get; set; }
 
         public string LineText { get; set; }
     }
@@ -36,6 +38,7 @@ namespace GitCommands
     {
         //Header
         public string CommitGuid { get; set; }
+
         public string AuthorMail { get; set; }
         public DateTime AuthorTime { get; set; }
         public string AuthorTimeZone { get; set; }

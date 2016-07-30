@@ -1,12 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 using RestSharp;
-using System.Linq;
-using System;
 
 namespace Stash
 {
-    class PullRequest
+    internal class PullRequest
     {
         //public string Ref { get; set; }
         public static PullRequest Parse(JObject json)
@@ -26,8 +26,7 @@ namespace Stash
                 DestProjectKey = json["toRef"]["repository"]["project"]["key"].ToString(),
                 DestRepo = json["toRef"]["repository"]["name"].ToString(),
                 DestBranch = json["toRef"]["displayId"].ToString(),
-                CreatedDate = Convert.ToDouble(json["createdDate"].ToString().Substring(0,10))
-                
+                CreatedDate = Convert.ToDouble(json["createdDate"].ToString().Substring(0, 10))
             };
             var reviewers = json["reviewers"];
             var participants = json["participants"];
@@ -52,6 +51,7 @@ namespace Stash
 
             return request;
         }
+
         public string Id { get; set; }
         public string Version { get; set; }
         public string DestProjectKey { get; set; }
@@ -68,18 +68,22 @@ namespace Stash
         public string DestRepo { get; set; }
         public string DestBranch { get; set; }
         public double CreatedDate { get; set; }
+
         public string SrcDisplayName
         {
             get { return string.Format("{0}/{1}", SrcProjectName, SrcRepo); }
         }
+
         public string DestDisplayName
         {
             get { return string.Format("{0}/{1}", DestProjectName, DestRepo); }
         }
+
         public string DisplayName
         {
             get { return string.Format("#{0}: {1}, {2}", Id, Title, (ConvertFromUnixTimestamp(CreatedDate)).ToString("yyyy-MM-dd")); }
         }
+
         public static DateTime ConvertFromUnixTimestamp(double timestamp)
         {
             DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
@@ -87,10 +91,11 @@ namespace Stash
         }
     }
 
-    class GetPullRequest : StashRequestBase<List<PullRequest>>
+    internal class GetPullRequest : StashRequestBase<List<PullRequest>>
     {
         private readonly string _projectKey;
         private readonly string _repoName;
+
         public GetPullRequest(string projectKey, string repoName, Settings settings)
             : base(settings)
         {

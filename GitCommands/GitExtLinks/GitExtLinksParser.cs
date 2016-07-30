@@ -7,7 +7,6 @@ using System.Xml;
 using System.Xml.Serialization;
 using GitCommands.Settings;
 
-
 namespace GitCommands.GitExtLinks
 {
     public class GitExtLinksParser
@@ -15,10 +14,10 @@ namespace GitCommands.GitExtLinks
         private readonly RepoDistSettings Settings;
 
         public List<GitExtLinkDef> LinkDefs;
-        
+
         private readonly GitExtLinksParser LowerPriority;
 
-        public GitExtLinksParser(RepoDistSettings aSettings)            
+        public GitExtLinksParser(RepoDistSettings aSettings)
         {
             Settings = new RepoDistSettings(null, aSettings.SettingsCache);
             LoadFromSettings();
@@ -31,7 +30,7 @@ namespace GitCommands.GitExtLinks
 
         public List<GitExtLinkDef> EffectiveLinkDefs
         {
-            get 
+            get
             {
                 HashSet<GitExtLinkDef> result = new HashSet<GitExtLinkDef>();
 
@@ -143,15 +142,15 @@ namespace GitCommands.GitExtLinks
                     var sw = new StringWriter();
                     var serializer = new XmlSerializer(typeof(List<GitExtLinkDef>));
                     serializer.Serialize(sw, LinkDefs);
-                    xml = sw.ToString();                    
+                    xml = sw.ToString();
                 }
 
                 Settings.SetString("RevisionLinkDefs", xml);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 System.Diagnostics.Debug.WriteLine(e);
-            }            
+            }
         }
     }
 }

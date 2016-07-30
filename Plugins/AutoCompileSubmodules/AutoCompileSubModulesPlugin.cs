@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
@@ -12,6 +11,7 @@ namespace AutoCompileSubmodules
     {
         private readonly TranslationString _doYouWantBuild =
             new TranslationString("Do you want to build {0}?\n\n{1}");
+
         private readonly TranslationString _enterCorrectMsBuildPath =
             new TranslationString("Please enter correct MSBuild path in the plugin settings dialog and try again.");
 
@@ -26,6 +26,7 @@ namespace AutoCompileSubmodules
         private StringSetting MsBuildArguments = new StringSetting("msbuild.exe arguments", "/p:Configuration=Debug");
 
         private const string DefaultMsBuildPath = @"C:\Windows\Microsoft.NET\Framework\v3.5\msbuild.exe";
+
         private static string FindMsBuild()
         {
             return File.Exists(DefaultMsBuildPath) ? DefaultMsBuildPath : "";
@@ -89,7 +90,7 @@ namespace AutoCompileSubmodules
             return false;
         }
 
-        #endregion
+        #endregion IGitPlugin Members
 
         /// <summary>
         ///   Automatically compile all solution files found in any submodule

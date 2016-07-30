@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Microsoft.Win32;
-using System.Diagnostics;
 using System.ComponentModel;
+using Microsoft.Win32;
 
 namespace GitUI
 {
     public sealed class WebBrowserEmulationMode
     {
-
         public static void SetBrowserFeatureControl()
         {
             // Fix for issue #2654:
@@ -29,7 +24,7 @@ namespace GitUI
             Registry.SetValue(featureControlRegKey + "FEATURE_BROWSER_EMULATION", appName, GetBrowserEmulationMode(), RegistryValueKind.DWord);
         }
 
-        static UInt32 GetBrowserEmulationMode()
+        private static UInt32 GetBrowserEmulationMode()
         {
             // https://msdn.microsoft.com/en-us/library/ee330730(v=vs.85).aspx#browser_emulation
             // http://stackoverflow.com/questions/28526826/web-browser-control-emulation-issue-feature-browser-emulation/28626667#28626667
@@ -55,12 +50,15 @@ namespace GitUI
                 case 7:
                     mode = 7000; // Webpages containing standards-based !DOCTYPE directives are displayed in IE7 Standards mode.
                     break;
+
                 case 8:
                     mode = 8000; // Webpages containing standards-based !DOCTYPE directives are displayed in IE8 mode.
                     break;
+
                 case 9:
                     mode = 9000; // Internet Explorer 9. Webpages containing standards-based !DOCTYPE directives are displayed in IE9 mode.
                     break;
+
                 case 10:
                     mode = 10000; // Internet Explorer 10.
                     break;

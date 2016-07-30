@@ -43,7 +43,9 @@ namespace GitUIPluginInterfaces.RepositoryHosts
     public interface IPullRequestDiscussion
     {
         List<IDiscussionEntry> Entries { get; }
+
         void Post(string data);
+
         void ForceReload();
     }
 }

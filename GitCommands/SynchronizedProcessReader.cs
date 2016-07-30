@@ -12,7 +12,7 @@ namespace GitCommands
         public Process Process { get; private set; }
         public byte[] Output { get; private set; }
         public byte[] Error { get; private set; }
-      
+
         private readonly Thread stdOutputLoaderThread;
         private readonly Thread stdErrLoaderThread;
 
@@ -22,13 +22,13 @@ namespace GitCommands
             stdOutputLoaderThread = new Thread(_ => Output = ReadByte(Process.StandardOutput.BaseStream));
             stdOutputLoaderThread.Start();
             stdErrLoaderThread = new Thread(_ => Error = ReadByte(Process.StandardError.BaseStream));
-            stdErrLoaderThread.Start();  
+            stdErrLoaderThread.Start();
         }
 
         public void WaitForExit()
         {
             stdOutputLoaderThread.Join();
-            stdErrLoaderThread.Join();              
+            stdErrLoaderThread.Join();
             Process.WaitForExit();
         }
 
@@ -41,7 +41,7 @@ namespace GitCommands
         {
             return encoding.GetString(Error);
         }
-        
+
         /// <summary>
         /// This function reads the output to a string. This function can be dangerous, because it returns a string
         /// and needs to know the correct encoding. This function should be avoided!

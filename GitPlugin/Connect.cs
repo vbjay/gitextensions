@@ -44,7 +44,7 @@ namespace GitPlugin
             handled = _gitPlugin.OnCommand(commandName);
         }
 
-        #endregion
+        #endregion IDTCommandTarget Members
 
         #region IDTExtensibility2 Members
 
@@ -190,7 +190,6 @@ namespace GitPlugin
                 _gitPlugin.AddToolbarCommand(commandBar, "Push", "Push", "Push changes to remote repository", 8, 4);
                 _gitPlugin.AddToolbarCommand(commandBar, "Stash", "Stash", "Stash changes", 3, 5);
                 _gitPlugin.AddToolbarCommand(commandBar, "Settings", "Settings", "Settings", 2, 6);
-
             }
             catch (Exception ex)
             {
@@ -241,7 +240,6 @@ namespace GitPlugin
                 //    {
                 //        _gitPlugin.OutputPane.OutputString(((CommandBar)commandBar).Name + Environment.NewLine);
                 //    }*/
-
             }
             catch (Exception ex)
             {
@@ -365,7 +363,6 @@ namespace GitPlugin
             //    //Find the MenuBar command bar, which is the top-level command bar holding all the main menu items:
             //    var menuBarCommandBar = ((CommandBars)_applicationObject.CommandBars)["MenuBar"];
 
-
             //    CommandBarControl toolsControl;
             //    try
             //    {
@@ -394,8 +391,7 @@ namespace GitPlugin
         {
         }
 
-        #endregion
-
+        #endregion IDTExtensibility2 Members
 
         private string GetToolsMenuName()
         {

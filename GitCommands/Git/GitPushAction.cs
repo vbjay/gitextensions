@@ -11,8 +11,10 @@ namespace GitCommands
     {
         /// <summary>Gets the name or URL of the remote repo to push to.</summary>
         public string Remote { get; private set; }
+
         /// <summary>Gets the set of LocalBranch:RemoteBranch actions.</summary>
         public IEnumerable<GitPushAction> PushActions { get; private set; }
+
         /// <summary>Indicates whether to report progress during the push operation.</summary>
         public bool ReportProgress { get; set; }
 
@@ -34,7 +36,7 @@ namespace GitCommands
         /// <param name="remote">Name or URL of the remote repository.</param>
         /// <param name="source">Name of the branch to push.</param>
         /// <param name="destination">Ref on the remote side to be updated.</param>
-        /// <param name="force">Indicates whether to update the <paramref name="destination"/> 
+        /// <param name="force">Indicates whether to update the <paramref name="destination"/>
         /// ref even when the update is not a fast-forward.</param>
         public GitPush(string remote, string source, string destination, bool force = false)
             : this(remote, new GitPushAction(source, destination, force)) { }
@@ -64,23 +66,22 @@ namespace GitCommands
                         Remote,
                         combined)
                 .Trim();
-
         }
     }
 
     /// <summary>Part of a 'git push', which specifies the local and/or remote branch.</summary>
     public class GitPushAction
     {
-        string _localBranch;
-        string _remoteBranch;
-        bool _force;
+        private string _localBranch;
+        private string _remoteBranch;
+        private bool _force;
 
         /// <summary>
         /// Push a local branch to a remote one, optionally forcing a non-fast-forward commit.
         /// </summary>
         /// <param name="source">Name of the branch to push.</param>
         /// <param name="destination">Ref on the remote side to be updated.</param>
-        /// <param name="force">Indicates whether to update the <paramref name="destination"/> 
+        /// <param name="force">Indicates whether to update the <paramref name="destination"/>
         /// ref even when the update is not a fast-forward.</param>
         public GitPushAction(string source, string destination, bool force = false)
         {
@@ -94,7 +95,8 @@ namespace GitCommands
         public static GitPushAction DeleteRemoteBranch(string branch)
         {
             branch = GitCommandHelpers.GetFullBranchName(branch);
-            return new GitPushAction(null, branch);        }
+            return new GitPushAction(null, branch);
+        }
 
         /// <summary>Creates the push action command part.</summary>
         public override string ToString()

@@ -4,7 +4,7 @@ using GitUI.Properties;
 
 namespace GitUI
 {
-    static class Lemmings
+    internal static class Lemmings
     {
         public static Bitmap GetPictureBoxImage(DateTime currentDate)
         {
@@ -15,15 +15,16 @@ namespace GitUI
                 if (currentDate.Month == 12 && currentDate.Day > 18 && currentDate.Day < 27) //X-Mass
                 {
                     return Resources.Cow_xmass;
-                } else
+                }
+                else
                     if (currentDate.Month == 6 && currentDate.Day == 21) //summer
-                    {
-                        return Resources.Cow_sunglass;
-                    }
-                    else
-                    {
-                        return Resources.Cow;
-                    }
+                {
+                    return Resources.Cow_sunglass;
+                }
+                else
+                {
+                    return Resources.Cow;
+                }
             }
             return null;
         }

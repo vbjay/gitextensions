@@ -13,6 +13,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
     {
         private readonly TranslationString _noneItem =
             new TranslationString("None");
+
         private Task<object> _populateBuildServerTypeTask;
 
         public BuildServerIntegrationSettingsPage()

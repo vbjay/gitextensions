@@ -19,6 +19,7 @@ namespace GitUI.CommandsDialogs
     public partial class FormPull : GitModuleForm
     {
         #region Translation
+
         private readonly TranslationString _areYouSureYouWantToRebaseMerge =
             new TranslationString("The current commit is a merge." + Environment.NewLine +
                                   "Are you sure you want to rebase this merge?");
@@ -59,21 +60,26 @@ namespace GitUI.CommandsDialogs
             new TranslationString("Submodules");
 
         private readonly TranslationString _notOnBranchMainInstruction = new TranslationString("You are not working on a branch");
+
         private readonly TranslationString _notOnBranch = new TranslationString("You cannot \"pull\" when git head detached." +
                                   Environment.NewLine + "" + Environment.NewLine + "Do you want to continue?");
+
         private readonly TranslationString _notOnBranchButtons = new TranslationString("Checkout branch|Continue");
         private readonly TranslationString _notOnBranchCaption = new TranslationString("Not on a branch");
 
         private readonly TranslationString _noRemoteBranch = new TranslationString("You didn't specify a remote branch");
+
         private readonly TranslationString _noRemoteBranchMainInstruction = new TranslationString(
             "You asked to pull from the remote '{0}'," + Environment.NewLine +
             "but did not specify a remote branch." + Environment.NewLine +
             "Because this is not the default configured remote for your local branch," + Environment.NewLine +
             "you must specify a remote branch.");
+
         private readonly TranslationString _noRemoteBranchForFetchMainInstruction = new TranslationString(
             "You asked to fetch from the remote '{0}'," + Environment.NewLine +
             "but did not specify a remote branch." + Environment.NewLine +
             "Because this is not the current branch, you must specify a remote branch.");
+
         private readonly TranslationString _noRemoteBranchButtons = new TranslationString("Pull from {0}|Cancel");
         private readonly TranslationString _noRemoteBranchForFetchButtons = new TranslationString("Fetch from {0}|Cancel");
         private readonly TranslationString _noRemoteBranchCaption = new TranslationString("Remote branch not specified");
@@ -82,14 +88,17 @@ namespace GitUI.CommandsDialogs
 
         private readonly TranslationString _pruneBranchesCaption = new TranslationString("Pull was rejected");
         private readonly TranslationString _pruneBranchesMainInstruction = new TranslationString("Remote branch no longer exist");
+
         private readonly TranslationString _pruneBranchesBranch =
             new TranslationString("Do you want deletes all stale remote-tracking branches?");
+
         private readonly TranslationString _pruneBranchesButtons = new TranslationString("Deletes stale branches|Cancel");
 
         private readonly TranslationString _pruneFromCaption = new TranslationString("Prune remote branches from {0}");
 
         private readonly TranslationString _hoverShowImageLabelText = new TranslationString("Hover to see scenario when fast forward is possible.");
-        #endregion
+
+        #endregion Translation
 
         public bool ErrorOccurred { get; private set; }
         private IList<GitRef> _heads;
@@ -126,11 +135,11 @@ namespace GitUI.CommandsDialogs
             }
 
             // If this repo is shallow, show an option to Unshallow
-            if(aCommands != null)
+            if (aCommands != null)
             {
                 // Detect by presence of the shallow file, not 100% sure it's the best way, but it's created upon shallow cloning and removed upon unshallowing
                 bool isRepoShallow = File.Exists(Path.Combine(aCommands.Module.GetGitDirectory(), "shallow"));
-                if(isRepoShallow)
+                if (isRepoShallow)
                     Unshallow.Visible = true;
             }
         }
@@ -168,7 +177,7 @@ namespace GitUI.CommandsDialogs
             remotes.Insert(0, AllRemotes);
             _NO_TRANSLATE_Remotes.DataSource = remotes;
 
-            ComboBoxHelper.ResizeComboBoxDropDownWidth (_NO_TRANSLATE_Remotes, AppSettings.BranchDropDownMinWidth, AppSettings.BranchDropDownMaxWidth);
+            ComboBoxHelper.ResizeComboBoxDropDownWidth(_NO_TRANSLATE_Remotes, AppSettings.BranchDropDownMinWidth, AppSettings.BranchDropDownMaxWidth);
         }
 
         public DialogResult PullAndShowDialogWhenFailed(IWin32Window owner)
@@ -238,7 +247,7 @@ namespace GitUI.CommandsDialogs
             _heads.Insert(0, GitRef.NoHead(Module));
             Branches.DataSource = _heads;
 
-            ComboBoxHelper.ResizeComboBoxDropDownWidth (Branches, AppSettings.BranchDropDownMinWidth, AppSettings.BranchDropDownMaxWidth);
+            ComboBoxHelper.ResizeComboBoxDropDownWidth(Branches, AppSettings.BranchDropDownMinWidth, AppSettings.BranchDropDownMaxWidth);
 
             Cursor.Current = Cursors.Default;
         }
@@ -312,7 +321,7 @@ namespace GitUI.CommandsDialogs
                 if (PSTaskDialog.cTaskDialog.VerificationChecked)
                     Settings.AutoPopStashAfterPull = messageBoxResult;
             }
-            if ((bool) messageBoxResult)
+            if ((bool)messageBoxResult)
             {
                 UICommands.StashPop(this);
             }
@@ -340,9 +349,10 @@ namespace GitUI.CommandsDialogs
                 switch (idx)
                 {
                     case 0:
-                        if (!UICommands.StartCheckoutBranch(owner, new[] {""}))
+                        if (!UICommands.StartCheckoutBranch(owner, new[] { "" }))
                             return DialogResult.Cancel;
                         break;
+
                     case -1:
                         return DialogResult.Cancel;
                 }
@@ -475,9 +485,9 @@ namespace GitUI.CommandsDialogs
             Debug.Assert(Merge.Checked || Rebase.Checked);
 
             return new FormRemoteProcess(Module, Module.PullCmd(source, curRemoteBranch, curLocalBranch, Rebase.Checked, GetTagsArg(), Unshallow.Checked))
-                       {
-                           HandleOnExitCallback = HandlePullOnExit
-                       };
+            {
+                HandleOnExitCallback = HandlePullOnExit
+            };
         }
 
         private bool HandlePullOnExit(ref bool isError, FormProcess form)
@@ -509,11 +519,9 @@ namespace GitUI.CommandsDialogs
                         Text = string.Format(_pruneFromCaption.Text, remote)
                     })
                     {
-
                         formPrune.ShowDialog(form);
                     }
                 }
-
             }
 
             return false;
@@ -573,6 +581,7 @@ namespace GitUI.CommandsDialogs
                     case 0:
                         curRemoteBranch = curLocalBranch;
                         return true;
+
                     default:
                         return false;
                 }
@@ -600,6 +609,7 @@ namespace GitUI.CommandsDialogs
                     case 0:
                         curRemoteBranch = curLocalBranch;
                         return true;
+
                     default:
                         return false;
                 }
@@ -656,7 +666,6 @@ namespace GitUI.CommandsDialogs
 
         private IEnumerable<string> GetSelectedRemotes()
         {
-
             if (PullFromUrl.Checked)
             {
                 yield break;

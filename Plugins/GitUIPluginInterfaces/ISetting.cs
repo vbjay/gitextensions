@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 
 namespace GitUIPluginInterfaces
 {
@@ -48,7 +44,7 @@ namespace GitUIPluginInterfaces
         /// </summary>
         string Caption();
 
-        ISetting GetSetting();        
+        ISetting GetSetting();
     }
 
     public abstract class SettingControlBinding<S, T> : ISettingControlBinding where T : Control where S : ISetting
@@ -100,6 +96,7 @@ namespace GitUIPluginInterfaces
         {
             return Setting;
         }
+
         /// <summary>
         /// Creates a control to be placed on FormSettings to edit this setting value
         /// Control should take care of scalability and resizability of its subcontrols
@@ -117,5 +114,4 @@ namespace GitUIPluginInterfaces
         /// </summary>
         public abstract void SaveSetting(ISettingsSource settings, T control);
     }
-
 }

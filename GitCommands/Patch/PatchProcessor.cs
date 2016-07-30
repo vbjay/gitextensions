@@ -82,7 +82,6 @@ namespace PatchApply
 
                 if (SetPatchType(input, patch))
                 {
-
                 }
                 else if (IsUnlistedBinaryFileDelete(input))
                 {

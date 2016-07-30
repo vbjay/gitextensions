@@ -5,7 +5,7 @@ namespace GitUI.UserControls.RevisionGridClasses
 {
     public class DoubleClickRevisionEventArgs : EventArgs
     {
-        GitRevision _revision;
+        private GitRevision _revision;
 
         public DoubleClickRevisionEventArgs(GitRevision revision)
         {

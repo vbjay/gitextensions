@@ -2,8 +2,6 @@
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Xml;
-using System.Xml.Serialization;
 using GitCommands.Utils;
 
 namespace GitUI.CommandsDialogs.CommitDialog
@@ -12,6 +10,7 @@ namespace GitUI.CommandsDialogs.CommitDialog
     public sealed class CommitTemplateItem : ISerializable
     {
         private string _name;
+
         public string Name
         {
             get { return _name; }
@@ -19,6 +18,7 @@ namespace GitUI.CommandsDialogs.CommitDialog
         }
 
         private string _text;
+
         public string Text
         {
             get { return _text; }
@@ -66,7 +66,6 @@ namespace GitUI.CommandsDialogs.CommitDialog
             return templates;
         }
 
-
         private static string SerializeCommitTemplates(CommitTemplateItem[] items)
         {
             return JsonSerializer.Serialize(items);
@@ -110,7 +109,6 @@ namespace GitUI.CommandsDialogs.CommitDialog
 
             return commitTemplateItem;
         }
-    
     }
 
     public sealed class MoveNamespaceDeserializationBinder : SerializationBinder

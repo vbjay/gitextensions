@@ -4,7 +4,6 @@ using System.ComponentModel;
 using System.Windows.Forms;
 using GitCommands;
 using GitCommands.Repository;
-using ResourceManager;
 
 namespace GitUI.CommandsDialogs.BrowseDialog
 {
@@ -31,7 +30,6 @@ namespace GitUI.CommandsDialogs.BrowseDialog
             sortLessRecentRepos.Checked = AppSettings.SortLessRecentRepos;
             _NO_TRANSLATE_maxRecentRepositories.Value = AppSettings.MaxMostRecentRepositories;
             comboMinWidthEdit.Value = AppSettings.RecentReposComboMinWidth;
-
         }
 
         private void SaveSettings()
@@ -212,7 +210,5 @@ namespace GitUI.CommandsDialogs.BrowseDialog
                 RefreshRepos();
             }
         }
-
-
     }
 }

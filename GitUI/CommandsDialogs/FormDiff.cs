@@ -18,12 +18,14 @@ namespace GitUI.CommandsDialogs
         private GitRevision _headRevision;
         private readonly GitRevision _mergeBase;
 
-        ToolTip _toolTipControl = new ToolTip();
+        private ToolTip _toolTipControl = new ToolTip();
 
         private readonly TranslationString anotherBranchTooltip =
             new TranslationString("Select another branch");
+
         private readonly TranslationString anotherCommitTooltip =
             new TranslationString("Select another commit");
+
         private readonly TranslationString btnSwapTooltip =
             new TranslationString("Swap BASE and Compare commits");
 
@@ -69,11 +71,11 @@ namespace GitUI.CommandsDialogs
 
             if (ckCompareToMergeBase.Checked)
             {
-                DiffFiles.SetDiffs(new List<GitRevision> {_headRevision, _mergeBase});
+                DiffFiles.SetDiffs(new List<GitRevision> { _headRevision, _mergeBase });
             }
             else
             {
-                DiffFiles.SetDiffs(new List<GitRevision> {_headRevision, _baseRevision});
+                DiffFiles.SetDiffs(new List<GitRevision> { _headRevision, _baseRevision });
             }
         }
 
@@ -81,6 +83,7 @@ namespace GitUI.CommandsDialogs
         {
             ShowSelectedFileDiff();
         }
+
         private void ShowSelectedFileDiff()
         {
             if (DiffFiles.SelectedItem == null)
@@ -177,12 +180,10 @@ namespace GitUI.CommandsDialogs
 
         private void findInDiffToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
             var candidates = DiffFiles.GitItemStatuses;
 
             Func<string, IList<GitItemStatus>> FindDiffFilesMatches = (string name) =>
             {
-
                 string nameAsLower = name.ToLower();
 
                 return candidates.Where(item =>
@@ -217,6 +218,7 @@ namespace GitUI.CommandsDialogs
         {
             PickAnotherBranch(_baseRevision, ref _baseCommitDisplayStr, ref _baseRevision);
         }
+
         private void btnAnotherCommit_Click(object sender, EventArgs e)
         {
             PickAnotherCommit(_baseRevision, ref _baseCommitDisplayStr, ref _baseRevision);

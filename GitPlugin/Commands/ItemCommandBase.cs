@@ -123,10 +123,13 @@ namespace GitPlugin.Commands
             {
                 case Constants.vsProjectItemKindPhysicalFile:
                     return CommandTarget.File;
+
                 case Constants.vsProjectItemKindVirtualFolder:
                     return CommandTarget.VirtualFolder;
+
                 case Constants.vsProjectItemKindPhysicalFolder:
                     return CommandTarget.PhysicalFolder;
+
                 default:
                     return CommandTarget.Any;
             }

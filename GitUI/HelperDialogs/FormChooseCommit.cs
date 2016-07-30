@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using GitCommands;
-using GitUI.CommandsDialogs.BrowseDialog;
-using ResourceManager;
 using GitUI.UserControls.RevisionGridClasses;
 
 namespace GitUI.HelperDialogs
@@ -19,7 +17,7 @@ namespace GitUI.HelperDialogs
             : base(aCommands)
         {
             InitializeComponent();
-            Translate();        
+            Translate();
         }
 
         public FormChooseCommit(GitUICommands aCommands, string preselectCommit)
@@ -35,7 +33,6 @@ namespace GitUI.HelperDialogs
                     revisionGrid.SetInitialRevision(new GitRevision(Module, guid));
                 }
             }
-
         }
 
         public GitCommands.GitRevision SelectedRevision { get; private set; }
@@ -90,9 +87,9 @@ namespace GitUI.HelperDialogs
 
             flowLayoutPanelParents.Visible = SelectedRevision.ParentGuids.Length != 0;
 
-            if(!flowLayoutPanelParents.Visible)
+            if (!flowLayoutPanelParents.Visible)
                 return;
-            _parents = SelectedRevision.ParentGuids.ToDictionary(p=> p.Substring(0, 10), p=> p);
+            _parents = SelectedRevision.ParentGuids.ToDictionary(p => p.Substring(0, 10), p => p);
             linkLabelParent.Text = _parents.Keys.ElementAt(0);
 
             linkLabelParent2.Visible = _parents.Count > 1;

@@ -14,6 +14,7 @@ namespace Gerrit
         private string _currentBranchRemote;
 
         #region Translation
+
         private readonly TranslationString _downloadGerritChangeCaption = new TranslationString("Download Gerrit Change");
 
         private readonly TranslationString _downloadCaption = new TranslationString("Download change {0}");
@@ -21,7 +22,8 @@ namespace Gerrit
         private readonly TranslationString _selectRemote = new TranslationString("Please select a remote repository");
         private readonly TranslationString _selectChange = new TranslationString("Please enter a change");
         private readonly TranslationString _cannotGetChangeDetails = new TranslationString("Could not retrieve the change details");
-        #endregion
+
+        #endregion Translation
 
         public FormGerritDownload(IGitUICommands uiCommand)
             : base(uiCommand)
@@ -150,7 +152,7 @@ namespace Gerrit
 
             remote = FixPath(remote);
 
-            //Remove spaces... 
+            //Remove spaces...
             if (remoteBranch != null)
                 remoteBranch = remoteBranch.Replace(" ", "");
 

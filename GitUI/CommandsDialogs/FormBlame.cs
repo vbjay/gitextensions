@@ -7,14 +7,14 @@ namespace GitUI.CommandsDialogs
     {
         private FormBlame()
             : this(null)
-        {         
+        {
         }
 
         private FormBlame(GitUICommands aCommands)
             : base(aCommands)
         {
             InitializeComponent();
-            Translate();        
+            Translate();
         }
 
         public FormBlame(GitUICommands aCommands, string fileName, GitRevision revision) : this(aCommands)
@@ -30,7 +30,6 @@ namespace GitUI.CommandsDialogs
         }
 
         public string FileName { get; set; }
-
 
         private void FormBlameLoad(object sender, EventArgs e)
         {

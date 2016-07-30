@@ -8,9 +8,10 @@ using GitUI.UserControls;
 
 using JetBrains.Annotations;
 
-using ResourceManager;
 #if !__MonoCS__
+
 using Microsoft.WindowsAPICodePack.Taskbar;
+
 #endif
 
 namespace GitUI
@@ -18,17 +19,17 @@ namespace GitUI
     public partial class FormStatus : GitExtensionsForm
     {
         public delegate void ProcessStart(FormStatus form);
+
         public delegate void ProcessAbort(FormStatus form);
 
         private readonly bool UseDialogSettings = true;
 
-        public FormStatus(): this(true)
+        public FormStatus() : this(true)
         { }
 
         public FormStatus(bool useDialogSettings)
             : this(null, useDialogSettings)
         {
-
         }
 
         public FormStatus(ConsoleOutputControl aConsoleOutput, bool useDialogSettings)
@@ -117,8 +118,8 @@ namespace GitUI
 #endif
                     }
                     // Show last progress message in the title, unless it's showin in the control body already
-                    if(!ConsoleOutput.IsDisplayingFullProcessOutput)
-                      Text = text;
+                    if (!ConsoleOutput.IsDisplayingFullProcessOutput)
+                        Text = text;
                 };
             BeginInvoke(method, this);
         }
@@ -292,13 +293,13 @@ namespace GitUI
             return OutputLog.GetString();
         }
 
-      private void KeepDialogOpen_CheckedChanged(object sender, EventArgs e)
-      {
-          AppSettings.CloseProcessDialog = !KeepDialogOpen.Checked;
+        private void KeepDialogOpen_CheckedChanged(object sender, EventArgs e)
+        {
+            AppSettings.CloseProcessDialog = !KeepDialogOpen.Checked;
 
-          // Maintain the invariant: if changing to "don't keep" and conditions are such that the dialog would have closed in dont-keep mode, then close it
-          if((!KeepDialogOpen.Checked /* keep off */) && (Ok.Enabled /* done */) && (!errorOccurred /* and successful */)) /* not checking for UseDialogSettings because checkbox is only visible with True */
-              Close();
-      }
+            // Maintain the invariant: if changing to "don't keep" and conditions are such that the dialog would have closed in dont-keep mode, then close it
+            if ((!KeepDialogOpen.Checked /* keep off */) && (Ok.Enabled /* done */) && (!errorOccurred /* and successful */)) /* not checking for UseDialogSettings because checkbox is only visible with True */
+                Close();
+        }
     }
 }

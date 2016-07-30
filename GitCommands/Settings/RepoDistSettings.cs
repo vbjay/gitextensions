@@ -9,7 +9,6 @@ namespace GitCommands.Settings
     /// </summary>
     public class RepoDistSettings : SettingsContainer<RepoDistSettings, GitExtSettingsCache>
     {
-
         public GitModule Module { get; private set; }
 
         public RepoDistSettings(RepoDistSettings aLowerPriority, GitExtSettingsCache aSettingsCache)
@@ -54,7 +53,7 @@ namespace GitCommands.Settings
             return new RepoDistSettings(null, GitExtSettingsCache.Create(AppSettings.SettingsFilePath, allowCache));
         }
 
-        #endregion
+        #endregion CreateXXX
 
         public override void SetValue<T>(string name, T value, Func<T, string> encode)
         {
@@ -108,9 +107,7 @@ namespace GitCommands.Settings
             get { return this.GetString("dictionary", "en-US"); }
             set { this.SetString("dictionary", value); }
         }
-
     }
-
 
     public class BuildServer : SettingsPath
     {
@@ -145,5 +142,4 @@ namespace GitCommands.Settings
             ShowConEmuTab = new BoolNullableSetting("ShowConEmuTab", this, true);
         }
     }
-
 }

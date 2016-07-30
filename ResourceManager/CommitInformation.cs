@@ -15,8 +15,8 @@ namespace ResourceManager
             Body = body;
         }
 
-        public string Header {get; private set;}
-        public string Body {get; private set;}
+        public string Header { get; private set; }
+        public string Body { get; private set; }
 
         /// <summary>
         /// Gets the commit info for module.

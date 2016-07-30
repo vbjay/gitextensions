@@ -7,7 +7,7 @@ using GitUIPluginInterfaces.RepositoryHosts;
 
 namespace Github3
 {
-    class GithubPullRequest : IPullRequestInformation
+    internal class GithubPullRequest : IPullRequestInformation
     {
         private PullRequest pullrequest;
 
@@ -36,11 +36,10 @@ namespace Github3
             get { return pullrequest.CreatedAt; }
         }
 
-
-
         private string _diffData;
-        public string DiffData 
-        { 
+
+        public string DiffData
+        {
             get
             {
                 if (_diffData == null)
@@ -57,6 +56,7 @@ namespace Github3
         }
 
         private IHostedRepository _BaseRepo;
+
         public IHostedRepository BaseRepo
         {
             get
@@ -69,11 +69,12 @@ namespace Github3
         }
 
         private IHostedRepository _HeadRepo;
+
         public IHostedRepository HeadRepo
         {
             get
             {
-                if(_HeadRepo == null)
+                if (_HeadRepo == null)
                     _HeadRepo = new GithubRepo(pullrequest.Head.Repo);
 
                 return _HeadRepo;
@@ -116,11 +117,12 @@ namespace Github3
         }
 
         private IPullRequestDiscussion _Discussion;
+
         public IPullRequestDiscussion Discussion
         {
             get
             {
-                if(_Discussion == null)
+                if (_Discussion == null)
                     _Discussion = new GithubPullRequestDiscussion(pullrequest);
 
                 return _Discussion;

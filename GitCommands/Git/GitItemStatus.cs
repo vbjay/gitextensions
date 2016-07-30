@@ -70,15 +70,13 @@ namespace GitCommands
             }
             else
                 if (IsCopied)
-                {
-                    toString = string.Concat("Copied\n   ", OldName, "\nto\n   ", Name, "");
-                }
-                else
-                {
-                    toString = Name;
-                }
-
-
+            {
+                toString = string.Concat("Copied\n   ", OldName, "\nto\n   ", Name, "");
+            }
+            else
+            {
+                toString = Name;
+            }
 
             if (IsConflict)
             {

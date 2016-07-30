@@ -39,13 +39,13 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
                 }
 
                 var translationImage = new PictureBox
-                                           {
-                                               Top = y + 34,
-                                               Left = x + 15,
-                                               Height = imageHeight,
-                                               Width = imageWidth,
-                                               BackgroundImageLayout = ImageLayout.Stretch
-                                           };
+                {
+                    Top = y + 34,
+                    Left = x + 15,
+                    Height = imageHeight,
+                    Width = imageWidth,
+                    BackgroundImageLayout = ImageLayout.Stretch
+                };
                 if (File.Exists(Path.Combine(Translator.GetTranslationDir(), translation + ".gif")))
                     translationImage.BackgroundImage = Image.FromFile(Path.Combine(Translator.GetTranslationDir(), translation + ".gif"));
                 else
@@ -74,7 +74,7 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             label2.Top = Height - SystemInformation.CaptionHeight - 25;
         }
 
-        void translationImage_Click(object sender, EventArgs e)
+        private void translationImage_Click(object sender, EventArgs e)
         {
             AppSettings.Translation = ((Control)sender).Tag.ToString();
             Close();

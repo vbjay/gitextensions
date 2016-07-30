@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using GitUIPluginInterfaces;
-using System.Linq;
-using System.Threading;
 using ResourceManager;
 
 namespace Stash
@@ -22,7 +22,6 @@ namespace Stash
         private readonly ISettingsSource _settingsContainer;
         private readonly BindingList<StashUser> _reviewers = new BindingList<StashUser>();
         private readonly List<string> _stashUsers = new List<string>();
-
 
         public StashPullRequestForm(GitUIBaseEventArgs gitUiCommands,
             ISettingsSource settings)
@@ -63,6 +62,7 @@ namespace Stash
                 }
             });
         }
+
         private void StashViewPullRequestFormLoad(object sender, EventArgs e)
         {
             if (_settings == null)
@@ -78,10 +78,10 @@ namespace Stash
                         lbxPullRequests.DisplayMember = "DisplayName";
                     });
                 }
-                catch(System.InvalidOperationException){
+                catch (System.InvalidOperationException)
+                {
                     return;
                 }
-
             });
         }
 
@@ -151,7 +151,9 @@ namespace Stash
             }
             return list;
         }
-        Dictionary<Repository, IEnumerable<string>> Branches = new Dictionary<Repository,IEnumerable<string>>();
+
+        private Dictionary<Repository, IEnumerable<string>> Branches = new Dictionary<Repository, IEnumerable<string>>();
+
         private IEnumerable<string> GetStashBranches(Repository selectedRepo)
         {
             if (Branches.ContainsKey(selectedRepo))
@@ -210,7 +212,7 @@ namespace Stash
 
             ddlBranchSource.Tag = commit;
             UpdateCommitInfo(lblCommitInfoSource, commit);
-            txtTitle.Text = ddlBranchSource.SelectedValue.ToString().Replace("-"," ");
+            txtTitle.Text = ddlBranchSource.SelectedValue.ToString().Replace("-", " ");
             UpdatePullRequestDescription();
         }
 
@@ -271,6 +273,7 @@ namespace Stash
                 txtDescription.Text = sb.ToString();
             }
         }
+
         private void PullRequestChanged(object sender, EventArgs e)
         {
             var curItem = lbxPullRequests.SelectedItem as PullRequest;
@@ -309,6 +312,7 @@ namespace Stash
                 MessageBox.Show(string.Join(Environment.NewLine, response.Messages),
                     _error.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+
         private void BtnApproveClick(object sender, EventArgs e)
         {
             var curItem = lbxPullRequests.SelectedItem as PullRequest;
@@ -326,7 +330,7 @@ namespace Stash
             if (response.Success)
             {
                 MessageBox.Show(_success.Text);
-                    StashViewPullRequestFormLoad(null, null);
+                StashViewPullRequestFormLoad(null, null);
             }
             else
                 MessageBox.Show(string.Join(Environment.NewLine, response.Messages),

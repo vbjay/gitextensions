@@ -10,7 +10,9 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             new TranslationString("None");
 
         #region Key
+
         private Keys _KeyData;
+
         /// <summary>Gets or sets the KeyData</summary>
         public Keys KeyData
         {
@@ -23,7 +25,8 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
                 this.Text = value.ToText() ?? _hotkeyNotSet.Text;
             }
         }
-        #endregion
+
+        #endregion Key
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
@@ -35,6 +38,5 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             // Swallow all keys
             return true;
         }
-
     }
 }

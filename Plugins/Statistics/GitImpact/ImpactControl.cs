@@ -18,24 +18,28 @@ namespace GitImpact
         private const int LinesFontSize = 10;
         private const int WeekFontSize = 8;
 
-
         private readonly object _dataLock = new object();
 
         private ImpactLoader _impactLoader;
 
         // <Author, <Commits, Added Lines, Deleted Lines>>
         private Dictionary<string, ImpactLoader.DataPoint> _authors;
+
         // <First weekday of commit date, <Author, <Commits, Added Lines, Deleted Lines>>>
         private SortedDictionary<DateTime, Dictionary<string, ImpactLoader.DataPoint>> _impact;
 
         // List of authors that determines the drawing order
         private List<string> _authorStack;
+
         // The paths for each author
         private Dictionary<string, GraphicsPath> _paths;
+
         // The brush for each author
         private Dictionary<string, SolidBrush> _brushes;
+
         // The changed-lines-labels for each author
         private Dictionary<string, List<Tuple<PointF, int>>> _lineLabels;
+
         // The week-labels
         private List<Tuple<PointF, DateTime>> _weekLabels;
 
@@ -82,14 +86,14 @@ namespace GitImpact
                 _impactLoader.Stop();
         }
 
-        void ImpactControl_MouseWheel(object sender, MouseEventArgs e)
+        private void ImpactControl_MouseWheel(object sender, MouseEventArgs e)
         {
             this._scrollBar.Value = Math.Min(this._scrollBar.Maximum, Math.Max(this._scrollBar.Minimum, this._scrollBar.Value + e.Delta));
             // Redraw when we've scrolled
             Invalidate();
         }
 
-        void OnImpactUpdate(object sender, ImpactLoader.CommitEventArgs e)
+        private void OnImpactUpdate(object sender, ImpactLoader.CommitEventArgs e)
         {
             var commit = e.Commit;
 
@@ -145,6 +149,7 @@ namespace GitImpact
         }
 
         private bool _showSubmodules;
+
         [DefaultValue(false)]
         public bool ShowSubmodules
         {
@@ -182,7 +187,6 @@ namespace GitImpact
             this.Paint += this.OnPaint;
             this.Resize += this.OnResize;
             this.ResumeLayout(false);
-
         }
 
         private int GetGraphWidth()
@@ -259,7 +263,7 @@ namespace GitImpact
                     foreach (var label in _lineLabels[author])
                     {
                         SizeF sz = g.MeasureString(label.Item2.ToString(), font);
-                        PointF pt = new PointF(label.Item1.X - sz.Width/2, label.Item1.Y - sz.Height/2);
+                        PointF pt = new PointF(label.Item1.X - sz.Width / 2, label.Item1.Y - sz.Height / 2);
                         g.DrawString(label.Item2.ToString(), font, brush, pt);
                     }
                 }
@@ -277,7 +281,7 @@ namespace GitImpact
                     foreach (var label in _weekLabels)
                     {
                         SizeF sz = g.MeasureString(label.Item2.ToString("dd. MMM yy"), font);
-                        PointF pt = new PointF(label.Item1.X - sz.Width/2, label.Item1.Y + sz.Height/2);
+                        PointF pt = new PointF(label.Item1.X - sz.Width / 2, label.Item1.Y + sz.Height / 2);
                         g.DrawString(label.Item2.ToString("dd. MMM yy"), font, brush, pt);
                     }
                 }
@@ -423,7 +427,7 @@ namespace GitImpact
 
         private int GenerateIntFromString(string text)
         {
-            return text.Sum(c => (int) c);
+            return text.Sum(c => (int)c);
         }
 
         /// <summary>
@@ -494,7 +498,7 @@ namespace GitImpact
         }
 
         [Browsable(false)]
-        public List<string> Authors { get { lock(_dataLock) return _authorStack; } }
+        public List<string> Authors { get { lock (_dataLock) return _authorStack; } }
 
         public ImpactLoader.DataPoint GetAuthorInfo(string author)
         {

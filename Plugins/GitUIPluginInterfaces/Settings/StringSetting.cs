@@ -2,7 +2,7 @@
 
 namespace GitUIPluginInterfaces
 {
-    public class StringSetting: ISetting
+    public class StringSetting : ISetting
     {
         public StringSetting(string aName, string aDefaultValue)
             : this(aName, aName, aDefaultValue)
@@ -23,7 +23,7 @@ namespace GitUIPluginInterfaces
         public ISettingControlBinding CreateControlBinding()
         {
             return new TextBoxBinding(this);
-    }
+        }
 
         private class TextBoxBinding : SettingControlBinding<StringSetting, TextBox>
         {
@@ -59,12 +59,12 @@ namespace GitUIPluginInterfaces
 
         public string this[ISettingsSource settings]
         {
-            get 
+            get
             {
                 return settings.GetString(Name, null);
             }
 
-            set 
+            set
             {
                 settings.SetString(Name, value);
             }
@@ -74,6 +74,5 @@ namespace GitUIPluginInterfaces
         {
             return this[settings] ?? DefaultValue;
         }
-
     }
 }

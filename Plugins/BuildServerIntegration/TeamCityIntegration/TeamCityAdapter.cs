@@ -22,7 +22,6 @@ using GitUIPluginInterfaces.BuildServerIntegration;
 
 namespace TeamCityIntegration
 {
-
     [MetadataAttribute]
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public class TeamCityIntegrationMetadata : BuildServerAdapterMetadataAttribute
@@ -70,7 +69,7 @@ namespace TeamCityIntegration
 
             this.buildServerWatcher = buildServerWatcher;
 
-            ProjectNames = config.GetString("ProjectName", "").Split(new char[]{'|'}, StringSplitOptions.RemoveEmptyEntries);
+            ProjectNames = config.GetString("ProjectName", "").Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
 
             var buildIdFilerSetting = config.GetString("BuildIdFilter", "");
             if (!BuildServerSettingsHelper.IsRegexValid(buildIdFilerSetting))
@@ -94,7 +93,7 @@ namespace TeamCityIntegration
                             GetProjectFromNameXmlResponseAsync(name, CancellationToken.None)
                             .ContinueWith(
                             task => from element in task.Result.XPathSelectElements("/project/buildTypes/buildType")
-                                   select element.Attribute("id").Value,
+                                    select element.Attribute("id").Value,
                            TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.AttachedToParent));
                     }
                 }
@@ -221,7 +220,7 @@ namespace TeamCityIntegration
                             cancellationToken,
                             TaskContinuationOptions.AttachedToParent | TaskContinuationOptions.ExecuteSynchronously,
                             TaskScheduler.Current);
-                
+
                 tasks.Add(notifyObserverTask);
                 --buildsLeft;
 
@@ -285,14 +284,14 @@ namespace TeamCityIntegration
             }
 
             var buildInfo = new BuildInfo
-                {
-                    Id = idValue,
-                    StartDate = DecodeJsonDateTime(startDateText),
-                    Status = ParseBuildStatus(statusValue),
-                    Description = statusText,
-                    CommitHashList = commitHashList,
-                    Url = webUrl
-                };
+            {
+                Id = idValue,
+                StartDate = DecodeJsonDateTime(startDateText),
+                Status = ParseBuildStatus(statusValue),
+                Description = statusText,
+                CommitHashList = commitHashList,
+                Url = webUrl
+            };
             return buildInfo;
         }
 
@@ -308,8 +307,10 @@ namespace TeamCityIntegration
             {
                 case "SUCCESS":
                     return BuildInfo.BuildStatus.Success;
+
                 case "FAILURE":
                     return BuildInfo.BuildStatus.Failure;
+
                 default:
                     return BuildInfo.BuildStatus.Unknown;
             }
@@ -406,8 +407,8 @@ namespace TeamCityIntegration
                             return XDocument.Load(responseStream);
                         }
                     },
-                cancellationToken, 
-                TaskContinuationOptions.AttachedToParent, 
+                cancellationToken,
+                TaskContinuationOptions.AttachedToParent,
                 TaskScheduler.Current);
         }
 
@@ -486,7 +487,7 @@ namespace TeamCityIntegration
         public IList<string> GetAllProjects()
         {
             var projectsRootElement = GetProjectsResponseAsync(CancellationToken.None).Result;
-            var projects = projectsRootElement.Root.Elements().Select(e=>(string)e.Attribute("id"));
+            var projects = projectsRootElement.Root.Elements().Select(e => (string)e.Attribute("id"));
             return projects.ToList();
         }
 

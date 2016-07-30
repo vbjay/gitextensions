@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using GitCommands.Config;
@@ -56,7 +56,6 @@ namespace GitCommands.Settings
             return new ConfigFileSettings(null,
                 ConfigFileSettingsCache.Create(configPath, false, allowCache));
         }
-
 
         public readonly CorePath core;
         public readonly MergeToolPath mergetool;
@@ -155,7 +154,6 @@ namespace GitCommands.Settings
         {
             SetValue(settingName, encoding == null ? null : encoding.HeaderName);
         }
-
     }
 
     public class CorePath : SettingsPath
@@ -179,5 +177,4 @@ namespace GitCommands.Settings
             keepBackup = new BoolNullableSetting("keepBackup", this, true);
         }
     }
-
 }

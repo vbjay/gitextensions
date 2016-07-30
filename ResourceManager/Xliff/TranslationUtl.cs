@@ -147,7 +147,7 @@ namespace ResourceManager.Xliff
                     string propertyName = property.Name;
                     if (propertyName == "Items" && typeof(IList).IsAssignableFrom(property.PropertyType))
                     {
-                        var list = (IList) property.GetValue(itemObj, null);
+                        var list = (IList)property.GetValue(itemObj, null);
                         for (int index = 0; index < list.Count; index++)
                         {
                             propertyName = "Item" + index;
@@ -255,7 +255,7 @@ namespace ResourceManager.Xliff
             return false;
         }
 
-        static readonly string[] UnTranslatableDLLs =
+        private static readonly string[] UnTranslatableDLLs =
         {
             "mscorlib",
             "Microsoft",
@@ -292,7 +292,7 @@ namespace ResourceManager.Xliff
                     continue;
                 foreach (var type in assembly.GetTypes())
                 {
-                    if (type.IsClass && typeof (ITranslate).IsAssignableFrom(type) && !type.IsAbstract)
+                    if (type.IsClass && typeof(ITranslate).IsAssignableFrom(type) && !type.IsAbstract)
                     {
                         var val = !assembly.IsPlugin() ? "" : ".Plugins";
                         List<Type> list;

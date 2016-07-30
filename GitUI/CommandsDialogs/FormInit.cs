@@ -52,13 +52,13 @@ namespace GitUI.CommandsDialogs
         {
             if (string.IsNullOrEmpty(Directory.Text))
             {
-                MessageBox.Show(this, _chooseDirectory.Text,_chooseDirectoryCaption.Text);
+                MessageBox.Show(this, _chooseDirectory.Text, _chooseDirectoryCaption.Text);
                 return;
             }
 
             if (File.Exists(Directory.Text))
             {
-                MessageBox.Show(this, _chooseDirectoryNotFile.Text,_chooseDirectoryNotFileCaption.Text);
+                MessageBox.Show(this, _chooseDirectoryNotFile.Text, _chooseDirectoryNotFileCaption.Text);
                 return;
             }
 
@@ -81,7 +81,6 @@ namespace GitUI.CommandsDialogs
         {
             using (var browseDialog = new FolderBrowserDialog())
             {
-
                 if (browseDialog.ShowDialog(this) == DialogResult.OK)
                     Directory.Text = browseDialog.SelectedPath;
             }

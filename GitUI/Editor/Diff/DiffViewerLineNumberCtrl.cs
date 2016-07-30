@@ -8,9 +8,9 @@ using ICSharpCode.TextEditor;
 
 namespace GitUI.Editor.Diff
 {
-    class DiffViewerLineNumberCtrl : AbstractMargin
+    internal class DiffViewerLineNumberCtrl : AbstractMargin
     {
-        const int TextHorizontalMargin = 4;
+        private const int TextHorizontalMargin = 4;
 
         private int _maxValueOfLineNum;
         private bool _visible = true;
@@ -28,7 +28,7 @@ namespace GitUI.Editor.Diff
                 if (!_visible)
                 {
                     _lastSize = new Size(0, 0);
-                } 
+                }
                 else if (DiffLines.Any())
                 {
                     var size = Graphics.FromHwnd(textArea.Handle).MeasureString(_maxValueOfLineNum.ToString(), textArea.Font);
@@ -44,7 +44,7 @@ namespace GitUI.Editor.Diff
         public override void Paint(Graphics g, Rectangle rect)
         {
             var totalWidth = Size.Width;
-            var leftWidth = (int)(totalWidth/2.0);
+            var leftWidth = (int)(totalWidth / 2.0);
             var rightWidth = rect.Width - leftWidth;
 
             var fontHeight = textArea.TextView.FontHeight;
@@ -80,9 +80,11 @@ namespace GitUI.Editor.Diff
                         case DiffLineNum.DiffLineStyle.Plus:
                             brush = new SolidBrush(AppSettings.DiffAddedColor);
                             break;
+
                         case DiffLineNum.DiffLineStyle.Minus:
                             brush = new SolidBrush(AppSettings.DiffRemovedColor);
                             break;
+
                         case DiffLineNum.DiffLineStyle.Header:
                             brush = new SolidBrush(AppSettings.DiffSectionColor);
                             break;

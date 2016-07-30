@@ -1,22 +1,22 @@
 ﻿using System.Collections.Generic;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Windows.Forms;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
-using System.Security.Cryptography.X509Certificates;
-using System.Net.Security;
-using System.Windows.Forms;
 
 namespace Stash
 {
-    class StashResponse<T>
+    internal class StashResponse<T>
     {
         public bool Success { get; set; }
         public IEnumerable<string> Messages { get; set; }
         public T Result { get; set; }
     }
 
-    abstract class StashRequestBase<T>
+    internal abstract class StashRequestBase<T>
     {
         protected Settings Settings { get; private set; }
 
@@ -30,7 +30,7 @@ namespace Stash
             if (Settings.DisableSSL)
             {
                 System.Net.ServicePointManager.ServerCertificateValidationCallback
-                    = delegate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) { return true; };
+                    = delegate (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) { return true; };
             }
             var client = new RestClient
             {
@@ -50,10 +50,10 @@ namespace Stash
             var response = client.Execute(request);
             if (response.ResponseStatus != ResponseStatus.Completed)
                 return new StashResponse<T>
-                    {
-                        Success = false,
-                        Messages = new[] {response.ErrorMessage}
-                    };
+                {
+                    Success = false,
+                    Messages = new[] { response.ErrorMessage }
+                };
 
             if ((int)response.StatusCode >= 300)
             {
@@ -61,15 +61,16 @@ namespace Stash
             }
 
             return new StashResponse<T>
-                {
-                    Success = true,
-                    Result = ParseResponse(JObject.Parse(response.Content))
-                };
+            {
+                Success = true,
+                Result = ParseResponse(JObject.Parse(response.Content))
+            };
         }
 
         protected abstract object RequestBody { get; }
         protected abstract Method RequestMethod { get; }
         protected abstract string ApiUrl { get; }
+
         protected abstract T ParseResponse(JObject json);
 
         private static StashResponse<T> ParseErrorResponse(string jsonString)
@@ -89,7 +90,7 @@ namespace Stash
             if (json["errors"] != null)
             {
                 var messages = new List<string>();
-                var errorResponse = new StashResponse<T> {Success = false};
+                var errorResponse = new StashResponse<T> { Success = false };
                 foreach (var error in json["errors"])
                 {
                     var sb = new StringBuilder();
@@ -110,10 +111,9 @@ namespace Stash
             }
             if (json["message"] != null)
             {
-                return new StashResponse<T> {Success = false, Messages = new[] {json["message"].ToString()}};
+                return new StashResponse<T> { Success = false, Messages = new[] { json["message"].ToString() } };
             }
-            return new StashResponse<T> {Success = false, Messages = new[] {"Unknown error."}};
+            return new StashResponse<T> { Success = false, Messages = new[] { "Unknown error." } };
         }
-
     }
 }

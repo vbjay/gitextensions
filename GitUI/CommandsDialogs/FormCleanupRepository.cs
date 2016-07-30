@@ -1,8 +1,8 @@
 ﻿using System;
+using System.Linq;
 using System.Windows.Forms;
 using GitCommands;
 using ResourceManager;
-using System.Linq;
 
 namespace GitUI.CommandsDialogs
 {
@@ -10,8 +10,8 @@ namespace GitUI.CommandsDialogs
     {
         private readonly TranslationString _reallyCleanupQuestion =
             new TranslationString("Are you sure you want to cleanup the repository?");
-        private readonly TranslationString _reallyCleanupQuestionCaption = new TranslationString("Cleanup");
 
+        private readonly TranslationString _reallyCleanupQuestionCaption = new TranslationString("Cleanup");
 
         public FormCleanupRepository(GitUICommands aCommands)
             : base(aCommands)

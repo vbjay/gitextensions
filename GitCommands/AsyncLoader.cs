@@ -51,7 +51,7 @@ namespace GitCommands
         }
 
         public Task Load(Action loadContent, Action onLoaded)
-        { 
+        {
             return Load((token) => loadContent(), onLoaded);
         }
 
@@ -109,7 +109,7 @@ namespace GitCommands
                 _cancelledTokenSource.Dispose();
             _cancelledTokenSource = new CancellationTokenSource();
             var token = _cancelledTokenSource.Token;
-            return Task.Factory.StartNew(() => 
+            return Task.Factory.StartNew(() =>
                 {
                     if (Delay > 0)
                     {
@@ -120,7 +120,6 @@ namespace GitCommands
                         return default(T);
                     }
                     return loadContent(token);
-
                 }, token)
                 .ContinueWith((task) =>
             {

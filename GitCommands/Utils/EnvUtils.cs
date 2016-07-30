@@ -14,6 +14,7 @@ namespace GitCommands.Utils
                 case PlatformID.Win32Windows:
                 case PlatformID.WinCE:
                     return true;
+
                 default:
                     return false;
             }
@@ -25,6 +26,7 @@ namespace GitCommands.Utils
             {
                 case PlatformID.Unix:
                     return true;
+
                 default:
                     return false;
             }
@@ -36,6 +38,7 @@ namespace GitCommands.Utils
             {
                 case PlatformID.MacOSX:
                     return true;
+
                 default:
                     return false;
             }
