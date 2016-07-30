@@ -61,25 +61,16 @@ namespace GitCommands
             return byteList.ToArray();
         }
 
-        private struct BufStatistic
+        public static bool IsBinary(byte[] buf)
         {
-            public long cntNul;
-            public long cntCr;
-            public long cntLf;
-            public long cntCrlf;
+            BufStatistic bufStatistic = GetBufStatistic(buf);
+            if (bufStatistic.cntNul > 0)
+                return true;
 
-            public long cntPrintable;
-            public long cntNonPrintable;
+            if ((bufStatistic.cntPrintable / 128) < bufStatistic.cntNonPrintable)
+                return true;
 
-            public void ResetBufStatistic()
-            {
-                cntNul = 0;
-                cntCr = 0;
-                cntLf = 0;
-                cntCrlf = 0;
-                cntPrintable = 0;
-                cntNonPrintable = 0;
-            }
+            return false;
         }
 
         private static BufStatistic GetBufStatistic(byte[] buf)
@@ -153,16 +144,24 @@ namespace GitCommands
             return bufStatistic;
         }
 
-        public static bool IsBinary(byte[] buf)
+        private struct BufStatistic
         {
-            BufStatistic bufStatistic = GetBufStatistic(buf);
-            if (bufStatistic.cntNul > 0)
-                return true;
+            public long cntCr;
+            public long cntCrlf;
+            public long cntLf;
+            public long cntNonPrintable;
+            public long cntNul;
+            public long cntPrintable;
 
-            if ((bufStatistic.cntPrintable / 128) < bufStatistic.cntNonPrintable)
-                return true;
-
-            return false;
+            public void ResetBufStatistic()
+            {
+                cntNul = 0;
+                cntCr = 0;
+                cntLf = 0;
+                cntCrlf = 0;
+                cntPrintable = 0;
+                cntNonPrintable = 0;
+            }
         }
     }
 }

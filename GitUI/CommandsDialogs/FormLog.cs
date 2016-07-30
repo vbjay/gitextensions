@@ -6,11 +6,6 @@ namespace GitUI.CommandsDialogs
 {
     public partial class FormLog : GitModuleForm
     {
-        private FormLog()
-            : this(null)
-        {
-        }
-
         public FormLog(GitUICommands aCommands)
             : base(true, aCommands)
         {
@@ -26,14 +21,32 @@ namespace GitUI.CommandsDialogs
             RevisionGrid.SetSelectedRevision(revision);
         }
 
-        private void FormDiffLoad(object sender, EventArgs e)
+        private FormLog()
+                            : this(null)
         {
-            RevisionGrid.Load();
         }
 
         private void DiffFilesSelectedIndexChanged(object sender, EventArgs e)
         {
             ViewSelectedFileDiff();
+        }
+
+        private void DiffViewerExtraDiffArgumentsChanged(object sender, EventArgs e)
+        {
+            ViewSelectedFileDiff();
+        }
+
+        private void FormDiffLoad(object sender, EventArgs e)
+        {
+            RevisionGrid.Load();
+        }
+
+        private void RevisionGridSelectionChanged(object sender, EventArgs e)
+        {
+            Cursor.Current = Cursors.WaitCursor;
+            DiffFiles.GitItemStatuses = null;
+            DiffFiles.SetDiffs(RevisionGrid.GetSelectedRevisions());
+            Cursor.Current = Cursors.Default;
         }
 
         private void ViewSelectedFileDiff()
@@ -47,19 +60,6 @@ namespace GitUI.CommandsDialogs
             Cursor.Current = Cursors.WaitCursor;
             diffViewer.ViewChanges(RevisionGrid.GetSelectedRevisions(), DiffFiles.SelectedItem, String.Empty);
             Cursor.Current = Cursors.Default;
-        }
-
-        private void RevisionGridSelectionChanged(object sender, EventArgs e)
-        {
-            Cursor.Current = Cursors.WaitCursor;
-            DiffFiles.GitItemStatuses = null;
-            DiffFiles.SetDiffs(RevisionGrid.GetSelectedRevisions());
-            Cursor.Current = Cursors.Default;
-        }
-
-        private void DiffViewerExtraDiffArgumentsChanged(object sender, EventArgs e)
-        {
-            ViewSelectedFileDiff();
         }
     }
 }

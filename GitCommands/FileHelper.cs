@@ -61,6 +61,16 @@ namespace GitCommands
             return HasMatchingExtension(BinaryExtensions, fileName);
         }
 
+        public static bool IsImage(string fileName)
+        {
+            return HasMatchingExtension(ImageExtensions, fileName);
+        }
+
+        private static bool HasMatchingExtension(IEnumerable<string> extensions, string fileName)
+        {
+            return extensions.Any(extension => fileName.EndsWith(extension, StringComparison.CurrentCultureIgnoreCase));
+        }
+
         /// <returns>null if no info in .gitattributes (or ambiguous). True if marked as binary, false if marked as text</returns>
         private static bool? IsBinaryAccordingToGitAttributes(GitModule aModule, string fileName)
         {
@@ -100,16 +110,6 @@ namespace GitCommands
                     return false;
             }
             return null;
-        }
-
-        public static bool IsImage(string fileName)
-        {
-            return HasMatchingExtension(ImageExtensions, fileName);
-        }
-
-        private static bool HasMatchingExtension(IEnumerable<string> extensions, string fileName)
-        {
-            return extensions.Any(extension => fileName.EndsWith(extension, StringComparison.CurrentCultureIgnoreCase));
         }
 
         #region binary file check

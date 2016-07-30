@@ -9,46 +9,12 @@ namespace Github3
 {
     public partial class OAuth : Form
     {
+        private bool gotToken = false;
+
         public OAuth()
         {
             InitializeComponent();
             webBrowser1.ScriptErrorsSuppressed = true;
-        }
-
-        protected override void OnLoad(System.EventArgs e)
-        {
-            try
-            {
-                webBrowser1.ScriptErrorsSuppressed = true;
-                webBrowser1.CausesValidation = false;
-                string url = "https://github.com/login/oauth/authorize?client_id=" + GithubAPIInfo.client_id + "&scope=repo,public_repo";
-                this.webBrowser1.Navigate(url);
-            }
-            catch (NullReferenceException)
-            {
-                MessageBox.Show(this, "Mono doesn't have installed WebBrowser.");
-            }
-        }
-
-        private bool gotToken = false;
-
-        public void web_Navigating(object sender, WebBrowserNavigatingEventArgs e)
-        {
-            checkAuth(e.Url.ToString());
-        }
-
-        public void web_Navigated(object sender, WebBrowserNavigatedEventArgs e)
-        {
-            checkAuth(e.Url.ToString());
-        }
-
-        static private Dictionary<string, string> GetParams(string uri)
-        {
-            var matches = Regex.Matches(uri, @"[\?&](([^&=]+)=([^&=#]*))", RegexOptions.Compiled);
-            return matches.Cast<Match>().ToDictionary(
-                m => Uri.UnescapeDataString(m.Groups[2].Value),
-                m => Uri.UnescapeDataString(m.Groups[3].Value)
-            );
         }
 
         public void checkAuth(string url)
@@ -75,6 +41,40 @@ namespace Github3
                     MessageBox.Show(this.Owner as IWin32Window, "Successfully retrieved OAuth token.", "Github Authorization");
                 }
             }
+        }
+
+        public void web_Navigated(object sender, WebBrowserNavigatedEventArgs e)
+        {
+            checkAuth(e.Url.ToString());
+        }
+
+        public void web_Navigating(object sender, WebBrowserNavigatingEventArgs e)
+        {
+            checkAuth(e.Url.ToString());
+        }
+
+        protected override void OnLoad(System.EventArgs e)
+        {
+            try
+            {
+                webBrowser1.ScriptErrorsSuppressed = true;
+                webBrowser1.CausesValidation = false;
+                string url = "https://github.com/login/oauth/authorize?client_id=" + GithubAPIInfo.client_id + "&scope=repo,public_repo";
+                this.webBrowser1.Navigate(url);
+            }
+            catch (NullReferenceException)
+            {
+                MessageBox.Show(this, "Mono doesn't have installed WebBrowser.");
+            }
+        }
+
+        static private Dictionary<string, string> GetParams(string uri)
+        {
+            var matches = Regex.Matches(uri, @"[\?&](([^&=]+)=([^&=#]*))", RegexOptions.Compiled);
+            return matches.Cast<Match>().ToDictionary(
+                m => Uri.UnescapeDataString(m.Groups[2].Value),
+                m => Uri.UnescapeDataString(m.Groups[3].Value)
+            );
         }
     }
 }

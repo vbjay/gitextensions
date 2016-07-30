@@ -14,27 +14,29 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
     {
         #region Translation
 
-        private readonly TranslationString _moveToCategory =
-            new TranslationString("Move to category");
-
-        private readonly TranslationString _moveCategoryUp =
-            new TranslationString("Move up");
+        private readonly TranslationString _editCategory =
+            new TranslationString("Edit");
 
         private readonly TranslationString _moveCategoryDown =
             new TranslationString("Move down");
 
-        private readonly TranslationString _removeCategory =
-            new TranslationString("Remove");
+        private readonly TranslationString _moveCategoryUp =
+            new TranslationString("Move up");
 
-        private readonly TranslationString _editCategory =
-            new TranslationString("Edit");
+        private readonly TranslationString _moveToCategory =
+                                    new TranslationString("Move to category");
 
         private readonly TranslationString _newCategory =
             new TranslationString("New category");
 
+        private readonly TranslationString _removeCategory =
+                    new TranslationString("Remove");
+
         #endregion Translation
 
         private RepositoryCategory m_repositoryCategory;
+
+        private Repository repository;
 
         public DashboardCategory()
         {
@@ -54,6 +56,13 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             Title = title;
             RepositoryCategory = repositoryCategory;
         }
+
+        public event EventHandler DashboardCategoryChanged;
+
+        [Category("Action")]
+        public event EventHandler DashboardItemClick;
+
+        public event EventHandler<RepositoryEventArgs> RepositoryRemoved;
 
         public RepositoryCategory RepositoryCategory
         {
@@ -82,15 +91,88 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             set { _NO_TRANSLATE_Caption.Text = value; }
         }
 
+        public void AddItem(DashboardItem dashboardItem)
+        {
+            dashboardItem.Margin = new Padding(10, 0, 0, 0);
+            this.flowLayoutPanel.Controls.Add(dashboardItem);
+        }
+
+        public void Clear()
+        {
+            var items = (from DashboardItem i in this.flowLayoutPanel.Controls
+                         select i).ToList();
+
+            this.flowLayoutPanel.Controls.Clear();
+
+            foreach (var item in items)
+            {
+                item.Click -= dashboardItem_Click;
+                item.Close();
+            }
+        }
+
         public void DisableContextMenu()
         {
             _NO_TRANSLATE_Caption.ContextMenuStrip = null;
         }
 
-        private void SetUpFonts()
+        public void Recalculate()
         {
-            _NO_TRANSLATE_Caption.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 10, FontStyle.Bold,
-                                                  GraphicsUnit.Point);
+            Title = RepositoryCategory.Description;
+            Clear();
+            InitRepositoryCategory();
+        }
+
+        private void addToItem_Click(object sender, EventArgs e)
+        {
+            var toolStripItem = sender as ToolStripItem;
+
+            if (toolStripItem == null)
+                return;
+
+            if (repository == null)
+                return;
+
+            foreach (RepositoryCategory newRepositoryCategory in Repositories.RepositoryCategories)
+            {
+                if (newRepositoryCategory.Description.Equals(toolStripItem.Text))
+                {
+                    RepositoryCategory.RemoveRepository(repository);
+                    repository.RepositoryType = RepositoryType.Repository;
+                    newRepositoryCategory.AddRepository(repository);
+                }
+            }
+
+            dashboardCategoryChanged(this, null);
+        }
+
+        private void contextMenu_Opening(object sender, EventArgs e)
+        {
+            repository = (Repository)(((ContextMenuStrip)sender).SourceControl.Tag);
+        }
+
+        private void dashboardCategoryChanged(object sender, EventArgs e)
+        {
+            if (DashboardCategoryChanged != null)
+                DashboardCategoryChanged(sender, e);
+        }
+
+        private void dashboardItem_Click(object sender, EventArgs e)
+        {
+            if (DashboardItemClick != null)
+                DashboardItemClick(sender, e);
+        }
+
+        private void editMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var frm = new FormDashboardEditor()) frm.ShowDialog(this);
+            dashboardCategoryChanged(this, null);
+        }
+
+        private void editToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var frm = new FormDashboardEditor()) frm.ShowDialog(this);
+            dashboardCategoryChanged(this, null);
         }
 
         private void InitRepositoryCategory()
@@ -136,11 +218,18 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             ResumeLayout();
         }
 
-        private Repository repository;
-
-        private void contextMenu_Opening(object sender, EventArgs e)
+        private void moveDownMenuItem_Click(object sender, EventArgs e)
         {
-            repository = (Repository)(((ContextMenuStrip)sender).SourceControl.Tag);
+            MoveItem(false);
+        }
+
+        private void moveDownToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            int index = Repositories.RepositoryCategories.IndexOf(RepositoryCategory);
+            Repositories.RepositoryCategories.Remove(RepositoryCategory);
+            Repositories.RepositoryCategories.Insert(Math.Min(index + 1, Repositories.RepositoryCategories.Count),
+                                                     RepositoryCategory);
+            dashboardCategoryChanged(this, null);
         }
 
         private void MoveItem(bool moveUp)
@@ -154,39 +243,6 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
                 Math.Min(index + 1, RepositoryCategory.Repositories.Count);
             RepositoryCategory.Repositories.Insert(newIndex, repository);
             Recalculate();
-        }
-
-        private void moveUpMenuItem_Click(object sender, EventArgs e)
-        {
-            MoveItem(true);
-        }
-
-        private void moveDownMenuItem_Click(object sender, EventArgs e)
-        {
-            MoveItem(false);
-        }
-
-        private void editMenuItem_Click(object sender, EventArgs e)
-        {
-            using (var frm = new FormDashboardEditor()) frm.ShowDialog(this);
-            dashboardCategoryChanged(this, null);
-        }
-
-        public void Recalculate()
-        {
-            Title = RepositoryCategory.Description;
-            Clear();
-            InitRepositoryCategory();
-        }
-
-        private void removeMenuItem_Click(object sender, EventArgs e)
-        {
-            if (repository == null)
-                return;
-
-            RepositoryCategory.RemoveRepository(repository);
-            repositoryRemoved(repository);
-            dashboardCategoryChanged(this, null);
         }
 
         private void moveToMenuItem_DropDownOpening(object sender, EventArgs e)
@@ -210,6 +266,19 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             var newCategoryMenuItem = new ToolStripMenuItem(_newCategory.Text);
             newCategoryMenuItem.Click += newCategoryMenuItem_Click;
             moveToMenuItem.DropDownItems.Add(newCategoryMenuItem);
+        }
+
+        private void moveUpMenuItem_Click(object sender, EventArgs e)
+        {
+            MoveItem(true);
+        }
+
+        private void moveUpToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            int index = Repositories.RepositoryCategories.IndexOf(RepositoryCategory);
+            Repositories.RepositoryCategories.Remove(RepositoryCategory);
+            Repositories.RepositoryCategories.Insert(Math.Max(index - 1, 0), RepositoryCategory);
+            dashboardCategoryChanged(this, null);
         }
 
         private void newCategoryMenuItem_Click(object sender, EventArgs e)
@@ -238,21 +307,33 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             dashboardCategoryChanged(this, null);
         }
 
-        [Category("Action")]
-        public event EventHandler DashboardItemClick;
-
-        private void dashboardItem_Click(object sender, EventArgs e)
+        private void removeMenuItem_Click(object sender, EventArgs e)
         {
-            if (DashboardItemClick != null)
-                DashboardItemClick(sender, e);
+            if (repository == null)
+                return;
+
+            RepositoryCategory.RemoveRepository(repository);
+            repositoryRemoved(repository);
+            dashboardCategoryChanged(this, null);
         }
 
-        public event EventHandler DashboardCategoryChanged;
-
-        private void dashboardCategoryChanged(object sender, EventArgs e)
+        private void removeToolStripMenuItem_Click_1(object sender, EventArgs e)
         {
-            if (DashboardCategoryChanged != null)
-                DashboardCategoryChanged(sender, e);
+            Repositories.RepositoryCategories.Remove(RepositoryCategory);
+            dashboardCategoryChanged(this, null);
+        }
+
+        private void repositoryRemoved(Repository repository)
+        {
+            var handler = RepositoryRemoved;
+            if (handler != null)
+                handler(this, new RepositoryEventArgs(repository));
+        }
+
+        private void SetUpFonts()
+        {
+            _NO_TRANSLATE_Caption.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 10, FontStyle.Bold,
+                                                  GraphicsUnit.Point);
         }
 
         public class RepositoryEventArgs : EventArgs
@@ -263,87 +344,6 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             }
 
             public Repository Repository { get; private set; }
-        }
-
-        public event EventHandler<RepositoryEventArgs> RepositoryRemoved;
-
-        private void repositoryRemoved(Repository repository)
-        {
-            var handler = RepositoryRemoved;
-            if (handler != null)
-                handler(this, new RepositoryEventArgs(repository));
-        }
-
-        public void AddItem(DashboardItem dashboardItem)
-        {
-            dashboardItem.Margin = new Padding(10, 0, 0, 0);
-            this.flowLayoutPanel.Controls.Add(dashboardItem);
-        }
-
-        public void Clear()
-        {
-            var items = (from DashboardItem i in this.flowLayoutPanel.Controls
-                         select i).ToList();
-
-            this.flowLayoutPanel.Controls.Clear();
-
-            foreach (var item in items)
-            {
-                item.Click -= dashboardItem_Click;
-                item.Close();
-            }
-        }
-
-        private void addToItem_Click(object sender, EventArgs e)
-        {
-            var toolStripItem = sender as ToolStripItem;
-
-            if (toolStripItem == null)
-                return;
-
-            if (repository == null)
-                return;
-
-            foreach (RepositoryCategory newRepositoryCategory in Repositories.RepositoryCategories)
-            {
-                if (newRepositoryCategory.Description.Equals(toolStripItem.Text))
-                {
-                    RepositoryCategory.RemoveRepository(repository);
-                    repository.RepositoryType = RepositoryType.Repository;
-                    newRepositoryCategory.AddRepository(repository);
-                }
-            }
-
-            dashboardCategoryChanged(this, null);
-        }
-
-        private void editToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            using (var frm = new FormDashboardEditor()) frm.ShowDialog(this);
-            dashboardCategoryChanged(this, null);
-        }
-
-        private void removeToolStripMenuItem_Click_1(object sender, EventArgs e)
-        {
-            Repositories.RepositoryCategories.Remove(RepositoryCategory);
-            dashboardCategoryChanged(this, null);
-        }
-
-        private void moveUpToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            int index = Repositories.RepositoryCategories.IndexOf(RepositoryCategory);
-            Repositories.RepositoryCategories.Remove(RepositoryCategory);
-            Repositories.RepositoryCategories.Insert(Math.Max(index - 1, 0), RepositoryCategory);
-            dashboardCategoryChanged(this, null);
-        }
-
-        private void moveDownToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            int index = Repositories.RepositoryCategories.IndexOf(RepositoryCategory);
-            Repositories.RepositoryCategories.Remove(RepositoryCategory);
-            Repositories.RepositoryCategories.Insert(Math.Min(index + 1, Repositories.RepositoryCategories.Count),
-                                                     RepositoryCategory);
-            dashboardCategoryChanged(this, null);
         }
     }
 }

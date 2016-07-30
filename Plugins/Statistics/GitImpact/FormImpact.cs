@@ -35,24 +35,15 @@ namespace GitImpact
             base.OnClosed(e);
         }
 
+        private void cbShowSubmodules_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdateAuthorInfo("");
+            Impact.ShowSubmodules = cbIncludingSubmodules.Checked;
+        }
+
         private void Impact_Invalidated(object sender, InvalidateEventArgs e)
         {
             syncContext.Send(o => UpdateAuthorInfo(Impact.GetSelectedAuthor()), this);
-        }
-
-        private void UpdateAuthorInfo(string author)
-        {
-            lblAuthor.Visible = pnlAuthorColor.Visible = !string.IsNullOrEmpty(author);
-
-            if (lblAuthor.Visible)
-            {
-                ImpactLoader.DataPoint data = Impact.GetAuthorInfo(author);
-                lblAuthor.Text = string.Format(_authorCommits.Text, author, data.Commits, data.ChangedLines);
-                pnlAuthorColor.BackColor = Impact.GetAuthorColor(author);
-
-                lblAuthor.Refresh();
-                pnlAuthorColor.Refresh();
-            }
         }
 
         private void Impact_MouseMove(object sender, MouseEventArgs e)
@@ -68,10 +59,19 @@ namespace GitImpact
             }
         }
 
-        private void cbShowSubmodules_CheckedChanged(object sender, EventArgs e)
+        private void UpdateAuthorInfo(string author)
         {
-            UpdateAuthorInfo("");
-            Impact.ShowSubmodules = cbIncludingSubmodules.Checked;
+            lblAuthor.Visible = pnlAuthorColor.Visible = !string.IsNullOrEmpty(author);
+
+            if (lblAuthor.Visible)
+            {
+                ImpactLoader.DataPoint data = Impact.GetAuthorInfo(author);
+                lblAuthor.Text = string.Format(_authorCommits.Text, author, data.Commits, data.ChangedLines);
+                pnlAuthorColor.BackColor = Impact.GetAuthorColor(author);
+
+                lblAuthor.Refresh();
+                pnlAuthorColor.Refresh();
+            }
         }
     }
 }

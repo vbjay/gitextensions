@@ -8,6 +8,12 @@ using ResourceManager;
 
 namespace GitUI.CommandsDialogs
 {
+    internal enum MainMenuItem
+    {
+        NavigateMenu,
+        ViewMenu
+    }
+
     /// <summary>
     /// Add MenuCommands as menus to the FormBrowse main menu.
     /// This class is intended to have NO dependency to FormBrowse
@@ -15,17 +21,16 @@ namespace GitUI.CommandsDialogs
     /// </summary>
     internal class FormBrowseMenus : ITranslate, IDisposable
     {
-        private MenuStrip _menuStrip;
-
-        private IList<MenuCommand> _navigateMenuCommands;
-        private IList<MenuCommand> _viewMenuCommands;
-
-        private ToolStripMenuItem _navigateToolStripMenuItem;
-        private ToolStripMenuItem _viewToolStripMenuItem;
-
         // we have to remember which items we registered with the menucommands because other
         // location (RevisionGrid) can register items too!
         private IList<ToolStripMenuItem> _itemsRegisteredWithMenuCommand = new List<ToolStripMenuItem>();
+
+        private MenuStrip _menuStrip;
+
+        private IList<MenuCommand> _navigateMenuCommands;
+        private ToolStripMenuItem _navigateToolStripMenuItem;
+        private IList<MenuCommand> _viewMenuCommands;
+        private ToolStripMenuItem _viewToolStripMenuItem;
 
         public FormBrowseMenus(MenuStrip menuStrip)
         {
@@ -33,27 +38,6 @@ namespace GitUI.CommandsDialogs
 
             CreateAdditionalMainMenuItems();
             Translate();
-        }
-
-        public void Translate()
-        {
-            Translator.Translate(this, AppSettings.CurrentTranslation);
-        }
-
-        public virtual void AddTranslationItems(ITranslation translation)
-        {
-            TranslationUtils.AddTranslationItemsFromList("FormBrowse", translation, GetAdditionalMainMenuItemsForTranslation());
-        }
-
-        public virtual void TranslateItems(ITranslation translation)
-        {
-            TranslationUtils.TranslateItemsFromList("FormBrowse", translation, GetAdditionalMainMenuItemsForTranslation());
-        }
-
-        public void ResetMenuCommandSets()
-        {
-            _navigateMenuCommands = null;
-            _viewMenuCommands = null;
         }
 
         /// <summary>
@@ -95,6 +79,17 @@ namespace GitUI.CommandsDialogs
             selectedMenuCommands.AddAll(menuCommands);
         }
 
+        public virtual void AddTranslationItems(ITranslation translation)
+        {
+            TranslationUtils.AddTranslationItemsFromList("FormBrowse", translation, GetAdditionalMainMenuItemsForTranslation());
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         /// <summary>
         /// inserts
         /// - Navigate (after Repository)
@@ -114,51 +109,15 @@ namespace GitUI.CommandsDialogs
             OnMenuCommandsPropertyChanged();
         }
 
-        /// <summary>
-        /// call in ctor before translation
-        /// </summary>
-        private void CreateAdditionalMainMenuItems()
+        public void OnMenuCommandsPropertyChanged()
         {
-            if (_navigateToolStripMenuItem == null)
-            {
-                _navigateToolStripMenuItem = new ToolStripMenuItem();
-                _navigateToolStripMenuItem.Name = "navigateToolStripMenuItem";
-                _navigateToolStripMenuItem.Text = "Navigate";
-            }
+            var menuCommands = GetNavigateAndViewMenuCommands();
 
-            if (_viewToolStripMenuItem == null)
-            {
-                _viewToolStripMenuItem = new ToolStripMenuItem();
-                _viewToolStripMenuItem.Name = "viewToolStripMenuItem";
-                _viewToolStripMenuItem.Text = "View";
-            }
-        }
-
-        private IEnumerable<Tuple<string, object>> GetAdditionalMainMenuItemsForTranslation()
-        {
-            var list = new List<ToolStripMenuItem> { _navigateToolStripMenuItem, _viewToolStripMenuItem };
-            return list.Select(menuItem => new Tuple<string, object>(menuItem.Name, menuItem));
-        }
-
-        private void SetDropDownItems(ToolStripMenuItem toolStripMenuItemTarget, IEnumerable<MenuCommand> menuCommands)
-        {
-            toolStripMenuItemTarget.DropDownItems.Clear();
-
-            var toolStripItems = new List<ToolStripItem>();
             foreach (var menuCommand in menuCommands)
             {
-                var toolStripItem = MenuCommand.CreateToolStripItem(menuCommand);
-                toolStripItems.Add(toolStripItem);
-
-                var toolStripMenuItem = toolStripItem as ToolStripMenuItem;
-                if (toolStripMenuItem != null)
-                {
-                    menuCommand.RegisterMenuItem(toolStripMenuItem);
-                    _itemsRegisteredWithMenuCommand.Add(toolStripMenuItem);
-                }
+                menuCommand.SetCheckForRegisteredMenuItems();
+                menuCommand.UpdateMenuItemsShortcutKeyDisplayString();
             }
-
-            toolStripMenuItemTarget.DropDownItems.AddRange(toolStripItems.ToArray());
         }
 
         // clear is important to avoid mem leaks of event handlers
@@ -187,15 +146,55 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-        public void OnMenuCommandsPropertyChanged()
+        public void ResetMenuCommandSets()
         {
-            var menuCommands = GetNavigateAndViewMenuCommands();
+            _navigateMenuCommands = null;
+            _viewMenuCommands = null;
+        }
 
-            foreach (var menuCommand in menuCommands)
+        public void Translate()
+        {
+            Translator.Translate(this, AppSettings.CurrentTranslation);
+        }
+
+        public virtual void TranslateItems(ITranslation translation)
+        {
+            TranslationUtils.TranslateItemsFromList("FormBrowse", translation, GetAdditionalMainMenuItemsForTranslation());
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
             {
-                menuCommand.SetCheckForRegisteredMenuItems();
-                menuCommand.UpdateMenuItemsShortcutKeyDisplayString();
+                _navigateToolStripMenuItem.Dispose();
+                _viewToolStripMenuItem.Dispose();
             }
+        }
+
+        /// <summary>
+        /// call in ctor before translation
+        /// </summary>
+        private void CreateAdditionalMainMenuItems()
+        {
+            if (_navigateToolStripMenuItem == null)
+            {
+                _navigateToolStripMenuItem = new ToolStripMenuItem();
+                _navigateToolStripMenuItem.Name = "navigateToolStripMenuItem";
+                _navigateToolStripMenuItem.Text = "Navigate";
+            }
+
+            if (_viewToolStripMenuItem == null)
+            {
+                _viewToolStripMenuItem = new ToolStripMenuItem();
+                _viewToolStripMenuItem.Name = "viewToolStripMenuItem";
+                _viewToolStripMenuItem.Text = "View";
+            }
+        }
+
+        private IEnumerable<Tuple<string, object>> GetAdditionalMainMenuItemsForTranslation()
+        {
+            var list = new List<ToolStripMenuItem> { _navigateToolStripMenuItem, _viewToolStripMenuItem };
+            return list.Select(menuItem => new Tuple<string, object>(menuItem.Name, menuItem));
         }
 
         private IEnumerable<MenuCommand> GetNavigateAndViewMenuCommands()
@@ -214,25 +213,25 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-        public void Dispose()
+        private void SetDropDownItems(ToolStripMenuItem toolStripMenuItemTarget, IEnumerable<MenuCommand> menuCommands)
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+            toolStripMenuItemTarget.DropDownItems.Clear();
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
+            var toolStripItems = new List<ToolStripItem>();
+            foreach (var menuCommand in menuCommands)
             {
-                _navigateToolStripMenuItem.Dispose();
-                _viewToolStripMenuItem.Dispose();
-            }
-        }
-    }
+                var toolStripItem = MenuCommand.CreateToolStripItem(menuCommand);
+                toolStripItems.Add(toolStripItem);
 
-    internal enum MainMenuItem
-    {
-        NavigateMenu,
-        ViewMenu
+                var toolStripMenuItem = toolStripItem as ToolStripMenuItem;
+                if (toolStripMenuItem != null)
+                {
+                    menuCommand.RegisterMenuItem(toolStripMenuItem);
+                    _itemsRegisteredWithMenuCommand.Add(toolStripMenuItem);
+                }
+            }
+
+            toolStripMenuItemTarget.DropDownItems.AddRange(toolStripItems.ToArray());
+        }
     }
 }

@@ -7,9 +7,10 @@ namespace ResourceManager
 {
     static public class LocalizationHelpers
     {
-        private static DateTime RoundDateTime(DateTime dateTime)
+        public static string GetFullDateString(DateTimeOffset datetime)
         {
-            return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, dateTime.Minute, dateTime.Second);
+            // previous format "ddd MMM dd HH':'mm':'ss yyyy"
+            return datetime.LocalDateTime.ToString("G");
         }
 
         /// <summary>
@@ -57,12 +58,6 @@ namespace ResourceManager
             }
             int years = Convert.ToInt32(ts.Days / 365.0);
             return Strings.GetNYearsAgoText(years);
-        }
-
-        public static string GetFullDateString(DateTimeOffset datetime)
-        {
-            // previous format "ddd MMM dd HH':'mm':'ss yyyy"
-            return datetime.LocalDateTime.ToString("G");
         }
 
         public static string GetSubmoduleText(GitModule superproject, string name, string hash)
@@ -225,6 +220,11 @@ namespace ResourceManager
             }
 
             return sb.ToString();
+        }
+
+        private static DateTime RoundDateTime(DateTime dateTime)
+        {
+            return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, dateTime.Minute, dateTime.Second);
         }
     }
 }

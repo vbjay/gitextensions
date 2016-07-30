@@ -5,18 +5,15 @@ namespace GitCommands
 {
     public class GitVersion : IComparable<GitVersion>
     {
+        public static readonly GitVersion LastSupportedVersion = v1_7_0;
+        public readonly string Full;
+        private const string Prefix = "git version";
         private static readonly GitVersion v1_7_0 = new GitVersion("1.7.0");
         private static readonly GitVersion v1_7_1 = new GitVersion("1.7.1");
-        private static readonly GitVersion v1_7_7 = new GitVersion("1.7.7");
         private static readonly GitVersion v1_7_11 = new GitVersion("1.7.11");
+        private static readonly GitVersion v1_7_7 = new GitVersion("1.7.7");
         private static readonly GitVersion v1_8_5 = new GitVersion("1.8.5");
         private static readonly GitVersion v2_0_1 = new GitVersion("2.0.1");
-
-        public static readonly GitVersion LastSupportedVersion = v1_7_0;
-
-        private const string Prefix = "git version";
-
-        public readonly string Full;
         private readonly int a;
         private readonly int b;
         private readonly int c;
@@ -38,14 +35,29 @@ namespace GitCommands
             get { return this >= v1_7_1; }
         }
 
+        public bool IsUnknown
+        {
+            get { return a == 0 && b == 0 && c == 0 && d == 0; }
+        }
+
         public bool PushCanAskForProgress
         {
             get { return this >= v1_7_1; }
         }
 
+        public bool RaceConditionWhenGitStatusIsUpdatingIndex
+        {
+            get { return this < v2_0_1; }
+        }
+
         public bool StashUntrackedFilesSupported
         {
             get { return this >= v1_7_7; }
+        }
+
+        public bool SupportPushForceWithLease
+        {
+            get { return this >= v1_8_5; }
         }
 
         public bool SupportPushWithRecursiveSubmodulesCheck
@@ -58,19 +70,29 @@ namespace GitCommands
             get { return this >= v1_7_11; }
         }
 
-        public bool SupportPushForceWithLease
+        public static bool operator <(GitVersion left, GitVersion right)
         {
-            get { return this >= v1_8_5; }
+            return Compare(left, right) < 0;
         }
 
-        public bool RaceConditionWhenGitStatusIsUpdatingIndex
+        public static bool operator <=(GitVersion left, GitVersion right)
         {
-            get { return this < v2_0_1; }
+            return Compare(left, right) <= 0;
         }
 
-        public bool IsUnknown
+        public static bool operator >(GitVersion left, GitVersion right)
         {
-            get { return a == 0 && b == 0 && c == 0 && d == 0; }
+            return Compare(left, right) > 0;
+        }
+
+        public static bool operator >=(GitVersion left, GitVersion right)
+        {
+            return Compare(left, right) >= 0;
+        }
+
+        public int CompareTo(GitVersion other)
+        {
+            return Compare(this, other);
         }
 
         // Returns true if it's possible to pass given string as command line
@@ -92,6 +114,33 @@ namespace GitCommands
             foreach (char ch in s)
                 if ((uint)ch >= 0x80) return false;
             return true;
+        }
+
+        public override string ToString()
+        {
+            return Full
+                .Replace(".msysgit.0", "")
+                .Replace(".msysgit.1", "")
+                .Replace(".windows.0", "")
+                .Replace(".windows.1", "");
+        }
+
+        private static int Compare(GitVersion left, GitVersion right)
+        {
+            if (left == null && right == null) return 0;
+            if (right == null) return 1;
+            if (left == null) return -1;
+
+            int compareA = left.a.CompareTo(right.a);
+            if (compareA != 0) return compareA;
+
+            int compareB = left.b.CompareTo(right.b);
+            if (compareB != 0) return compareB;
+
+            int compareC = left.c.CompareTo(right.c);
+            if (compareC != 0) return compareC;
+
+            return left.d.CompareTo(right.d);
         }
 
         private static string Fix(string version)
@@ -129,58 +178,6 @@ namespace GitCommands
                     yield return value;
                 }
             }
-        }
-
-        public int CompareTo(GitVersion other)
-        {
-            return Compare(this, other);
-        }
-
-        private static int Compare(GitVersion left, GitVersion right)
-        {
-            if (left == null && right == null) return 0;
-            if (right == null) return 1;
-            if (left == null) return -1;
-
-            int compareA = left.a.CompareTo(right.a);
-            if (compareA != 0) return compareA;
-
-            int compareB = left.b.CompareTo(right.b);
-            if (compareB != 0) return compareB;
-
-            int compareC = left.c.CompareTo(right.c);
-            if (compareC != 0) return compareC;
-
-            return left.d.CompareTo(right.d);
-        }
-
-        public static bool operator >(GitVersion left, GitVersion right)
-        {
-            return Compare(left, right) > 0;
-        }
-
-        public static bool operator <(GitVersion left, GitVersion right)
-        {
-            return Compare(left, right) < 0;
-        }
-
-        public static bool operator >=(GitVersion left, GitVersion right)
-        {
-            return Compare(left, right) >= 0;
-        }
-
-        public static bool operator <=(GitVersion left, GitVersion right)
-        {
-            return Compare(left, right) <= 0;
-        }
-
-        public override string ToString()
-        {
-            return Full
-                .Replace(".msysgit.0", "")
-                .Replace(".msysgit.1", "")
-                .Replace(".windows.0", "")
-                .Replace(".windows.1", "");
         }
     }
 }

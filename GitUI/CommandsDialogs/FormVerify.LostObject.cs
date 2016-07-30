@@ -28,31 +28,11 @@ namespace GitUI.CommandsDialogs
             private const string LogPattern = @"^([^,]+), (.*), (.+), (\d+)$";
             private const string RawDataPattern = "^((dangling|missing|unreachable) (commit|blob|tree)|warning in tree) (" + GitRevision.Sha1HashPattern + ")(.)*$";
 
-            private static readonly Regex RawDataRegex = new Regex(RawDataPattern, RegexOptions.Compiled);
             private static readonly Regex LogRegex = new Regex(LogPattern, RegexOptions.Compiled | RegexOptions.Singleline);
-
+            private static readonly Regex RawDataRegex = new Regex(RawDataPattern, RegexOptions.Compiled);
+            private readonly string hash;
             private readonly LostObjectType objectType;
             private readonly string rawType;
-            private readonly string hash;
-
-            public LostObjectType ObjectType
-            {
-                get { return objectType; }
-            }
-
-            /// <summary>
-            /// Sha1 hash of lost object.
-            /// </summary>
-            public string Hash { get { return hash; } }
-
-            /// <summary>
-            /// Diagnostics and object type.
-            /// </summary>
-            public string RawType { get { return rawType; } }
-
-            public string Author { get; private set; }
-            public string Subject { get; private set; }
-            public DateTime? Date { get; private set; }
 
             private LostObject(LostObjectType objectType, string rawType, string hash)
             {
@@ -60,6 +40,27 @@ namespace GitUI.CommandsDialogs
                 this.rawType = rawType;
                 this.hash = hash;
             }
+
+            public string Author { get; private set; }
+
+            public DateTime? Date { get; private set; }
+
+            /// <summary>
+            /// Sha1 hash of lost object.
+            /// </summary>
+            public string Hash { get { return hash; } }
+
+            public LostObjectType ObjectType
+            {
+                get { return objectType; }
+            }
+
+            /// <summary>
+            /// Diagnostics and object type.
+            /// </summary>
+            public string RawType { get { return rawType; } }
+
+            public string Subject { get; private set; }
 
             public static LostObject TryParse(GitModule aModule, string raw)
             {

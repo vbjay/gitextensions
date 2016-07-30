@@ -6,12 +6,8 @@ namespace GitCommands
 {
     public class GitRef : IGitItem
     {
-        private readonly string _mergeSettingName;
-        private readonly string _remoteSettingName;
-        private IList<IGitItem> _subItems;
-
-        /// <summary>"refs/tags/"</summary>
-        public static readonly string RefsTagsPrefix = "refs/tags/";
+        /// <summary>"refs/bisect/"</summary>
+        public static readonly string RefsBisectPrefix = "refs/bisect/";
 
         /// <summary>"refs/heads/"</summary>
         public static readonly string RefsHeadsPrefix = "refs/heads/";
@@ -19,13 +15,15 @@ namespace GitCommands
         /// <summary>"refs/remotes/"</summary>
         public static readonly string RefsRemotesPrefix = "refs/remotes/";
 
-        /// <summary>"refs/bisect/"</summary>
-        public static readonly string RefsBisectPrefix = "refs/bisect/";
+        /// <summary>"refs/tags/"</summary>
+        public static readonly string RefsTagsPrefix = "refs/tags/";
 
         /// <summary>"^{}"</summary>
         public static readonly string TagDereferenceSuffix = "^{}";
 
-        public GitModule Module { get; private set; }
+        private readonly string _mergeSettingName;
+        private readonly string _remoteSettingName;
+        private IList<IGitItem> _subItems;
 
         public GitRef(GitModule module, string guid, string completeName)
             : this(module, guid, completeName, string.Empty) { }
@@ -49,17 +47,7 @@ namespace GitCommands
             _mergeSettingName = String.Format("branch.{0}.merge", Name);
         }
 
-        public static GitRef CreateBranchRef(GitModule module, string guid, string name)
-        {
-            return new GitRef(module, guid, RefsHeadsPrefix + name);
-        }
-
         public string CompleteName { get; private set; }
-        public bool Selected { get; set; }
-        public bool SelectedHeadMergeSource { get; set; }
-        public bool IsTag { get; private set; }
-        public bool IsHead { get; private set; }
-        public bool IsRemote { get; private set; }
         public bool IsBisect { get; private set; }
 
         /// <summary>
@@ -69,17 +57,42 @@ namespace GitCommands
         /// </summary>
         public bool IsDereference { get; private set; }
 
+        public bool IsHead { get; private set; }
+
         public bool IsOther
         {
             get { return !IsHead && !IsRemote && !IsTag; }
         }
+
+        public bool IsRemote { get; private set; }
+        public bool IsTag { get; private set; }
 
         public string LocalName
         {
             get { return IsRemote ? Name.Substring(Remote.Length + 1) : Name; }
         }
 
+        public string MergeWith
+        {
+            get
+            {
+                return GetMergeWith(Module.LocalConfigFile);
+            }
+            set
+            {
+                if (String.IsNullOrEmpty(value))
+                    Module.UnsetSetting(_mergeSettingName);
+                else
+                    Module.SetSetting(_mergeSettingName, GitCommandHelpers.GetFullBranchName(value));
+            }
+        }
+
+        public GitModule Module { get; private set; }
         public string Remote { get; private set; }
+
+        public bool Selected { get; set; }
+
+        public bool SelectedHeadMergeSource { get; set; }
 
         public string TrackingRemote
         {
@@ -101,35 +114,20 @@ namespace GitCommands
             }
         }
 
+        public static GitRef CreateBranchRef(GitModule module, string guid, string name)
+        {
+            return new GitRef(module, guid, RefsHeadsPrefix + name);
+        }
+
+        public static GitRef NoHead(GitModule module)
+        {
+            return new GitRef(module, null, "");
+        }
+
         /// <summary>Gets the setting name for a branch's remote.</summary>
         public static string RemoteSettingName(string branch)
         {
             return String.Format("branch.{0}.remote", branch);
-        }
-
-        /// <summary>
-        /// This method is a faster than the property above. The property reads the config file
-        /// every time it is accessed. This method accepts a config file what makes it faster when loading
-        /// the revision graph.
-        /// </summary>
-        public string GetTrackingRemote(ConfigFileSettings configFile)
-        {
-            return configFile.GetValue(_remoteSettingName);
-        }
-
-        public string MergeWith
-        {
-            get
-            {
-                return GetMergeWith(Module.LocalConfigFile);
-            }
-            set
-            {
-                if (String.IsNullOrEmpty(value))
-                    Module.UnsetSetting(_mergeSettingName);
-                else
-                    Module.SetSetting(_mergeSettingName, GitCommandHelpers.GetFullBranchName(value));
-            }
         }
 
         /// <summary>
@@ -143,9 +141,14 @@ namespace GitCommands
             return merge.StartsWith(RefsHeadsPrefix) ? merge.Substring(11) : merge;
         }
 
-        public static GitRef NoHead(GitModule module)
+        /// <summary>
+        /// This method is a faster than the property above. The property reads the config file
+        /// every time it is accessed. This method accepts a config file what makes it faster when loading
+        /// the revision graph.
+        /// </summary>
+        public string GetTrackingRemote(ConfigFileSettings configFile)
         {
-            return new GitRef(module, null, "");
+            return configFile.GetValue(_remoteSettingName);
         }
 
         #region IGitItem Members

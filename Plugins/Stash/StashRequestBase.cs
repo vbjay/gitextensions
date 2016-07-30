@@ -9,21 +9,17 @@ using RestSharp;
 
 namespace Stash
 {
-    internal class StashResponse<T>
-    {
-        public bool Success { get; set; }
-        public IEnumerable<string> Messages { get; set; }
-        public T Result { get; set; }
-    }
-
     internal abstract class StashRequestBase<T>
     {
-        protected Settings Settings { get; private set; }
-
         protected StashRequestBase(Settings settings)
         {
             Settings = settings;
         }
+
+        protected abstract string ApiUrl { get; }
+        protected abstract object RequestBody { get; }
+        protected abstract Method RequestMethod { get; }
+        protected Settings Settings { get; private set; }
 
         public StashResponse<T> Send()
         {
@@ -66,10 +62,6 @@ namespace Stash
                 Result = ParseResponse(JObject.Parse(response.Content))
             };
         }
-
-        protected abstract object RequestBody { get; }
-        protected abstract Method RequestMethod { get; }
-        protected abstract string ApiUrl { get; }
 
         protected abstract T ParseResponse(JObject json);
 
@@ -115,5 +107,12 @@ namespace Stash
             }
             return new StashResponse<T> { Success = false, Messages = new[] { "Unknown error." } };
         }
+    }
+
+    internal class StashResponse<T>
+    {
+        public IEnumerable<string> Messages { get; set; }
+        public T Result { get; set; }
+        public bool Success { get; set; }
     }
 }

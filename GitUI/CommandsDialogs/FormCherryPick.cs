@@ -22,10 +22,6 @@ namespace GitUI.CommandsDialogs
 
         private bool isMerge;
 
-        private FormCherryPick()
-            : this(null, null)
-        { }
-
         public FormCherryPick(GitUICommands aCommands, GitRevision revision)
             : base(aCommands)
         {
@@ -35,7 +31,35 @@ namespace GitUI.CommandsDialogs
             Translate();
         }
 
+        private FormCherryPick()
+                    : this(null, null)
+        { }
+
         public GitRevision Revision { get; set; }
+
+        public void CopyOptions(FormCherryPick source)
+        {
+            AutoCommit.Checked = source.AutoCommit.Checked;
+            checkAddReference.Checked = source.checkAddReference.Checked;
+        }
+
+        private void btnChooseRevision_Click(object sender, EventArgs e)
+        {
+            using (var chooseForm = new FormChooseCommit(UICommands, Revision != null ? Revision.Guid : null))
+            {
+                if (chooseForm.ShowDialog(this) == DialogResult.OK && chooseForm.SelectedRevision != null)
+                {
+                    Revision = chooseForm.SelectedRevision;
+                }
+            }
+
+            OnRevisionChanged();
+        }
+
+        private void Form_Closing(object sender, FormClosingEventArgs e)
+        {
+            SaveSettings();
+        }
 
         private void Form_Load(object sender, EventArgs e)
         {
@@ -109,30 +133,6 @@ namespace GitUI.CommandsDialogs
                 DialogResult = DialogResult.OK;
                 Close();
             }
-        }
-
-        public void CopyOptions(FormCherryPick source)
-        {
-            AutoCommit.Checked = source.AutoCommit.Checked;
-            checkAddReference.Checked = source.checkAddReference.Checked;
-        }
-
-        private void btnChooseRevision_Click(object sender, EventArgs e)
-        {
-            using (var chooseForm = new FormChooseCommit(UICommands, Revision != null ? Revision.Guid : null))
-            {
-                if (chooseForm.ShowDialog(this) == DialogResult.OK && chooseForm.SelectedRevision != null)
-                {
-                    Revision = chooseForm.SelectedRevision;
-                }
-            }
-
-            OnRevisionChanged();
-        }
-
-        private void Form_Closing(object sender, FormClosingEventArgs e)
-        {
-            SaveSettings();
         }
 
         private void SaveSettings()

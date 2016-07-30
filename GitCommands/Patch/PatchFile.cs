@@ -6,19 +6,13 @@ namespace PatchApply
     [DebuggerDisplay("PatchFile( {Subject} )")]
     public class PatchFile
     {
+        public string Author { get; set; }
+        public string Date { get; set; }
         public string FullName { get; set; }
 
-        public string Name { get; set; }
-
-        public string Author { get; set; }
-
-        public string Subject { get; set; }
-
-        public string Date { get; set; }
-
         public bool IsNext { get; set; }
-
         public bool IsSkipped { get; set; }
+        public string Name { get; set; }
 
         public string Status
         {
@@ -39,5 +33,7 @@ namespace PatchApply
                 return "";
             }
         }
+
+        public string Subject { get; set; }
     }
 }

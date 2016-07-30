@@ -74,16 +74,16 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             label2.Top = Height - SystemInformation.CaptionHeight - 25;
         }
 
-        private void translationImage_Click(object sender, EventArgs e)
-        {
-            AppSettings.Translation = ((Control)sender).Tag.ToString();
-            Close();
-        }
-
         private void FormChooseTranslation_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (string.IsNullOrEmpty(AppSettings.Translation))
                 AppSettings.Translation = "English";
+        }
+
+        private void translationImage_Click(object sender, EventArgs e)
+        {
+            AppSettings.Translation = ((Control)sender).Tag.ToString();
+            Close();
         }
     }
 }

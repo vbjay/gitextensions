@@ -3,6 +3,28 @@ using GitCommands;
 
 namespace GitUI.CommandsDialogs.SettingsDialog.Pages
 {
+    public static class CheckboxExtension
+    {
+        public static bool? ToBoolean(this CheckState state)
+        {
+            if (state == CheckState.Indeterminate)
+                return null;
+            return state == CheckState.Checked;
+        }
+
+        public static CheckState ToCheckboxState(this bool booleanValue)
+        {
+            return booleanValue.ToCheckboxState();
+        }
+
+        public static CheckState ToCheckboxState(this bool? booleanValue)
+        {
+            if (!booleanValue.HasValue)
+                return CheckState.Indeterminate;
+            return booleanValue == true ? CheckState.Checked : CheckState.Unchecked;
+        }
+    }
+
     public partial class ConfirmationsSettingsPage : SettingsPageWithHeader
     {
         public ConfirmationsSettingsPage()
@@ -12,14 +34,9 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             Translate();
         }
 
-        protected override void SettingsToPage()
+        public static SettingsPageReference GetPageReference()
         {
-            chkAmend.Checked = AppSettings.DontConfirmAmend;
-            chkAutoPopStashAfterPull.CheckState = AppSettings.AutoPopStashAfterPull.ToCheckboxState();
-            chkAutoPopStashAfterCheckout.CheckState = AppSettings.AutoPopStashAfterCheckoutBranch.ToCheckboxState();
-            chkPushNewBranch.Checked = AppSettings.DontConfirmPushNewBranch;
-            chkAddTrackingRef.Checked = AppSettings.DontConfirmAddTrackingRef;
-            chkUpdateModules.CheckState = AppSettings.UpdateSubmodulesOnCheckout.ToCheckboxState();
+            return new SettingsPageReferenceByType(typeof(ConfirmationsSettingsPage));
         }
 
         protected override void PageToSettings()
@@ -32,31 +49,14 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             AppSettings.UpdateSubmodulesOnCheckout = chkUpdateModules.CheckState.ToBoolean();
         }
 
-        public static SettingsPageReference GetPageReference()
+        protected override void SettingsToPage()
         {
-            return new SettingsPageReferenceByType(typeof(ConfirmationsSettingsPage));
-        }
-    }
-
-    public static class CheckboxExtension
-    {
-        public static CheckState ToCheckboxState(this bool booleanValue)
-        {
-            return booleanValue.ToCheckboxState();
-        }
-
-        public static CheckState ToCheckboxState(this bool? booleanValue)
-        {
-            if (!booleanValue.HasValue)
-                return CheckState.Indeterminate;
-            return booleanValue == true ? CheckState.Checked : CheckState.Unchecked;
-        }
-
-        public static bool? ToBoolean(this CheckState state)
-        {
-            if (state == CheckState.Indeterminate)
-                return null;
-            return state == CheckState.Checked;
+            chkAmend.Checked = AppSettings.DontConfirmAmend;
+            chkAutoPopStashAfterPull.CheckState = AppSettings.AutoPopStashAfterPull.ToCheckboxState();
+            chkAutoPopStashAfterCheckout.CheckState = AppSettings.AutoPopStashAfterCheckoutBranch.ToCheckboxState();
+            chkPushNewBranch.Checked = AppSettings.DontConfirmPushNewBranch;
+            chkAddTrackingRef.Checked = AppSettings.DontConfirmAddTrackingRef;
+            chkUpdateModules.CheckState = AppSettings.UpdateSubmodulesOnCheckout.ToCheckboxState();
         }
     }
 }

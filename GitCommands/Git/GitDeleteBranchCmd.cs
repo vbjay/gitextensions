@@ -18,9 +18,14 @@ namespace GitCommands
             this.force = force;
         }
 
-        public override string GitComandName()
+        public override bool AccessesRemote()
         {
-            return "branch";
+            return false;
+        }
+
+        public override bool ChangesRepoState()
+        {
+            return true;
         }
 
         public override IEnumerable<string> CollectArguments()
@@ -36,14 +41,9 @@ namespace GitCommands
                 yield return "\"" + branch.Name + "\"";
         }
 
-        public override bool AccessesRemote()
+        public override string GitComandName()
         {
-            return false;
-        }
-
-        public override bool ChangesRepoState()
-        {
-            return true;
+            return "branch";
         }
     }
 }

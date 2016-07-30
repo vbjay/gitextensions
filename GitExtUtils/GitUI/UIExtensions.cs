@@ -10,7 +10,6 @@ namespace GitUI
                 return null;
             else
                 return chx.Checked;
-
         }
 
         public static void SetNullableChecked(this CheckBox chx, bool? Checked)

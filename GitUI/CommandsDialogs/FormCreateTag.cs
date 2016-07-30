@@ -33,28 +33,9 @@ namespace GitUI.CommandsDialogs
                 commitPickerSmallControl1.SetSelectedCommitHash(revision == null ? Module.GetCurrentCheckout() : revision.Guid);
         }
 
-        private void FormCreateTag_Load(object sender, EventArgs e)
+        private void AnnotateCheckedChanged(object sender, EventArgs e)
         {
-            textBoxTagName.Focus();
-            _currentRemote = Module.GetCurrentRemote();
-            if (String.IsNullOrEmpty(_currentRemote))
-                _currentRemote = "origin";
-            pushTag.Text = string.Format(_pushToCaption.Text, _currentRemote);
-        }
-
-        private void OkClick(object sender, EventArgs e)
-        {
-            try
-            {
-                var tagName = CreateTag();
-
-                if (pushTag.Checked && !string.IsNullOrEmpty(tagName))
-                    PushTag(tagName);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(this, ex.Message);
-            }
+            tagMessage.Enabled = annotate.Checked;
         }
 
         private string CreateTag()
@@ -89,6 +70,30 @@ namespace GitUI.CommandsDialogs
             return textBoxTagName.Text;
         }
 
+        private void FormCreateTag_Load(object sender, EventArgs e)
+        {
+            textBoxTagName.Focus();
+            _currentRemote = Module.GetCurrentRemote();
+            if (String.IsNullOrEmpty(_currentRemote))
+                _currentRemote = "origin";
+            pushTag.Text = string.Format(_pushToCaption.Text, _currentRemote);
+        }
+
+        private void OkClick(object sender, EventArgs e)
+        {
+            try
+            {
+                var tagName = CreateTag();
+
+                if (pushTag.Checked && !string.IsNullOrEmpty(tagName))
+                    PushTag(tagName);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message);
+            }
+        }
+
         private void PushTag(string tagName)
         {
             var pushCmd = GitCommandHelpers.PushTagCmd(_currentRemote, tagName, false);
@@ -108,11 +113,6 @@ namespace GitUI.CommandsDialogs
                     ScriptManager.RunEventScripts(this, ScriptEvent.AfterPush);
                 }
             }
-        }
-
-        private void AnnotateCheckedChanged(object sender, EventArgs e)
-        {
-            tagMessage.Enabled = annotate.Checked;
         }
     }
 }

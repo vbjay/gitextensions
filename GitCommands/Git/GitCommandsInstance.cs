@@ -8,15 +8,21 @@ namespace GitCommands
 
     public sealed class GitCommandsInstance : IDisposable
     {
-        private Process _myProcess;
         private readonly object _processLock = new object();
-
-        public string WorkingDirectory { get; private set; }
+        private Process _myProcess;
 
         public GitCommandsInstance(string aWorkingDirectory)
         {
             WorkingDirectory = aWorkingDirectory;
         }
+
+        public event DataReceivedEventHandler DataReceived;
+
+        public event EventHandler Exited;
+
+        public int ExitCode { get; set; }
+        public bool IsRunning { get { return _myProcess != null && !_myProcess.HasExited; } }
+        public string WorkingDirectory { get; private set; }
 
         [PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
         public Process CmdStartProcess(string cmd, string arguments)
@@ -70,6 +76,11 @@ namespace GitCommands
             }
         }
 
+        public void Dispose()
+        {
+            Kill();
+        }
+
         public void Kill()
         {
             lock (_processLock)
@@ -96,14 +107,11 @@ namespace GitCommands
             }
         }
 
-        public void Dispose()
+        private void ProcessErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
-            Kill();
+            if (DataReceived != null)
+                DataReceived(this, e);
         }
-
-        public event DataReceivedEventHandler DataReceived;
-
-        public event EventHandler Exited;
 
         private void ProcessExited(object sender, EventArgs e)
         {
@@ -134,19 +142,10 @@ namespace GitCommands
             }
         }
 
-        private void ProcessErrorDataReceived(object sender, DataReceivedEventArgs e)
-        {
-            if (DataReceived != null)
-                DataReceived(this, e);
-        }
-
         private void ProcessOutputDataReceived(object sender, DataReceivedEventArgs e)
         {
             if (DataReceived != null)
                 DataReceived(this, e);
         }
-
-        public int ExitCode { get; set; }
-        public bool IsRunning { get { return _myProcess != null && !_myProcess.HasExited; } }
     }
 }

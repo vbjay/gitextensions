@@ -14,6 +14,27 @@ namespace GitUI.Editor.Diff
             _segmentGetter = segmentGetter;
         }
 
+        public bool DoesLineStartWith(IDocument document, int lineOffset, string prefixStr)
+        {
+            Debug.Assert(prefixStr.Length <= 2 && prefixStr.Length >= 1);
+            if (prefixStr.Length == 1) return document.GetCharAt(lineOffset) == prefixStr[0];
+
+            if (document.TextLength <= lineOffset + 1)
+            {
+                return false;
+            }
+
+            var firstChar = document.GetCharAt(lineOffset);
+            var secondChar = document.GetCharAt(lineOffset + 1);
+
+            return firstChar == prefixStr[0] && secondChar == prefixStr[1];
+        }
+
+        public bool DoesLineStartWith(IDocument document, int lineOffset, string[] prefixStrs)
+        {
+            return prefixStrs.Any(pre => DoesLineStartWith(document, lineOffset, pre));
+        }
+
         public List<ISegment> GetLinesStartingWith(IDocument document, ref int beginIndex, string prefixStr, ref bool found)
         {
             return GetLinesStartingWith(document, ref beginIndex, new string[] { prefixStr }, ref found);
@@ -44,27 +65,6 @@ namespace GitUI.Editor.Diff
             }
 
             return result;
-        }
-
-        public bool DoesLineStartWith(IDocument document, int lineOffset, string prefixStr)
-        {
-            Debug.Assert(prefixStr.Length <= 2 && prefixStr.Length >= 1);
-            if (prefixStr.Length == 1) return document.GetCharAt(lineOffset) == prefixStr[0];
-
-            if (document.TextLength <= lineOffset + 1)
-            {
-                return false;
-            }
-
-            var firstChar = document.GetCharAt(lineOffset);
-            var secondChar = document.GetCharAt(lineOffset + 1);
-
-            return firstChar == prefixStr[0] && secondChar == prefixStr[1];
-        }
-
-        public bool DoesLineStartWith(IDocument document, int lineOffset, string[] prefixStrs)
-        {
-            return prefixStrs.Any(pre => DoesLineStartWith(document, lineOffset, pre));
         }
     }
 }

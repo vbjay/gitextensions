@@ -10,22 +10,22 @@ namespace GitCommands
 {
     public sealed class GitRevision : IGitItem, INotifyPropertyChanged
     {
-        /// <summary>40 characters of 0's</summary>
-        public const string UnstagedGuid = "0000000000000000000000000000000000000000";
-
         /// <summary>40 characters of 1's</summary>
         public const string IndexGuid = "1111111111111111111111111111111111111111";
 
         /// <summary>40 characters of a-f or any digit.</summary>
         public const string Sha1HashPattern = @"[a-f\d]{40}";
 
+        /// <summary>40 characters of 0's</summary>
+        public const string UnstagedGuid = "0000000000000000000000000000000000000000";
+
         public static readonly Regex Sha1HashRegex = new Regex("^" + Sha1HashPattern + "$", RegexOptions.Compiled);
 
         public string[] ParentGuids;
-        private IList<IGitItem> _subItems;
-        private readonly List<GitRef> _refs = new List<GitRef>();
         private readonly GitModule _module;
+        private readonly List<GitRef> _refs = new List<GitRef>();
         private BuildInfo _buildStatus;
+        private IList<IGitItem> _subItems;
 
         public GitRevision(GitModule aModule, string guid)
         {
@@ -34,16 +34,12 @@ namespace GitCommands
             _module = aModule;
         }
 
-        public List<GitRef> Refs { get { return _refs; } }
-
-        public string TreeGuid { get; set; }
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public string Author { get; set; }
-        public string AuthorEmail { get; set; }
         public DateTime AuthorDate { get; set; }
-        public string Committer { get; set; }
-        public string CommitterEmail { get; set; }
-        public DateTime CommitDate { get; set; }
+        public string AuthorEmail { get; set; }
+        public string Body { get; set; }
 
         public BuildInfo BuildStatus
         {
@@ -56,11 +52,17 @@ namespace GitCommands
             }
         }
 
-        public string Subject { get; set; }
-        public string Body { get; set; }
+        public DateTime CommitDate { get; set; }
+        public string Committer { get; set; }
+        public string CommitterEmail { get; set; }
 
         //UTF-8 when is null or empty
         public string MessageEncoding { get; set; }
+
+        public List<GitRef> Refs { get { return _refs; } }
+
+        public string Subject { get; set; }
+        public string TreeGuid { get; set; }
 
         #region IGitItem Members
 
@@ -74,14 +76,20 @@ namespace GitCommands
 
         #endregion IGitItem Members
 
-        public override string ToString()
+        public static bool IsArtificial(string guid)
         {
-            var sha = Guid;
-            if (sha.Length > 8)
-            {
-                sha = sha.Substring(0, 4) + ".." + sha.Substring(sha.Length - 4, 4);
-            }
-            return String.Format("{0}:{1}", sha, Subject);
+            return guid == UnstagedGuid ||
+                    guid == IndexGuid;
+        }
+
+        public bool HasParent()
+        {
+            return ParentGuids != null && ParentGuids.Length > 0;
+        }
+
+        public bool IsArtificial()
+        {
+            return IsArtificial(Guid);
         }
 
         public bool MatchesSearchString(string searchString)
@@ -96,23 +104,15 @@ namespace GitCommands
                     Subject.ToLower().Contains(searchString);
         }
 
-        public bool IsArtificial()
+        public override string ToString()
         {
-            return IsArtificial(Guid);
+            var sha = Guid;
+            if (sha.Length > 8)
+            {
+                sha = sha.Substring(0, 4) + ".." + sha.Substring(sha.Length - 4, 4);
+            }
+            return String.Format("{0}:{1}", sha, Subject);
         }
-
-        public static bool IsArtificial(string guid)
-        {
-            return guid == UnstagedGuid ||
-                    guid == IndexGuid;
-        }
-
-        public bool HasParent()
-        {
-            return ParentGuids != null && ParentGuids.Length > 0;
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
 
         [NotifyPropertyChangedInvocator]
         private void OnPropertyChanged(string propertyName)

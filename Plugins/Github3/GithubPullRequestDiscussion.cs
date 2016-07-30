@@ -6,6 +6,18 @@ using GitUIPluginInterfaces.RepositoryHosts;
 
 namespace Github3
 {
+    internal class GithubDiscussionComment : IDiscussionEntry
+    {
+        public string Author { get; internal set; }
+        public string Body { get; internal set; }
+        public DateTime Created { get; internal set; }
+    }
+
+    internal class GithubDiscussionCommit : GithubDiscussionComment, ICommitDiscussionEntry
+    {
+        public string Sha { get; internal set; }
+    }
+
     internal class GithubPullRequestDiscussion : IPullRequestDiscussion
     {
         private PullRequest pullrequest;
@@ -18,11 +30,6 @@ namespace Github3
         }
 
         public List<IDiscussionEntry> Entries { get; private set; }
-
-        public void Post(string data)
-        {
-            pullrequest.ToIssue().CreateComment(data);
-        }
 
         public void ForceReload()
         {
@@ -40,17 +47,10 @@ namespace Github3
 
             Entries = Entries.OrderBy(entry => entry.Created).ToList();
         }
-    }
 
-    internal class GithubDiscussionComment : IDiscussionEntry
-    {
-        public string Author { get; internal set; }
-        public DateTime Created { get; internal set; }
-        public string Body { get; internal set; }
-    }
-
-    internal class GithubDiscussionCommit : GithubDiscussionComment, ICommitDiscussionEntry
-    {
-        public string Sha { get; internal set; }
+        public void Post(string data)
+        {
+            pullrequest.ToIssue().CreateComment(data);
+        }
     }
 }

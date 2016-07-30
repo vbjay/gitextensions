@@ -10,6 +10,19 @@ namespace TranslationApp
 {
     internal static class TranslationHelpers
     {
+        public static IDictionary<string, List<TranslationItemWithCategory>> GetItemsDictionary(IDictionary<string, TranslationFile> translations)
+        {
+            var items = new Dictionary<string, List<TranslationItemWithCategory>>();
+            foreach (var pair in translations)
+            {
+                var list = from item in pair.Value.TranslationCategories
+                           from translationItem in item.Body.TranslationItems
+                           select new TranslationItemWithCategory(item.Name, translationItem);
+                items.Add(pair.Key, list.ToList());
+            }
+            return items;
+        }
+
         public static IDictionary<string, List<TranslationItemWithCategory>> LoadNeutralItems()
         {
             IDictionary<string, TranslationFile> neutralTranslation = new Dictionary<string, TranslationFile>();
@@ -48,30 +61,6 @@ namespace TranslationApp
             }
 
             return GetItemsDictionary(neutralTranslation);
-        }
-
-        public static IDictionary<string, List<TranslationItemWithCategory>> GetItemsDictionary(IDictionary<string, TranslationFile> translations)
-        {
-            var items = new Dictionary<string, List<TranslationItemWithCategory>>();
-            foreach (var pair in translations)
-            {
-                var list = from item in pair.Value.TranslationCategories
-                           from translationItem in item.Body.TranslationItems
-                           select new TranslationItemWithCategory(item.Name, translationItem);
-                items.Add(pair.Key, list.ToList());
-            }
-            return items;
-        }
-
-        private static List<T> Find<T>(this IDictionary<string, List<T>> dictionary, string key)
-        {
-            List<T> list;
-            if (!dictionary.TryGetValue(key, out list))
-            {
-                list = new List<T>();
-                dictionary.Add(key, list);
-            }
-            return list;
         }
 
         public static IDictionary<string, List<TranslationItemWithCategory>> LoadTranslation(IDictionary<string, TranslationFile> translation, IDictionary<string, List<TranslationItemWithCategory>> neutralItems)
@@ -161,6 +150,17 @@ namespace TranslationApp
                 var newfilename = Path.ChangeExtension(filename, pair.Key + ext);
                 TranslationSerializer.Serialize(foreignTranslation, newfilename);
             }
+        }
+
+        private static List<T> Find<T>(this IDictionary<string, List<T>> dictionary, string key)
+        {
+            List<T> list;
+            if (!dictionary.TryGetValue(key, out list))
+            {
+                list = new List<T>();
+                dictionary.Add(key, list);
+            }
+            return list;
         }
     }
 }

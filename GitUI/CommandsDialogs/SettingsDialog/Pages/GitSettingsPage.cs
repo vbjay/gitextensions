@@ -17,11 +17,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             Translate();
         }
 
-        protected override string GetCommaSeparatedKeywordList()
-        {
-            return "path,home,environment,variable,msys,cygwin,download,git,command,linux,tools";
-        }
-
         public static SettingsPageReference GetPageReference()
         {
             return new SettingsPageReferenceByType(typeof(GitSettingsPage));
@@ -33,6 +28,17 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             GitBinPath.Text = AppSettings.GitBinDir;
         }
 
+        protected override string GetCommaSeparatedKeywordList()
+        {
+            return "path,home,environment,variable,msys,cygwin,download,git,command,linux,tools";
+        }
+
+        protected override void PageToSettings()
+        {
+            AppSettings.GitCommandValue = GitPath.Text;
+            AppSettings.GitBinDir = GitBinPath.Text;
+        }
+
         protected override void SettingsToPage()
         {
             GitCommandHelpers.SetEnvironmentVariable();
@@ -42,10 +48,17 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             GitBinPath.Text = AppSettings.GitBinDir;
         }
 
-        protected override void PageToSettings()
+        private void BrowseGitBinPath_Click(object sender, EventArgs e)
         {
-            AppSettings.GitCommandValue = GitPath.Text;
-            AppSettings.GitBinDir = GitBinPath.Text;
+            CheckSettingsLogic.SolveLinuxToolsDir(GitBinPath.Text.Trim());
+
+            using (var browseDialog = new FolderBrowserDialog { SelectedPath = AppSettings.GitBinDir })
+            {
+                if (browseDialog.ShowDialog(this) == DialogResult.OK)
+                {
+                    GitBinPath.Text = browseDialog.SelectedPath;
+                }
+            }
         }
 
         private void BrowseGitPath_Click(object sender, EventArgs e)
@@ -65,36 +78,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             }
         }
 
-        private void BrowseGitBinPath_Click(object sender, EventArgs e)
-        {
-            CheckSettingsLogic.SolveLinuxToolsDir(GitBinPath.Text.Trim());
-
-            using (var browseDialog = new FolderBrowserDialog { SelectedPath = AppSettings.GitBinDir })
-            {
-                if (browseDialog.ShowDialog(this) == DialogResult.OK)
-                {
-                    GitBinPath.Text = browseDialog.SelectedPath;
-                }
-            }
-        }
-
-        private void GitPath_TextChanged(object sender, EventArgs e)
-        {
-            // If user pastes text or types in the box be sure to validate and save in the settings.
-            CheckSettingsLogic.SolveGitCommand(GitPath.Text.Trim());
-        }
-
-        private void GitBinPath_TextChanged(object sender, EventArgs e)
-        {
-            // If user pastes text or types in the box be sure to validate and save in the settings.
-            CheckSettingsLogic.SolveLinuxToolsDir(GitBinPath.Text.Trim());
-        }
-
-        private void downloadGitForWindows_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            Process.Start(@"https://git-scm.com/downloads");
-        }
-
         private void ChangeHomeButton_Click(object sender, EventArgs e)
         {
             PageHost.SaveAll();
@@ -109,6 +92,23 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             ////            LoadSettings();
             ////            Rescan_Click(null, null);
             ////            ");
+        }
+
+        private void downloadGitForWindows_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Process.Start(@"https://git-scm.com/downloads");
+        }
+
+        private void GitBinPath_TextChanged(object sender, EventArgs e)
+        {
+            // If user pastes text or types in the box be sure to validate and save in the settings.
+            CheckSettingsLogic.SolveLinuxToolsDir(GitBinPath.Text.Trim());
+        }
+
+        private void GitPath_TextChanged(object sender, EventArgs e)
+        {
+            // If user pastes text or types in the box be sure to validate and save in the settings.
+            CheckSettingsLogic.SolveGitCommand(GitPath.Text.Trim());
         }
     }
 }

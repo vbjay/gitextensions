@@ -15,23 +15,23 @@ namespace GitUI.CommandsDialogs.RepoHosting
     {
         #region Translation
 
-        private readonly TranslationString _strError = new TranslationString("Error");
-        private readonly TranslationString _strLoading = new TranslationString(" : LOADING : ");
-        private readonly TranslationString _strYes = new TranslationString("Yes");
-        private readonly TranslationString _strNo = new TranslationString("No");
-        private readonly TranslationString _strFailedToGetRepos = new TranslationString("Failed to get repositories. This most likely means you didn't configure {0}, please do so via the menu \"Plugins/{0}\".");
-        private readonly TranslationString _strWillCloneWithPushAccess = new TranslationString("Will clone {0} into {1}.\r\nYou will have push access. {2}");
-        private readonly TranslationString _strWillCloneInfo = new TranslationString("Will clone {0} into {1}.\r\nYou can not push unless you are a collaborator. {2}");
-        private readonly TranslationString _strWillBeAddedAsARemote = new TranslationString("\"{0}\" will be added as a remote.");
+        private readonly TranslationString _strCloneFolderCanNotBeEmpty = new TranslationString("Clone folder can not be empty");
         private readonly TranslationString _strCouldNotAddRemote = new TranslationString("Could not add remote");
-        private readonly TranslationString _strNoHomepageDefined = new TranslationString("No homepage defined");
-        private readonly TranslationString _strFailedToFork = new TranslationString("Failed to fork:");
-        private readonly TranslationString _strSearchFailed = new TranslationString("Search failed!");
-        private readonly TranslationString _strUserNotFound = new TranslationString("User not found!");
         private readonly TranslationString _strCouldNotFetchReposOfUser = new TranslationString("Could not fetch repositories of user!");
+        private readonly TranslationString _strError = new TranslationString("Error");
+        private readonly TranslationString _strFailedToFork = new TranslationString("Failed to fork:");
+        private readonly TranslationString _strFailedToGetRepos = new TranslationString("Failed to get repositories. This most likely means you didn't configure {0}, please do so via the menu \"Plugins/{0}\".");
+        private readonly TranslationString _strLoading = new TranslationString(" : LOADING : ");
+        private readonly TranslationString _strNo = new TranslationString("No");
+        private readonly TranslationString _strNoHomepageDefined = new TranslationString("No homepage defined");
+        private readonly TranslationString _strSearchFailed = new TranslationString("Search failed!");
         private readonly TranslationString _strSearching = new TranslationString(" : SEARCHING : ");
         private readonly TranslationString _strSelectOneItem = new TranslationString("You must select exactly one item");
-        private readonly TranslationString _strCloneFolderCanNotBeEmpty = new TranslationString("Clone folder can not be empty");
+        private readonly TranslationString _strUserNotFound = new TranslationString("User not found!");
+        private readonly TranslationString _strWillBeAddedAsARemote = new TranslationString("\"{0}\" will be added as a remote.");
+        private readonly TranslationString _strWillCloneInfo = new TranslationString("Will clone {0} into {1}.\r\nYou can not push unless you are a collaborator. {2}");
+        private readonly TranslationString _strWillCloneWithPushAccess = new TranslationString("Will clone {0} into {1}.\r\nYou will have push access. {2}");
+        private readonly TranslationString _strYes = new TranslationString("Yes");
 
         #endregion Translation
 
@@ -46,237 +46,35 @@ namespace GitUI.CommandsDialogs.RepoHosting
             Translate();
         }
 
-        private void ForkAndCloneForm_Load(object sender, EventArgs e)
+        private IHostedRepository CurrentySelectedGitRepo
         {
-            Init();
-        }
-
-        private void Init()
-        {
-            if (!string.IsNullOrEmpty(AppSettings.DefaultCloneDestinationPath))
+            get
             {
-                _destinationTB.Text = AppSettings.DefaultCloneDestinationPath;
-            }
-            else
-            {
-                var hist = Repositories.RepositoryHistory;
-                var lastRepo = hist.Repositories.FirstOrDefault();
-                if (lastRepo != null && !string.IsNullOrEmpty(lastRepo.Path))
+                if (_tabControl.SelectedTab == _searchReposPage)
                 {
-                    string p = lastRepo.Path.Trim('/', '\\');
+                    if (_searchResultsLV.SelectedItems.Count != 1)
+                        return null;
 
-                    _destinationTB.Text = Path.GetDirectoryName(p);
+                    return (IHostedRepository)_searchResultsLV.SelectedItems[0].Tag;
                 }
-            }
+                if (_myReposLV.SelectedItems.Count != 1)
+                    return null;
 
-            Text = _gitHoster.Description + ": " + Text;
-
-            UpdateCloneInfo();
-            UpdateMyRepos();
-        }
-
-        private void UpdateMyRepos()
-        {
-            _myReposLV.Items.Clear();
-            _myReposLV.Items.Add(new ListViewItem { Text = _strLoading.Text });
-
-            AsyncLoader.DoAsync(
-                () => _gitHoster.GetMyRepos(),
-
-                repos =>
-                {
-                    _myReposLV.Items.Clear();
-                    foreach (var repo in repos)
-                    {
-                        var lvi = new ListViewItem { Tag = repo, Text = repo.Name };
-                        lvi.SubItems.Add(repo.IsAFork ? _strYes.Text : _strNo.Text);
-                        lvi.SubItems.Add(repo.Forks.ToString());
-                        lvi.SubItems.Add(repo.IsPrivate ? _strYes.Text : _strNo.Text);
-                        _myReposLV.Items.Add(lvi);
-                    }
-                },
-
-                ex =>
-                {
-                    _myReposLV.Items.Clear();
-                    _helpTextLbl.Text = string.Format(_strFailedToGetRepos.Text, _gitHoster.Description) +
-                        "\r\n\r\nException: " + ex.Exception.Message + "\r\n\r\n" + _helpTextLbl.Text;
-                });
-        }
-
-        #region GUI Handlers
-
-        private void _searchBtn_Click(object sender, EventArgs e)
-        {
-            var search = _searchTB.Text;
-            if (search == null || search.Trim().Length == 0)
-                return;
-
-            PrepareSearch(sender, e);
-
-            AsyncLoader.DoAsync(
-                () => _gitHoster.SearchForRepository(search),
-                HandleSearchResult,
-                ex =>
-                {
-                    MessageBox.Show(this, _strSearchFailed.Text + Environment.NewLine + ex.Exception.Message,
-                        _strError.Text);
-                    _searchBtn.Enabled = true;
-                });
-        }
-
-        private void _getFromUserBtn_Click(object sender, EventArgs e)
-        {
-            var search = _searchTB.Text;
-            if (search == null || search.Trim().Length == 0)
-                return;
-            PrepareSearch(sender, e);
-
-            AsyncLoader.DoAsync(
-                () => _gitHoster.GetRepositoriesOfUser(search.Trim()),
-                HandleSearchResult,
-                ex =>
-                {
-                    if (ex.Exception.Message.Contains("404"))
-                        MessageBox.Show(this, _strUserNotFound.Text, _strError.Text);
-                    else
-                        MessageBox.Show(this, _strCouldNotFetchReposOfUser.Text + Environment.NewLine +
-                            ex.Exception.Message, _strError.Text);
-                    _searchBtn.Enabled = true;
-                });
-        }
-
-        private void PrepareSearch(object sender, EventArgs e)
-        {
-            _searchResultsLV.Items.Clear();
-            _searchResultsLV_SelectedIndexChanged(sender, e);
-            _searchBtn.Enabled = false;
-            _searchResultsLV.Items.Add(new ListViewItem { Text = _strSearching.Text });
-        }
-
-        private void HandleSearchResult(IList<IHostedRepository> repos)
-        {
-            _searchResultsLV.Items.Clear();
-            foreach (var repo in repos)
-            {
-                var lvi = new ListViewItem { Tag = repo, Text = repo.Name };
-                lvi.SubItems.Add(repo.Owner);
-                lvi.SubItems.Add(repo.Forks.ToString());
-                lvi.SubItems.Add(repo.IsAFork ? _strYes.Text : _strNo.Text);
-                _searchResultsLV.Items.Add(lvi);
-            }
-            _searchBtn.Enabled = true;
-        }
-
-        private void _forkBtn_Click(object sender, EventArgs e)
-        {
-            if (_searchResultsLV.SelectedItems.Count != 1)
-            {
-                MessageBox.Show(this, _strSelectOneItem.Text, _strError.Text);
-                return;
-            }
-
-            var hostedRepo = _searchResultsLV.SelectedItems[0].Tag as IHostedRepository;
-            try
-            {
-                if (hostedRepo != null) hostedRepo.Fork();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(this, _strFailedToFork.Text + Environment.NewLine + ex.Message, _strError.Text);
-            }
-
-            _tabControl.SelectedTab = _myReposPage;
-            UpdateMyRepos();
-        }
-
-        private void _searchTB_Enter(object sender, EventArgs e)
-        {
-            AcceptButton = _searchBtn;
-        }
-
-        private void _searchTB_Leave(object sender, EventArgs e)
-        {
-            AcceptButton = null;
-        }
-
-        private void _searchResultsLV_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            UpdateCloneInfo();
-            if (_searchResultsLV.SelectedItems.Count != 1)
-            {
-                _forkBtn.Enabled = false;
-                return;
-            }
-
-            _forkBtn.Enabled = true;
-            var hostedRepo = (IHostedRepository)_searchResultsLV.SelectedItems[0].Tag;
-            _searchResultItemDescription.Text = hostedRepo.Description;
-        }
-
-        private void _browseForCloneToDirbtn_Click(object sender, EventArgs e)
-        {
-            var initialDir = _destinationTB.Text.Length > 0 ? _destinationTB.Text : "C:\\";
-
-            using (var browseDialog = new FolderBrowserDialog { SelectedPath = initialDir })
-            {
-                if (browseDialog.ShowDialog(this) == DialogResult.OK)
-                {
-                    _destinationTB.Text = browseDialog.SelectedPath;
-                    _destinationTB_TextChanged(sender, e);
-                }
+                return (IHostedRepository)_myReposLV.SelectedItems[0].Tag;
             }
         }
 
-        private void _cloneBtn_Click(object sender, EventArgs e)
+        private void _createDirTB_Validating(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            Clone(CurrentySelectedGitRepo);
+            if (_createDirTB.Text.IndexOfAny(Path.GetInvalidPathChars()) != -1)
+                e.Cancel = true;
         }
 
-        private void _openGitupPageBtn_Click(object sender, EventArgs e)
+        private void _destinationTB_Validating(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (CurrentySelectedGitRepo == null)
-                return;
-            string hp = CurrentySelectedGitRepo.Homepage;
-            if (string.IsNullOrEmpty(hp) || (!hp.StartsWith("http://") && !hp.StartsWith("https://")))
-                MessageBox.Show(this, _strNoHomepageDefined.Text, _strError.Text);
-            else
-                Process.Start(CurrentySelectedGitRepo.Homepage);
+            if (_destinationTB.Text.IndexOfAny(Path.GetInvalidPathChars()) != -1)
+                e.Cancel = true;
         }
-
-        private void _closeBtn_Click(object sender, EventArgs e)
-        {
-            DialogResult = DialogResult.OK;
-        }
-
-        private void _tabControl_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            UpdateCloneInfo();
-            if (_tabControl.SelectedTab == _searchReposPage)
-                _searchTB.Focus();
-        }
-
-        private void _myReposLV_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            UpdateCloneInfo();
-        }
-
-        private void _createDirTB_TextChanged(object sender, EventArgs e)
-        {
-            UpdateCloneInfo(false);
-        }
-
-        private void _destinationTB_TextChanged(object sender, EventArgs e)
-        {
-            UpdateCloneInfo(false);
-        }
-
-        private void _addRemoteAsTB_TextChanged(object sender, EventArgs e)
-        {
-            UpdateCloneInfo(false);
-        }
-
-        #endregion GUI Handlers
 
         private void Clone(IHostedRepository repo)
         {
@@ -310,22 +108,46 @@ namespace GitUI.CommandsDialogs.RepoHosting
             Close();
         }
 
-        private IHostedRepository CurrentySelectedGitRepo
+        private void ForkAndCloneForm_Load(object sender, EventArgs e)
         {
-            get
+            Init();
+        }
+
+        private string GetTargetDir()
+        {
+            string targetDir = _destinationTB.Text.Trim();
+            if (targetDir.Length == 0)
             {
-                if (_tabControl.SelectedTab == _searchReposPage)
-                {
-                    if (_searchResultsLV.SelectedItems.Count != 1)
-                        return null;
-
-                    return (IHostedRepository)_searchResultsLV.SelectedItems[0].Tag;
-                }
-                if (_myReposLV.SelectedItems.Count != 1)
-                    return null;
-
-                return (IHostedRepository)_myReposLV.SelectedItems[0].Tag;
+                MessageBox.Show(this, _strCloneFolderCanNotBeEmpty.Text, _strError.Text);
+                return null;
             }
+
+            targetDir = Path.Combine(targetDir, _createDirTB.Text);
+            return targetDir;
+        }
+
+        private void Init()
+        {
+            if (!string.IsNullOrEmpty(AppSettings.DefaultCloneDestinationPath))
+            {
+                _destinationTB.Text = AppSettings.DefaultCloneDestinationPath;
+            }
+            else
+            {
+                var hist = Repositories.RepositoryHistory;
+                var lastRepo = hist.Repositories.FirstOrDefault();
+                if (lastRepo != null && !string.IsNullOrEmpty(lastRepo.Path))
+                {
+                    string p = lastRepo.Path.Trim('/', '\\');
+
+                    _destinationTB.Text = Path.GetDirectoryName(p);
+                }
+            }
+
+            Text = _gitHoster.Description + ": " + Text;
+
+            UpdateCloneInfo();
+            UpdateMyRepos();
         }
 
         private void UpdateCloneInfo()
@@ -362,29 +184,207 @@ namespace GitUI.CommandsDialogs.RepoHosting
             }
         }
 
-        private string GetTargetDir()
+        private void UpdateMyRepos()
         {
-            string targetDir = _destinationTB.Text.Trim();
-            if (targetDir.Length == 0)
+            _myReposLV.Items.Clear();
+            _myReposLV.Items.Add(new ListViewItem { Text = _strLoading.Text });
+
+            AsyncLoader.DoAsync(
+                () => _gitHoster.GetMyRepos(),
+
+                repos =>
+                {
+                    _myReposLV.Items.Clear();
+                    foreach (var repo in repos)
+                    {
+                        var lvi = new ListViewItem { Tag = repo, Text = repo.Name };
+                        lvi.SubItems.Add(repo.IsAFork ? _strYes.Text : _strNo.Text);
+                        lvi.SubItems.Add(repo.Forks.ToString());
+                        lvi.SubItems.Add(repo.IsPrivate ? _strYes.Text : _strNo.Text);
+                        _myReposLV.Items.Add(lvi);
+                    }
+                },
+
+                ex =>
+                {
+                    _myReposLV.Items.Clear();
+                    _helpTextLbl.Text = string.Format(_strFailedToGetRepos.Text, _gitHoster.Description) +
+                        "\r\n\r\nException: " + ex.Exception.Message + "\r\n\r\n" + _helpTextLbl.Text;
+                });
+        }
+
+        #region GUI Handlers
+
+        private void _addRemoteAsTB_TextChanged(object sender, EventArgs e)
+        {
+            UpdateCloneInfo(false);
+        }
+
+        private void _browseForCloneToDirbtn_Click(object sender, EventArgs e)
+        {
+            var initialDir = _destinationTB.Text.Length > 0 ? _destinationTB.Text : "C:\\";
+
+            using (var browseDialog = new FolderBrowserDialog { SelectedPath = initialDir })
             {
-                MessageBox.Show(this, _strCloneFolderCanNotBeEmpty.Text, _strError.Text);
-                return null;
+                if (browseDialog.ShowDialog(this) == DialogResult.OK)
+                {
+                    _destinationTB.Text = browseDialog.SelectedPath;
+                    _destinationTB_TextChanged(sender, e);
+                }
+            }
+        }
+
+        private void _cloneBtn_Click(object sender, EventArgs e)
+        {
+            Clone(CurrentySelectedGitRepo);
+        }
+
+        private void _closeBtn_Click(object sender, EventArgs e)
+        {
+            DialogResult = DialogResult.OK;
+        }
+
+        private void _createDirTB_TextChanged(object sender, EventArgs e)
+        {
+            UpdateCloneInfo(false);
+        }
+
+        private void _destinationTB_TextChanged(object sender, EventArgs e)
+        {
+            UpdateCloneInfo(false);
+        }
+
+        private void _forkBtn_Click(object sender, EventArgs e)
+        {
+            if (_searchResultsLV.SelectedItems.Count != 1)
+            {
+                MessageBox.Show(this, _strSelectOneItem.Text, _strError.Text);
+                return;
             }
 
-            targetDir = Path.Combine(targetDir, _createDirTB.Text);
-            return targetDir;
+            var hostedRepo = _searchResultsLV.SelectedItems[0].Tag as IHostedRepository;
+            try
+            {
+                if (hostedRepo != null) hostedRepo.Fork();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, _strFailedToFork.Text + Environment.NewLine + ex.Message, _strError.Text);
+            }
+
+            _tabControl.SelectedTab = _myReposPage;
+            UpdateMyRepos();
         }
 
-        private void _destinationTB_Validating(object sender, System.ComponentModel.CancelEventArgs e)
+        private void _getFromUserBtn_Click(object sender, EventArgs e)
         {
-            if (_destinationTB.Text.IndexOfAny(Path.GetInvalidPathChars()) != -1)
-                e.Cancel = true;
+            var search = _searchTB.Text;
+            if (search == null || search.Trim().Length == 0)
+                return;
+            PrepareSearch(sender, e);
+
+            AsyncLoader.DoAsync(
+                () => _gitHoster.GetRepositoriesOfUser(search.Trim()),
+                HandleSearchResult,
+                ex =>
+                {
+                    if (ex.Exception.Message.Contains("404"))
+                        MessageBox.Show(this, _strUserNotFound.Text, _strError.Text);
+                    else
+                        MessageBox.Show(this, _strCouldNotFetchReposOfUser.Text + Environment.NewLine +
+                            ex.Exception.Message, _strError.Text);
+                    _searchBtn.Enabled = true;
+                });
         }
 
-        private void _createDirTB_Validating(object sender, System.ComponentModel.CancelEventArgs e)
+        private void _myReposLV_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (_createDirTB.Text.IndexOfAny(Path.GetInvalidPathChars()) != -1)
-                e.Cancel = true;
+            UpdateCloneInfo();
         }
+
+        private void _openGitupPageBtn_Click(object sender, EventArgs e)
+        {
+            if (CurrentySelectedGitRepo == null)
+                return;
+            string hp = CurrentySelectedGitRepo.Homepage;
+            if (string.IsNullOrEmpty(hp) || (!hp.StartsWith("http://") && !hp.StartsWith("https://")))
+                MessageBox.Show(this, _strNoHomepageDefined.Text, _strError.Text);
+            else
+                Process.Start(CurrentySelectedGitRepo.Homepage);
+        }
+
+        private void _searchBtn_Click(object sender, EventArgs e)
+        {
+            var search = _searchTB.Text;
+            if (search == null || search.Trim().Length == 0)
+                return;
+
+            PrepareSearch(sender, e);
+
+            AsyncLoader.DoAsync(
+                () => _gitHoster.SearchForRepository(search),
+                HandleSearchResult,
+                ex =>
+                {
+                    MessageBox.Show(this, _strSearchFailed.Text + Environment.NewLine + ex.Exception.Message,
+                        _strError.Text);
+                    _searchBtn.Enabled = true;
+                });
+        }
+
+        private void _searchResultsLV_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            UpdateCloneInfo();
+            if (_searchResultsLV.SelectedItems.Count != 1)
+            {
+                _forkBtn.Enabled = false;
+                return;
+            }
+
+            _forkBtn.Enabled = true;
+            var hostedRepo = (IHostedRepository)_searchResultsLV.SelectedItems[0].Tag;
+            _searchResultItemDescription.Text = hostedRepo.Description;
+        }
+
+        private void _searchTB_Enter(object sender, EventArgs e)
+        {
+            AcceptButton = _searchBtn;
+        }
+
+        private void _searchTB_Leave(object sender, EventArgs e)
+        {
+            AcceptButton = null;
+        }
+
+        private void _tabControl_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            UpdateCloneInfo();
+            if (_tabControl.SelectedTab == _searchReposPage)
+                _searchTB.Focus();
+        }
+
+        private void HandleSearchResult(IList<IHostedRepository> repos)
+        {
+            _searchResultsLV.Items.Clear();
+            foreach (var repo in repos)
+            {
+                var lvi = new ListViewItem { Tag = repo, Text = repo.Name };
+                lvi.SubItems.Add(repo.Owner);
+                lvi.SubItems.Add(repo.Forks.ToString());
+                lvi.SubItems.Add(repo.IsAFork ? _strYes.Text : _strNo.Text);
+                _searchResultsLV.Items.Add(lvi);
+            }
+            _searchBtn.Enabled = true;
+        }
+
+        private void PrepareSearch(object sender, EventArgs e)
+        {
+            _searchResultsLV.Items.Clear();
+            _searchResultsLV_SelectedIndexChanged(sender, e);
+            _searchBtn.Enabled = false;
+            _searchResultsLV.Items.Add(new ListViewItem { Text = _strSearching.Text });
+        }
+
+        #endregion GUI Handlers
     }
 }

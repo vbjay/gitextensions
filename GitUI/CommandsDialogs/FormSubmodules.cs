@@ -16,8 +16,9 @@ namespace GitUI.CommandsDialogs
 
         private readonly TranslationString _removeSelectedSubmoduleCaption = new TranslationString("Remove");
 
-        private BindingList<IGitSubmoduleInfo> modules = new BindingList<IGitSubmoduleInfo>();
         private GitSubmoduleInfo _oldSubmoduleInfo;
+        private BackgroundWorker bw;
+        private BindingList<IGitSubmoduleInfo> modules = new BindingList<IGitSubmoduleInfo>();
 
         public FormSubmodules(GitUICommands aCommands)
             : base(aCommands)
@@ -31,11 +32,6 @@ namespace GitUI.CommandsDialogs
         {
             using (var formAddSubmodule = new FormAddSubmodule(UICommands))
                 formAddSubmodule.ShowDialog(this);
-            Initialize();
-        }
-
-        private void FormSubmodulesShown(object sender, EventArgs e)
-        {
             Initialize();
         }
 
@@ -76,7 +72,10 @@ namespace GitUI.CommandsDialogs
             UseWaitCursor = false;
         }
 
-        private BackgroundWorker bw;
+        private void FormSubmodulesShown(object sender, EventArgs e)
+        {
+            Initialize();
+        }
 
         private void Initialize()
         {
@@ -97,18 +96,14 @@ namespace GitUI.CommandsDialogs
             bw.RunWorkerAsync();
         }
 
-        private void SynchronizeSubmoduleClick(object sender, EventArgs e)
+        private void Pull_Click(object sender, EventArgs e)
         {
+            var submodule = Module.GetSubmodule(SubModuleLocalPath.Text);
+            if (submodule == null)
+                return;
+            GitUICommands uiCommands = new GitUICommands(submodule);
+            uiCommands.StartPullDialog(this);
             UseWaitCursor = true;
-            FormProcess.ShowDialog(this, GitCommandHelpers.SubmoduleSyncCmd(SubModuleLocalPath.Text));
-            Initialize();
-            UseWaitCursor = false;
-        }
-
-        private void UpdateSubmoduleClick(object sender, EventArgs e)
-        {
-            UseWaitCursor = true;
-            FormProcess.ShowDialog(this, GitCommandHelpers.SubmoduleUpdateCmd(SubModuleLocalPath.Text));
             Initialize();
             UseWaitCursor = false;
         }
@@ -142,14 +137,18 @@ namespace GitUI.CommandsDialogs
             UseWaitCursor = false;
         }
 
-        private void Pull_Click(object sender, EventArgs e)
+        private void SynchronizeSubmoduleClick(object sender, EventArgs e)
         {
-            var submodule = Module.GetSubmodule(SubModuleLocalPath.Text);
-            if (submodule == null)
-                return;
-            GitUICommands uiCommands = new GitUICommands(submodule);
-            uiCommands.StartPullDialog(this);
             UseWaitCursor = true;
+            FormProcess.ShowDialog(this, GitCommandHelpers.SubmoduleSyncCmd(SubModuleLocalPath.Text));
+            Initialize();
+            UseWaitCursor = false;
+        }
+
+        private void UpdateSubmoduleClick(object sender, EventArgs e)
+        {
+            UseWaitCursor = true;
+            FormProcess.ShowDialog(this, GitCommandHelpers.SubmoduleUpdateCmd(SubModuleLocalPath.Text));
             Initialize();
             UseWaitCursor = false;
         }

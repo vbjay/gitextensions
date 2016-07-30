@@ -4,36 +4,6 @@ using System.Linq;
 
 namespace GitCommands.Core
 {
-    /// <summary>
-    /// class that provides Equals and ToString methods based on objects returned by InlinedStructure
-    /// Warning: it doesn't provide GetHashCode,
-    /// so obj1.Equals(obj2) == true does not imply obj1.GetHashCode() == obj2.GetHashCode()
-    /// to satisfy above implication you have to provide custom implementation for GetHashCode
-    /// </summary>
-    public abstract class SimpleStructured
-    {
-        protected internal abstract IEnumerable<object> InlinedStructure();
-
-        public override bool Equals(object obj)
-        {
-            SimpleStructured other = obj as SimpleStructured;
-            if (other == null)
-                return false;
-
-            return InlinedStructure().SequenceEqual(other.InlinedStructure(), new SimpleEqualityComparer());
-        }
-
-        public override string ToString()
-        {
-            return new SimpleEqualityComparer().ToString(InlinedStructure());
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
-    }
-
     public class SimpleEqualityComparer : IEqualityComparer<object>
     {
         public new bool Equals(object x, object y)
@@ -82,5 +52,35 @@ namespace GitCommands.Core
                 return indent + obj.ToString();
             }
         }
+    }
+
+    /// <summary>
+    /// class that provides Equals and ToString methods based on objects returned by InlinedStructure
+    /// Warning: it doesn't provide GetHashCode,
+    /// so obj1.Equals(obj2) == true does not imply obj1.GetHashCode() == obj2.GetHashCode()
+    /// to satisfy above implication you have to provide custom implementation for GetHashCode
+    /// </summary>
+    public abstract class SimpleStructured
+    {
+        public override bool Equals(object obj)
+        {
+            SimpleStructured other = obj as SimpleStructured;
+            if (other == null)
+                return false;
+
+            return InlinedStructure().SequenceEqual(other.InlinedStructure(), new SimpleEqualityComparer());
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return new SimpleEqualityComparer().ToString(InlinedStructure());
+        }
+
+        protected internal abstract IEnumerable<object> InlinedStructure();
     }
 }

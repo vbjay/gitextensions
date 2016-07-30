@@ -16,6 +16,12 @@ namespace PatchApply
             File = FileType.Text;
         }
 
+        public enum FileType
+        {
+            Binary,
+            Text
+        }
+
         public enum PatchType
         {
             NewFile,
@@ -24,31 +30,24 @@ namespace PatchApply
             ChangeFileMode
         }
 
-        public enum FileType
-        {
-            Binary,
-            Text
-        }
-
-        public string PatchHeader { get; set; }
-        public string PatchIndex { get; set; }
+        public bool Apply { get; set; }
+        public List<int> Bookmarks { get; set; }
+        public bool CombinedDiff { get; set; }
+        public string DirToPatch { get; set; }
         public FileType File { get; set; }
         public string FileNameA { get; set; }
         public string FileNameB { get; set; }
         public string FileTextB { get; set; }
-        public string DirToPatch { get; set; }
+        public string PatchHeader { get; set; }
+        public string PatchIndex { get; set; }
         public int Rate { get; set; }
-        public bool Apply { get; set; }
-        public bool CombinedDiff { get; set; }
-
-        public List<int> Bookmarks { get; set; }
-
-        public PatchType Type { get; set; }
 
         public string Text
         {
             get { return _textBuilder == null ? null : _textBuilder.ToString(); }
         }
+
+        public PatchType Type { get; set; }
 
         public void AppendText(string text)
         {
@@ -90,31 +89,6 @@ namespace PatchApply
         private StringBuilder GetTextBuilder()
         {
             return _textBuilder ?? (_textBuilder = new StringBuilder());
-        }
-
-        private string LoadFile(string fileName, Encoding filesContentEncoding)
-        {
-            try
-            {
-                using (var streamReader = new StreamReader(DirToPatch + fileName, filesContentEncoding))
-                {
-                    string retval = "";
-                    string line;
-                    while ((line = streamReader.ReadLine()) != null)
-                    {
-                        retval += line + "\n";
-                    }
-
-                    if (retval.Length > 0 && retval[retval.Length - 1] == '\n')
-                        retval = retval.Remove(retval.Length - 1, 1);
-
-                    return retval;
-                }
-            }
-            catch
-            {
-                return "";
-            }
         }
 
         private void HandleChangeFilePatchType(Encoding filesContentEncoding)
@@ -205,6 +179,18 @@ namespace PatchApply
                 Apply = false;
         }
 
+        private void HandleDeletePatchType()
+        {
+            FileTextB = "";
+            Rate = 100;
+
+            if (!System.IO.File.Exists(DirToPatch + FileNameA))
+            {
+                Rate -= 40;
+                Apply = false;
+            }
+        }
+
         private void HandleNewFilePatchType()
         {
             foreach (string line in Text.Split('\n'))
@@ -231,15 +217,28 @@ namespace PatchApply
             }
         }
 
-        private void HandleDeletePatchType()
+        private string LoadFile(string fileName, Encoding filesContentEncoding)
         {
-            FileTextB = "";
-            Rate = 100;
-
-            if (!System.IO.File.Exists(DirToPatch + FileNameA))
+            try
             {
-                Rate -= 40;
-                Apply = false;
+                using (var streamReader = new StreamReader(DirToPatch + fileName, filesContentEncoding))
+                {
+                    string retval = "";
+                    string line;
+                    while ((line = streamReader.ReadLine()) != null)
+                    {
+                        retval += line + "\n";
+                    }
+
+                    if (retval.Length > 0 && retval[retval.Length - 1] == '\n')
+                        retval = retval.Remove(retval.Length - 1, 1);
+
+                    return retval;
+                }
+            }
+            catch
+            {
+                return "";
             }
         }
     }

@@ -10,21 +10,18 @@ namespace GitCommands
         internal const int MinimumStringLength = 53;
         private readonly GitModule Module;
 
-        public string Guid { get; set; }
-        public string CommitGuid { get; set; }
-        public string ItemType { get; set; }
-        public string Name { get; set; }
-        public string Author { get; set; }
-        public string Date { get; set; }
-        public string FileName { get; set; }
-        public string Mode { get; set; }
+        private IList<IGitItem> subItems;
 
         public GitItem(GitModule aModule)
         {
             Module = aModule;
         }
 
-        private IList<IGitItem> subItems;
+        public string Author { get; set; }
+        public string CommitGuid { get; set; }
+        public string Date { get; set; }
+        public string FileName { get; set; }
+        public string Guid { get; set; }
 
         public bool IsBlob
         {
@@ -40,6 +37,10 @@ namespace GitCommands
         {
             get { return ItemType == "tree"; }
         }
+
+        public string ItemType { get; set; }
+        public string Mode { get; set; }
+        public string Name { get; set; }
 
         public IEnumerable<IGitItem> SubItems
         {
@@ -57,25 +58,6 @@ namespace GitCommands
 
                 return subItems;
             }
-        }
-
-        internal static GitItem CreateGitItemFromString(GitModule aModule, string itemsString)
-        {
-            if ((itemsString == null) || (itemsString.Length <= MinimumStringLength))
-                return null;
-
-            var guidStart = itemsString.IndexOf(' ', 7);
-
-            var item = new GitItem(aModule)
-            {
-                Mode = itemsString.Substring(0, 6),
-                ItemType = itemsString.Substring(7, guidStart - 7),
-                Guid = itemsString.Substring(guidStart + 1, 40),
-                Name = itemsString.Substring(guidStart + 42).Trim()
-            };
-
-            item.FileName = item.Name;
-            return item;
         }
 
         public static List<GitItem> CreateGitItemsFromString(GitModule aModule, string tree)
@@ -105,6 +87,25 @@ namespace GitCommands
                 items.Add(item);
 
             return items;
+        }
+
+        internal static GitItem CreateGitItemFromString(GitModule aModule, string itemsString)
+        {
+            if ((itemsString == null) || (itemsString.Length <= MinimumStringLength))
+                return null;
+
+            var guidStart = itemsString.IndexOf(' ', 7);
+
+            var item = new GitItem(aModule)
+            {
+                Mode = itemsString.Substring(0, 6),
+                ItemType = itemsString.Substring(7, guidStart - 7),
+                Guid = itemsString.Substring(guidStart + 1, 40),
+                Name = itemsString.Substring(guidStart + 42).Trim()
+            };
+
+            item.FileName = item.Name;
+            return item;
         }
     }
 }

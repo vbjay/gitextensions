@@ -5,6 +5,14 @@ namespace GitCommands.Git
 {
     public class GitCheckoutBranchCmd : GitCommand
     {
+        private LocalChangesAction _localChanges;
+
+        public GitCheckoutBranchCmd(string branchName, bool remote)
+        {
+            BranchName = branchName;
+            Remote = remote;
+        }
+
         public enum NewBranch
         {
             DontCreate,
@@ -13,9 +21,6 @@ namespace GitCommands.Git
         }
 
         public string BranchName { get; set; }
-        public string NewBranchName { get; set; }
-        public bool Remote { get; set; }
-        private LocalChangesAction _localChanges;
 
         public LocalChangesAction LocalChanges
         {
@@ -30,16 +35,17 @@ namespace GitCommands.Git
         }
 
         public NewBranch NewBranchAction { get; set; }
+        public string NewBranchName { get; set; }
+        public bool Remote { get; set; }
 
-        public GitCheckoutBranchCmd(string branchName, bool remote)
+        public override bool AccessesRemote()
         {
-            BranchName = branchName;
-            Remote = remote;
+            return false;
         }
 
-        public override string GitComandName()
+        public override bool ChangesRepoState()
         {
-            return "checkout";
+            return true;
         }
 
         public override IEnumerable<string> CollectArguments()
@@ -60,14 +66,9 @@ namespace GitCommands.Git
             yield return BranchName.QuoteNE();
         }
 
-        public override bool AccessesRemote()
+        public override string GitComandName()
         {
-            return false;
-        }
-
-        public override bool ChangesRepoState()
-        {
-            return true;
+            return "checkout";
         }
     }
 }

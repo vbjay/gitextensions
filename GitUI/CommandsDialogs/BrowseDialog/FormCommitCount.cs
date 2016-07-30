@@ -16,11 +16,6 @@ namespace GitUI.CommandsDialogs.BrowseDialog
             Translate();
         }
 
-        private void FormCommitCountLoad(object sender, EventArgs e)
-        {
-            FetchData();
-        }
-
         private void cbIncludeSubmodules_CheckedChanged(object sender, EventArgs e)
         {
             FetchData();
@@ -78,6 +73,11 @@ namespace GitUI.CommandsDialogs.BrowseDialog
             }
 
             Loading.Visible = false;
+        }
+
+        private void FormCommitCountLoad(object sender, EventArgs e)
+        {
+            FetchData();
         }
     }
 }

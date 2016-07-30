@@ -10,14 +10,8 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
 {
     public sealed partial class DashboardItem : GitExtensionsControl
     {
-        private ToolTip toolTip;
         private readonly AsyncLoader _branchNameLoader;
-
-        private DashboardItem()
-        {
-            InitializeComponent();
-            Translate();
-        }
+        private ToolTip toolTip;
 
         public DashboardItem(Repository repository)
             : this()
@@ -50,10 +44,85 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             Initialize(icon, title, title, null);
         }
 
+        private DashboardItem()
+        {
+            InitializeComponent();
+            Translate();
+        }
+
+        public string Path { get; private set; }
+
         public void Close()
         {
             if (toolTip != null)
                 toolTip.RemoveAll();
+        }
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                CancelBranchNameLoad();
+                if (_branchNameLoader != null)
+                    _branchNameLoader.Dispose();
+                if (components != null)
+                    components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        private static Bitmap GetRepositoryIcon(Repository repository)
+        {
+            switch (repository.RepositoryType)
+            {
+                case RepositoryType.Repository:
+                    return Resources.Star;
+
+                case RepositoryType.RssFeed:
+                    return Resources.rss;
+
+                case RepositoryType.History:
+                    return Resources.history;
+
+                default:
+                    throw new ArgumentException("Repository type is not supported.", "repository");
+            }
+        }
+
+        private void CancelBranchNameLoad()
+        {
+            if (_branchNameLoader != null)
+            {
+                _branchNameLoader.Cancel();
+            }
+        }
+
+        private void DashboardItem_MouseEnter(object sender, EventArgs e)
+        {
+            BackColor = SystemColors.ControlLight;
+        }
+
+        private void DashboardItem_MouseLeave(object sender, EventArgs e)
+        {
+            BackColor = SystemColors.Control;
+        }
+
+        private void DashboardItem_SizeChanged(object sender, EventArgs e)
+        {
+            ////_NO_TRANSLATE_Title.Width = Width - _NO_TRANSLATE_Title.Location.X;
+            ////_NO_TRANSLATE_Description.Width = Width - _NO_TRANSLATE_Title.Location.X;
+        }
+
+        private void DashboardItem_VisibleChanged(object sender, System.EventArgs e)
+        {
+            if (!Visible)
+            {
+                CancelBranchNameLoad();
+            }
         }
 
         private void Initialize(Bitmap icon, string path, string title, string text)
@@ -94,18 +163,10 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             Icon.Click += Title_Click;
         }
 
-        private void UpdateBranchName(string branchName)
+        private void OnKeyDown(object sender, PreviewKeyDownEventArgs e)
         {
-            _NO_TRANSLATE_BranchName.Visible = !string.IsNullOrEmpty(branchName);
-            _NO_TRANSLATE_BranchName.Text = branchName;
-        }
-
-        private void CancelBranchNameLoad()
-        {
-            if (_branchNameLoader != null)
-            {
-                _branchNameLoader.Cancel();
-            }
+            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space)
+                OnClick(e);
         }
 
         private void Title_Click(object sender, EventArgs e)
@@ -122,71 +183,10 @@ namespace GitUI.CommandsDialogs.BrowseDialog.DashboardControl
             }
         }
 
-        public string Path { get; private set; }
-
-        private void DashboardItem_SizeChanged(object sender, EventArgs e)
+        private void UpdateBranchName(string branchName)
         {
-            ////_NO_TRANSLATE_Title.Width = Width - _NO_TRANSLATE_Title.Location.X;
-            ////_NO_TRANSLATE_Description.Width = Width - _NO_TRANSLATE_Title.Location.X;
-        }
-
-        private void DashboardItem_MouseEnter(object sender, EventArgs e)
-        {
-            BackColor = SystemColors.ControlLight;
-        }
-
-        private void DashboardItem_MouseLeave(object sender, EventArgs e)
-        {
-            BackColor = SystemColors.Control;
-        }
-
-        private void DashboardItem_VisibleChanged(object sender, System.EventArgs e)
-        {
-            if (!Visible)
-            {
-                CancelBranchNameLoad();
-            }
-        }
-
-        private static Bitmap GetRepositoryIcon(Repository repository)
-        {
-            switch (repository.RepositoryType)
-            {
-                case RepositoryType.Repository:
-                    return Resources.Star;
-
-                case RepositoryType.RssFeed:
-                    return Resources.rss;
-
-                case RepositoryType.History:
-                    return Resources.history;
-
-                default:
-                    throw new ArgumentException("Repository type is not supported.", "repository");
-            }
-        }
-
-        private void OnKeyDown(object sender, PreviewKeyDownEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space)
-                OnClick(e);
-        }
-
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                CancelBranchNameLoad();
-                if (_branchNameLoader != null)
-                    _branchNameLoader.Dispose();
-                if (components != null)
-                    components.Dispose();
-            }
-            base.Dispose(disposing);
+            _NO_TRANSLATE_BranchName.Visible = !string.IsNullOrEmpty(branchName);
+            _NO_TRANSLATE_BranchName.Text = branchName;
         }
     }
 }

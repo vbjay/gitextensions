@@ -26,69 +26,24 @@ namespace GitUI.UserControls.RevisionGridClasses
     /// * A final Flush(true) passes on any pending revisions even if they weren't completely rewritten
     public class FollowParentRewriter
     {
-        private class CommitData
-        {
-            // original parents
-            internal List<string> parents = new List<string>();
-
-            // original children
-            internal List<string> children = new List<string>();
-
-            // rewritten parents (Empty == no rewriting necessary)
-            internal List<string> rewrittenParents = new List<string>();
-
-            // null  == mentioned as parent only
-            // !null == received GitRevision data (==seen)
-            internal GitRevision rev = null;
-
-            // true == all ancestors were seen
-            internal bool allAncectorsSeen = false;
-
-            internal void AddParent(string parentId)
-            {
-                if (!parents.Contains(parentId))
-                {
-                    parents.Add(parentId);
-                }
-            }
-
-            internal void AddChild(string childId)
-            {
-                if (!children.Contains(childId))
-                {
-                    children.Add(childId);
-                }
-            }
-
-            internal bool WasSeen()
-            {
-                return rev != null;
-            }
-
-            internal bool RewritingNeeded()
-            {
-                return rewrittenParents.Any();
-            }
-
-            internal string[] ParentsAfterRewriting()
-            {
-                if (rewrittenParents.Any())
-                {
-                    return rewrittenParents.ToArray();
-                }
-                else if (WasSeen())
-                {
-                    return rev.ParentGuids;
-                }
-                else
-                {
-                    return parents.ToArray();
-                }
-            }
-        }
+        private string _fileName;
 
         private Func<string, StreamReader> _gitExecFunc;
-        private string _fileName;
+
+        /// <summary>
+        /// Commits and their immediate relatives
+        /// commitId => CommitData
+        /// </summary>
+        private Dictionary<string, CommitData> _historyGraph = new Dictionary<string, CommitData>();
+
+        private bool _historyLoaded = false;
+
+        /// <summary>
+        /// Previous names of analysed file
+        /// </summary>
+        private HashSet<string> _previousNames = new HashSet<string>();
+
+        private Queue<GitRevision> _revisionQueue = new Queue<GitRevision>();
 
         public FollowParentRewriter(String fileName, Func<string, StreamReader> gitExecFunc)
         {
@@ -96,60 +51,62 @@ namespace GitUI.UserControls.RevisionGridClasses
             _gitExecFunc = gitExecFunc;
         }
 
-        private CommitData ProvideCommitData(string commitId)
+        /// <summary>
+        /// Returns whether the rewrite process is needed (i.e. the file had more than one name throughout its history)
+        /// </summary>
+        /// <returns></returns>
+        public bool RewriteNecessary
         {
-            if (!_historyGraph.ContainsKey(commitId))
+            get
             {
-                CommitData dta = new CommitData();
-                _historyGraph.Add(commitId, dta);
-                return dta;
-            }
-            else
-            {
-                return _historyGraph[commitId];
+                EnsureHistoryLoaded();
+                return _previousNames.Count() > 1;
             }
         }
 
         /// <summary>
-        /// Previous names of analysed file
+        /// Calls supplied function with any revisions ready to be processed
+        /// If flushAll==True then forces processing of all pending revisions without rewriting them
         /// </summary>
-        private HashSet<string> _previousNames = new HashSet<string>();
-
-        private void AddNameToPreviousNames(string line)
+        public void Flush(bool flushAll, Action<GitRevision> processRevision)
         {
-            if (!_previousNames.Contains(line))
+            if (!flushAll && RewriteNecessary)
             {
-                _previousNames.Add(line);
-            }
-        }
-
-        // Fetches previous names of _fileName, stores in _previousNames
-        private void LoadPreviousNames()
-        {
-            string arg = "log " + GitCommandHelpers.FindRenamesAndCopiesOpts() + " --follow --name-only --format=\"%n\"";
-            if (AppSettings.FullHistoryInFileHistory)
-            {
-                arg += " --full-history";
-            }
-            arg += " -- \"" + _fileName + "\"";
-            using (StreamReader gitResult = _gitExecFunc(arg))
-            {
-                string line;
-                while ((line = gitResult.ReadLine()) != null)
+                while (_revisionQueue.Any())
                 {
-                    if (line.IsNotNullOrWhitespace())
+                    GitRevision r = _revisionQueue.Peek();
+                    if ((r == null) || ProvideCommitData(r.Guid).allAncectorsSeen)
                     {
-                        AddNameToPreviousNames(line);
+                        DequeueAndProcessRevision(processRevision);
                     }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                while (_revisionQueue.Any())
+                {
+                    DequeueAndProcessRevision(processRevision);
                 }
             }
         }
 
         /// <summary>
-        /// Commits and their immediate relatives
-        /// commitId => CommitData
+        /// Receives revision data, stores it for receiving by Flush
         /// </summary>
-        private Dictionary<string, CommitData> _historyGraph = new Dictionary<string, CommitData>();
+        /// <param name="rev"></param>
+        public void PushRevision(GitRevision rev)
+        {
+            _revisionQueue.Enqueue(rev);
+            if ((rev != null) && RewriteNecessary)
+            {
+                UpdateHistoryGraph(rev);
+                UpdateDescendants(rev);
+            }
+        }
 
         // line contains commitid followed by one or more parentIds
         private void AddCommitToParentsGraph(string line)
@@ -167,6 +124,46 @@ namespace GitUI.UserControls.RevisionGridClasses
                     ownData.AddParent(parentId);
                     CommitData parentData = ProvideCommitData(parentId);
                     parentData.AddChild(commitId);
+                }
+            }
+        }
+
+        private void AddNameToPreviousNames(string line)
+        {
+            if (!_previousNames.Contains(line))
+            {
+                _previousNames.Add(line);
+            }
+        }
+
+        private void DequeueAndProcessRevision(Action<GitRevision> processRevision)
+        {
+            GitRevision rev = _revisionQueue.Dequeue();
+            if ((rev != null) && RewriteNecessary)
+            {
+                var cdta = ProvideCommitData(rev.Guid);
+                if (cdta.RewritingNeeded())
+                {
+                    var rewrittenParentGuids = cdta.ParentsAfterRewriting();
+                    if (cdta.allAncectorsSeen)
+                    {
+                        rewrittenParentGuids = RemoveRedundantParents(rewrittenParentGuids, rev.ParentGuids);
+                    }
+                    rev.ParentGuids = rewrittenParentGuids;
+                }
+            }
+            processRevision(rev);
+        }
+
+        private void EnsureHistoryLoaded()
+        {
+            if (!_historyLoaded)
+            {
+                LoadPreviousNames();
+                _historyLoaded = true;
+                if (RewriteNecessary)
+                {
+                    LoadParents();
                 }
             }
         }
@@ -202,32 +199,93 @@ namespace GitUI.UserControls.RevisionGridClasses
             }
         }
 
-        private bool _historyLoaded = false;
-
-        private void EnsureHistoryLoaded()
+        // Fetches previous names of _fileName, stores in _previousNames
+        private void LoadPreviousNames()
         {
-            if (!_historyLoaded)
+            string arg = "log " + GitCommandHelpers.FindRenamesAndCopiesOpts() + " --follow --name-only --format=\"%n\"";
+            if (AppSettings.FullHistoryInFileHistory)
             {
-                LoadPreviousNames();
-                _historyLoaded = true;
-                if (RewriteNecessary)
+                arg += " --full-history";
+            }
+            arg += " -- \"" + _fileName + "\"";
+            using (StreamReader gitResult = _gitExecFunc(arg))
+            {
+                string line;
+                while ((line = gitResult.ReadLine()) != null)
                 {
-                    LoadParents();
+                    if (line.IsNotNullOrWhitespace())
+                    {
+                        AddNameToPreviousNames(line);
+                    }
                 }
             }
         }
 
-        /// <summary>
-        /// Returns whether the rewrite process is needed (i.e. the file had more than one name throughout its history)
-        /// </summary>
-        /// <returns></returns>
-        public bool RewriteNecessary
+        private CommitData ProvideCommitData(string commitId)
         {
-            get
+            if (!_historyGraph.ContainsKey(commitId))
             {
-                EnsureHistoryLoaded();
-                return _previousNames.Count() > 1;
+                CommitData dta = new CommitData();
+                _historyGraph.Add(commitId, dta);
+                return dta;
             }
+            else
+            {
+                return _historyGraph[commitId];
+            }
+        }
+
+        /// Removes parent paths to allAncectorsSeen commits that can be pruned without affecting reachability
+        private string[] RemoveRedundantParents(string[] parentsToCheck, string[] parentsToKeep)
+        {
+            if (parentsToCheck.Length == 1)
+            {
+                return parentsToCheck;
+            }
+            // parentsToKeep should not to be considered for removal
+            var toRemove = from removalCandidateParent in parentsToCheck.Except(parentsToKeep)
+                           from reachabilityCheckedParent in parentsToCheck
+                               // parents to check different from parents to removal
+                           where (removalCandidateParent != reachabilityCheckedParent)
+                           // and reachable
+                           && RemoveRedundantParentsIsReachable(removalCandidateParent, reachabilityCheckedParent)
+                           // should be excluded from result
+                           select removalCandidateParent;
+            return parentsToCheck.Except(toRemove).ToArray();
+        }
+
+        // RemoveRedundantParents helper, returns whether a commit is reachable through rewritten parents
+        // checking range limited to Seen or allAncestorsSeen commits
+        private bool RemoveRedundantParentsIsReachable(string target, string source)
+        {
+            // (source) connections to check for reachability
+            Queue<string> sourcesToCheck = new Queue<string>();
+            HashSet<string> checkedSources = new HashSet<string>();
+            sourcesToCheck.Enqueue(source);
+            while (sourcesToCheck.Any())
+            {
+                string currentSource = sourcesToCheck.Dequeue();
+                if (checkedSources.Contains(currentSource))
+                {
+                    continue;
+                }
+                checkedSources.Add(currentSource);
+                if (currentSource == target)
+                {
+                    return true;
+                }
+                var dta = ProvideCommitData(currentSource);
+                if (!dta.WasSeen() && !dta.allAncectorsSeen)
+                {
+                    // interested only in Seen || allAncectorsSeen commits
+                    continue;
+                }
+                foreach (string p in dta.ParentsAfterRewriting())
+                {
+                    sourcesToCheck.Enqueue(p);
+                }
+            }
+            return false;
         }
 
         /// <summary>
@@ -299,121 +357,64 @@ namespace GitUI.UserControls.RevisionGridClasses
             dta.rev = rev;
         }
 
-        private Queue<GitRevision> _revisionQueue = new Queue<GitRevision>();
-
-        /// <summary>
-        /// Receives revision data, stores it for receiving by Flush
-        /// </summary>
-        /// <param name="rev"></param>
-        public void PushRevision(GitRevision rev)
+        private class CommitData
         {
-            _revisionQueue.Enqueue(rev);
-            if ((rev != null) && RewriteNecessary)
-            {
-                UpdateHistoryGraph(rev);
-                UpdateDescendants(rev);
-            }
-        }
+            // true == all ancestors were seen
+            internal bool allAncectorsSeen = false;
 
-        // RemoveRedundantParents helper, returns whether a commit is reachable through rewritten parents
-        // checking range limited to Seen or allAncestorsSeen commits
-        private bool RemoveRedundantParentsIsReachable(string target, string source)
-        {
-            // (source) connections to check for reachability
-            Queue<string> sourcesToCheck = new Queue<string>();
-            HashSet<string> checkedSources = new HashSet<string>();
-            sourcesToCheck.Enqueue(source);
-            while (sourcesToCheck.Any())
+            // original children
+            internal List<string> children = new List<string>();
+
+            // original parents
+            internal List<string> parents = new List<string>();
+
+            // null  == mentioned as parent only
+            // !null == received GitRevision data (==seen)
+            internal GitRevision rev = null;
+
+            // rewritten parents (Empty == no rewriting necessary)
+            internal List<string> rewrittenParents = new List<string>();
+
+            internal void AddChild(string childId)
             {
-                string currentSource = sourcesToCheck.Dequeue();
-                if (checkedSources.Contains(currentSource))
+                if (!children.Contains(childId))
                 {
-                    continue;
-                }
-                checkedSources.Add(currentSource);
-                if (currentSource == target)
-                {
-                    return true;
-                }
-                var dta = ProvideCommitData(currentSource);
-                if (!dta.WasSeen() && !dta.allAncectorsSeen)
-                {
-                    // interested only in Seen || allAncectorsSeen commits
-                    continue;
-                }
-                foreach (string p in dta.ParentsAfterRewriting())
-                {
-                    sourcesToCheck.Enqueue(p);
+                    children.Add(childId);
                 }
             }
-            return false;
-        }
 
-        /// Removes parent paths to allAncectorsSeen commits that can be pruned without affecting reachability
-        private string[] RemoveRedundantParents(string[] parentsToCheck, string[] parentsToKeep)
-        {
-            if (parentsToCheck.Length == 1)
+            internal void AddParent(string parentId)
             {
-                return parentsToCheck;
-            }
-            // parentsToKeep should not to be considered for removal
-            var toRemove = from removalCandidateParent in parentsToCheck.Except(parentsToKeep)
-                           from reachabilityCheckedParent in parentsToCheck
-                               // parents to check different from parents to removal
-                           where (removalCandidateParent != reachabilityCheckedParent)
-                           // and reachable
-                           && RemoveRedundantParentsIsReachable(removalCandidateParent, reachabilityCheckedParent)
-                           // should be excluded from result
-                           select removalCandidateParent;
-            return parentsToCheck.Except(toRemove).ToArray();
-        }
-
-        private void DequeueAndProcessRevision(Action<GitRevision> processRevision)
-        {
-            GitRevision rev = _revisionQueue.Dequeue();
-            if ((rev != null) && RewriteNecessary)
-            {
-                var cdta = ProvideCommitData(rev.Guid);
-                if (cdta.RewritingNeeded())
+                if (!parents.Contains(parentId))
                 {
-                    var rewrittenParentGuids = cdta.ParentsAfterRewriting();
-                    if (cdta.allAncectorsSeen)
-                    {
-                        rewrittenParentGuids = RemoveRedundantParents(rewrittenParentGuids, rev.ParentGuids);
-                    }
-                    rev.ParentGuids = rewrittenParentGuids;
+                    parents.Add(parentId);
                 }
             }
-            processRevision(rev);
-        }
 
-        /// <summary>
-        /// Calls supplied function with any revisions ready to be processed
-        /// If flushAll==True then forces processing of all pending revisions without rewriting them
-        /// </summary>
-        public void Flush(bool flushAll, Action<GitRevision> processRevision)
-        {
-            if (!flushAll && RewriteNecessary)
+            internal string[] ParentsAfterRewriting()
             {
-                while (_revisionQueue.Any())
+                if (rewrittenParents.Any())
                 {
-                    GitRevision r = _revisionQueue.Peek();
-                    if ((r == null) || ProvideCommitData(r.Guid).allAncectorsSeen)
-                    {
-                        DequeueAndProcessRevision(processRevision);
-                    }
-                    else
-                    {
-                        break;
-                    }
+                    return rewrittenParents.ToArray();
+                }
+                else if (WasSeen())
+                {
+                    return rev.ParentGuids;
+                }
+                else
+                {
+                    return parents.ToArray();
                 }
             }
-            else
+
+            internal bool RewritingNeeded()
             {
-                while (_revisionQueue.Any())
-                {
-                    DequeueAndProcessRevision(processRevision);
-                }
+                return rewrittenParents.Any();
+            }
+
+            internal bool WasSeen()
+            {
+                return rev != null;
             }
         }
     }

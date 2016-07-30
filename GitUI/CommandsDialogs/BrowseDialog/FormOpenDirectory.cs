@@ -40,6 +40,14 @@ namespace GitUI.CommandsDialogs.BrowseDialog
             }
         }
 
+        private void DirectoryKeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                LoadClick(null, null);
+            }
+        }
+
         private void LoadClick(object sender, EventArgs e)
         {
             _NO_TRANSLATE_Directory.Text = _NO_TRANSLATE_Directory.Text.Trim();
@@ -52,14 +60,6 @@ namespace GitUI.CommandsDialogs.BrowseDialog
             else
             {
                 MessageBox.Show(this, _warningOpenFailed.Text, _warningOpenFailedCaption.Text);
-            }
-        }
-
-        private void DirectoryKeyPress(object sender, KeyPressEventArgs e)
-        {
-            if (e.KeyChar == (char)Keys.Enter)
-            {
-                LoadClick(null, null);
             }
         }
     }

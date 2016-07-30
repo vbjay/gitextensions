@@ -12,17 +12,16 @@ namespace GitUI.UserControls.RevisionGridClasses
 {
     internal class RevisionGridMenuCommands : MenuCommandsBase
     {
-        private readonly TranslationString _quickSearchQuickHelp =
-            new TranslationString("Start typing in revision grid to start quick search.");
-
         private readonly TranslationString _noRevisionFoundError =
             new TranslationString("No revision found.");
 
-        private RevisionGrid _revisionGrid;
+        private readonly TranslationString _quickSearchQuickHelp =
+                    new TranslationString("Start typing in revision grid to start quick search.");
 
         // must both be created only once
         private IEnumerable<MenuCommand> _navigateMenuCommands;
 
+        private RevisionGrid _revisionGrid;
         private IEnumerable<MenuCommand> _viewMenuCommands;
 
         public RevisionGridMenuCommands(RevisionGrid revisionGrid)
@@ -32,6 +31,8 @@ namespace GitUI.UserControls.RevisionGridClasses
             TranslationCategoryName = "RevisionGrid";
             Translate();
         }
+
+        public event EventHandler MenuChanged;
 
         /// <summary>
         /// ... "Update" because the hotkey settings might change
@@ -59,24 +60,68 @@ namespace GitUI.UserControls.RevisionGridClasses
             }
         }
 
+        public IEnumerable<MenuCommand> GetNavigateMenuCommands()
+        {
+            return _navigateMenuCommands;
+        }
+
+        public IEnumerable<MenuCommand> GetViewMenuCommands()
+        {
+            return _viewMenuCommands;
+        }
+
+        public void GotoCommitExcecute()
+        {
+            using (FormGoToCommit formGoToCommit = new FormGoToCommit(_revisionGrid.UICommands))
+            {
+                if (formGoToCommit.ShowDialog(_revisionGrid) != DialogResult.OK)
+                    return;
+
+                string revisionGuid = formGoToCommit.ValidateAndGetSelectedRevision();
+                if (!string.IsNullOrEmpty(revisionGuid))
+                {
+                    _revisionGrid.SetSelectedRevision(new GitRevision(_revisionGrid.Module, revisionGuid));
+                }
+                else
+                {
+                    MessageBox.Show(_revisionGrid, _noRevisionFoundError.Text);
+                }
+            }
+        }
+
+        public void SelectCurrentRevisionExecute()
+        {
+            _revisionGrid.ExecuteCommand(GitUI.RevisionGrid.Commands.SelectCurrentRevision);
+        }
+
         public void TriggerMenuChanged()
         {
             Debug.WriteLine("RevisionGridMenuCommands.TriggerMenuChanged()");
             OnMenuChanged();
         }
 
-        private void UpdateMenuCommandShortcutKeyDisplayString(IEnumerable<MenuCommand> targetList, IEnumerable<MenuCommand> sourceList)
+        protected override IEnumerable<MenuCommand> GetMenuCommandsForTranslation()
         {
-            foreach (var sourceMc in sourceList.Where(mc => !mc.IsSeparator))
-            {
-                var targetMc = targetList.Single(mc => !mc.IsSeparator && mc.Name == sourceMc.Name);
-                targetMc.ShortcutKeyDisplayString = sourceMc.ShortcutKeyDisplayString;
-            }
+            return GetMenuCommandsWithoutSeparators();
         }
 
-        public IEnumerable<MenuCommand> GetNavigateMenuCommands()
+        // taken from http://stackoverflow.com/questions/5058254/inotifypropertychanged-propertychangedeventhandler-event-is-always-null
+        // paramenter name not used
+        protected void OnMenuChanged()
         {
-            return _navigateMenuCommands;
+            Debug.WriteLine("RevisionGridMenuCommands.OnPropertyChanged()");
+
+            EventHandler handler = MenuChanged;
+            if (handler != null)
+            {
+                handler(this, null);
+            }
+
+            foreach (var menuCommand in GetMenuCommandsWithoutSeparators())
+            {
+                menuCommand.SetCheckForRegisteredMenuItems();
+                menuCommand.UpdateMenuItemsShortcutKeyDisplayString();
+            }
         }
 
         private IEnumerable<MenuCommand> CreateNavigateMenuCommands()
@@ -181,21 +226,6 @@ namespace GitUI.UserControls.RevisionGridClasses
             }
 
             return resultList;
-        }
-
-        /// <summary>
-        /// this is needed because _revsionGrid is null when TranslationApp is called
-        /// </summary>
-        /// <param name="revGridCommands"></param>
-        /// <returns></returns>
-        private string GetShortcutKeyDisplayStringFromRevisionGridIfAvailable(GitUI.RevisionGrid.Commands revGridCommands)
-        {
-            if (_revisionGrid == null)
-            {
-                return null;
-            }
-
-            return _revisionGrid.GetShortcutKeys(revGridCommands).ToShortcutKeyDisplayString();
         }
 
         private IEnumerable<MenuCommand> CreateViewMenuCommands()
@@ -413,63 +443,32 @@ namespace GitUI.UserControls.RevisionGridClasses
             return resultList;
         }
 
-        public IEnumerable<MenuCommand> GetViewMenuCommands()
-        {
-            return _viewMenuCommands;
-        }
-
-        public event EventHandler MenuChanged;
-
-        // taken from http://stackoverflow.com/questions/5058254/inotifypropertychanged-propertychangedeventhandler-event-is-always-null
-        // paramenter name not used
-        protected void OnMenuChanged()
-        {
-            Debug.WriteLine("RevisionGridMenuCommands.OnPropertyChanged()");
-
-            EventHandler handler = MenuChanged;
-            if (handler != null)
-            {
-                handler(this, null);
-            }
-
-            foreach (var menuCommand in GetMenuCommandsWithoutSeparators())
-            {
-                menuCommand.SetCheckForRegisteredMenuItems();
-                menuCommand.UpdateMenuItemsShortcutKeyDisplayString();
-            }
-        }
-
-        protected override IEnumerable<MenuCommand> GetMenuCommandsForTranslation()
-        {
-            return GetMenuCommandsWithoutSeparators();
-        }
-
         private IEnumerable<MenuCommand> GetMenuCommandsWithoutSeparators()
         {
             return _navigateMenuCommands.Concat(_viewMenuCommands).Where(mc => !mc.IsSeparator);
         }
 
-        public void SelectCurrentRevisionExecute()
+        /// <summary>
+        /// this is needed because _revsionGrid is null when TranslationApp is called
+        /// </summary>
+        /// <param name="revGridCommands"></param>
+        /// <returns></returns>
+        private string GetShortcutKeyDisplayStringFromRevisionGridIfAvailable(GitUI.RevisionGrid.Commands revGridCommands)
         {
-            _revisionGrid.ExecuteCommand(GitUI.RevisionGrid.Commands.SelectCurrentRevision);
+            if (_revisionGrid == null)
+            {
+                return null;
+            }
+
+            return _revisionGrid.GetShortcutKeys(revGridCommands).ToShortcutKeyDisplayString();
         }
 
-        public void GotoCommitExcecute()
+        private void UpdateMenuCommandShortcutKeyDisplayString(IEnumerable<MenuCommand> targetList, IEnumerable<MenuCommand> sourceList)
         {
-            using (FormGoToCommit formGoToCommit = new FormGoToCommit(_revisionGrid.UICommands))
+            foreach (var sourceMc in sourceList.Where(mc => !mc.IsSeparator))
             {
-                if (formGoToCommit.ShowDialog(_revisionGrid) != DialogResult.OK)
-                    return;
-
-                string revisionGuid = formGoToCommit.ValidateAndGetSelectedRevision();
-                if (!string.IsNullOrEmpty(revisionGuid))
-                {
-                    _revisionGrid.SetSelectedRevision(new GitRevision(_revisionGrid.Module, revisionGuid));
-                }
-                else
-                {
-                    MessageBox.Show(_revisionGrid, _noRevisionFoundError.Text);
-                }
+                var targetMc = targetList.Single(mc => !mc.IsSeparator && mc.Name == sourceMc.Name);
+                targetMc.ShortcutKeyDisplayString = sourceMc.ShortcutKeyDisplayString;
             }
         }
     }

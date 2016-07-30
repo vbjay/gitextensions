@@ -15,29 +15,34 @@ namespace Gource
     {
         #region Translation
 
-        private readonly TranslationString _currentDirectoryIsNotValidGit = new TranslationString("The current directory is not a valid git repository.\n\n" +
-            "Gource can be only be started from a valid git repository.");
-
-        private readonly TranslationString _resetConfigPath = new TranslationString("Cannot find Gource in the configured path: {0}.\n\n" +
-            "Do you want to reset the configured path?");
-
-        private readonly TranslationString _gource = new TranslationString("Gource");
-
-        private readonly TranslationString _doYouWantDownloadGource = new TranslationString("There is no path to Gource configured.\n\n" +
-            "Do you want to automatically download Gource?");
-
-        private readonly TranslationString _download = new TranslationString("Download");
+        private readonly TranslationString _bytesDownloaded = new TranslationString("{0} bytes downloaded.");
 
         private readonly TranslationString _cannotFindGource = new TranslationString("Cannot find Gource.\n" +
             "Please download Gource and set the path in the plugins settings dialog.");
 
-        private readonly TranslationString _bytesDownloaded = new TranslationString("{0} bytes downloaded.");
-        private readonly TranslationString _gourceDownloadedAndUnzipped = new TranslationString("Gource has been downloaded and unzipped.");
+        private readonly TranslationString _currentDirectoryIsNotValidGit = new TranslationString("The current directory is not a valid git repository.\n\n" +
+                            "Gource can be only be started from a valid git repository.");
+
+        private readonly TranslationString _download = new TranslationString("Download");
 
         private readonly TranslationString _downloadingFailed = new TranslationString("Downloading failed.\n" +
             "Please download Gource and set the path in the plugins settings dialog.");
 
+        private readonly TranslationString _doYouWantDownloadGource = new TranslationString("There is no path to Gource configured.\n\n" +
+            "Do you want to automatically download Gource?");
+
+        private readonly TranslationString _gource = new TranslationString("Gource");
+
+        private readonly TranslationString _gourceDownloadedAndUnzipped = new TranslationString("Gource has been downloaded and unzipped.");
+
+        private readonly TranslationString _resetConfigPath = new TranslationString("Cannot find Gource in the configured path: {0}.\n\n" +
+                                                    "Do you want to reset the configured path?");
+
         #endregion Translation
+
+        private StringSetting GourceArguments = new StringSetting("Arguments", "--hide filenames --user-image-dir \"$(AVATARS)\"");
+
+        private StringSetting GourcePath = new StringSetting("Path to Gource", "");
 
         public GourcePlugin()
         {
@@ -45,17 +50,7 @@ namespace Gource
             Translate();
         }
 
-        private StringSetting GourcePath = new StringSetting("Path to Gource", "");
-        private StringSetting GourceArguments = new StringSetting("Arguments", "--hide filenames --user-image-dir \"$(AVATARS)\"");
-
         #region IGitPlugin Members
-
-        public override IEnumerable<ISetting> GetSettings()
-        {
-            //return all settings or introduce implementation based on reflection on GitPluginBase level
-            yield return GourcePath;
-            yield return GourceArguments;
-        }
 
         public override bool Execute(GitUIBaseEventArgs eventArgs)
         {
@@ -125,6 +120,13 @@ namespace Gource
                 Settings.SetValue<string>(GourcePath.Name, gourceStart.PathToGource, s => s);
             }
             return true;
+        }
+
+        public override IEnumerable<ISetting> GetSettings()
+        {
+            //return all settings or introduce implementation based on reflection on GitPluginBase level
+            yield return GourcePath;
+            yield return GourceArguments;
         }
 
         #endregion IGitPlugin Members

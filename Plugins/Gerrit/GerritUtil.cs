@@ -12,13 +12,6 @@ namespace Gerrit
 {
     internal static class GerritUtil
     {
-        public static string RunGerritCommand([NotNull] IWin32Window owner, [NotNull] IGitModule aModule, [NotNull] string command, [NotNull] string remote, byte[] stdIn)
-        {
-            var fetchUrl = GetFetchUrl(aModule, remote);
-
-            return RunGerritCommand(owner, aModule, command, fetchUrl, remote, stdIn);
-        }
-
         public static Uri GetFetchUrl(IGitModule aModule, string remote)
         {
             string remotes = aModule.RunGitCmd("remote show -n \"" + remote + "\"");
@@ -26,6 +19,13 @@ namespace Gerrit
             string fetchUrlLine = remotes.Split('\n').Select(p => p.Trim()).First(p => p.StartsWith("Push"));
 
             return new Uri(fetchUrlLine.Split(new[] { ':' }, 2)[1].Trim());
+        }
+
+        public static string RunGerritCommand([NotNull] IWin32Window owner, [NotNull] IGitModule aModule, [NotNull] string command, [NotNull] string remote, byte[] stdIn)
+        {
+            var fetchUrl = GetFetchUrl(aModule, remote);
+
+            return RunGerritCommand(owner, aModule, command, fetchUrl, remote, stdIn);
         }
 
         public static string RunGerritCommand([NotNull] IWin32Window owner, [NotNull] IGitModule aModule, [NotNull] string command, [NotNull] Uri fetchUrl, [NotNull] string remote, byte[] stdIn)

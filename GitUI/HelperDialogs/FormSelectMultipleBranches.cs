@@ -7,14 +7,6 @@ namespace GitUI.HelperDialogs
 {
     public partial class FormSelectMultipleBranches : GitExtensionsForm
     {
-        // only for translation
-        private FormSelectMultipleBranches()
-            : base(true)
-        {
-            InitializeComponent();
-            Translate();
-        }
-
         public FormSelectMultipleBranches(IList<GitRef> branchesToSelect)
         {
             InitializeComponent();
@@ -25,6 +17,24 @@ namespace GitUI.HelperDialogs
 
             Branches.DisplayMember = "Name";
             Branches.Items.AddRange(branchesToSelect.ToArray());
+        }
+
+        // only for translation
+        private FormSelectMultipleBranches()
+            : base(true)
+        {
+            InitializeComponent();
+            Translate();
+        }
+
+        public IList<GitRef> GetSelectedBranches()
+        {
+            IList<GitRef> branches = new List<GitRef>();
+
+            foreach (GitRef head in Branches.CheckedItems)
+                branches.Add(head);
+
+            return branches;
         }
 
         public void SelectBranch(string name)
@@ -40,16 +50,6 @@ namespace GitUI.HelperDialogs
                 }
                 index++;
             }
-        }
-
-        public IList<GitRef> GetSelectedBranches()
-        {
-            IList<GitRef> branches = new List<GitRef>();
-
-            foreach (GitRef head in Branches.CheckedItems)
-                branches.Add(head);
-
-            return branches;
         }
 
         private void okButton_Click(object sender, EventArgs e)

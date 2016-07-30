@@ -13,37 +13,38 @@ namespace GitImpact
     public class ImpactControl : UserControl
     {
         private const int BlockWidth = 60;
-        private const int TransitionWidth = 50;
-
         private const int LinesFontSize = 10;
+        private const int TransitionWidth = 50;
         private const int WeekFontSize = 8;
 
         private readonly object _dataLock = new object();
 
-        private ImpactLoader _impactLoader;
-
         // <Author, <Commits, Added Lines, Deleted Lines>>
         private Dictionary<string, ImpactLoader.DataPoint> _authors;
-
-        // <First weekday of commit date, <Author, <Commits, Added Lines, Deleted Lines>>>
-        private SortedDictionary<DateTime, Dictionary<string, ImpactLoader.DataPoint>> _impact;
 
         // List of authors that determines the drawing order
         private List<string> _authorStack;
 
-        // The paths for each author
-        private Dictionary<string, GraphicsPath> _paths;
-
         // The brush for each author
         private Dictionary<string, SolidBrush> _brushes;
+
+        // <First weekday of commit date, <Author, <Commits, Added Lines, Deleted Lines>>>
+        private SortedDictionary<DateTime, Dictionary<string, ImpactLoader.DataPoint>> _impact;
+
+        private ImpactLoader _impactLoader;
 
         // The changed-lines-labels for each author
         private Dictionary<string, List<Tuple<PointF, int>>> _lineLabels;
 
-        // The week-labels
-        private List<Tuple<PointF, DateTime>> _weekLabels;
+        // The paths for each author
+        private Dictionary<string, GraphicsPath> _paths;
 
         private HScrollBar _scrollBar;
+
+        private bool _showSubmodules;
+
+        // The week-labels
+        private List<Tuple<PointF, DateTime>> _weekLabels;
 
         public ImpactControl()
         {
@@ -58,11 +59,114 @@ namespace GitImpact
             MouseWheel += ImpactControl_MouseWheel;
         }
 
+        [Browsable(false)]
+        public List<string> Authors { get { lock (_dataLock) return _authorStack; } }
+
+        [DefaultValue(false)]
+        public bool ShowSubmodules
+        {
+            get { return _showSubmodules; }
+            set
+            {
+                _showSubmodules = value;
+                Stop();
+                Clear();
+                UpdateData();
+            }
+        }
+
+        /// <summary>
+        /// Determines if the given coordinates are belonging to any author
+        /// </summary>
+        /// <param name="x">x coordinate</param>
+        /// <param name="y">y coordinate</param>
+        /// <returns>Name of the author</returns>
+        public string GetAuthorByScreenPosition(int x, int y)
+        {
+            lock (_dataLock)
+            {
+                foreach (var author in _authorStack.Reverse<string>())
+                    if (_paths.ContainsKey(author) && _paths[author].IsVisible(x + _scrollBar.Value, y))
+                        return author;
+            }
+            return "";
+        }
+
+        public Color GetAuthorColor(string author)
+        {
+            lock (_dataLock)
+            {
+                if (_brushes.ContainsKey(author))
+                    return _brushes[author].Color;
+            }
+            return Color.Transparent;
+        }
+
+        public ImpactLoader.DataPoint GetAuthorInfo(string author)
+        {
+            lock (_dataLock)
+            {
+                if (_authors.ContainsKey(author))
+                    return _authors[author];
+
+                return new ImpactLoader.DataPoint(0, 0, 0);
+            }
+        }
+
+        /// <summary>
+        /// Returns the selected author
+        /// </summary>
+        public string GetSelectedAuthor()
+        {
+            if (_authorStack.Count == 0)
+                return string.Empty;
+
+            lock (_dataLock)
+            {
+                return _authorStack.Last();
+            }
+        }
+
         public void Init(IGitModule Module)
         {
             _impactLoader = new ImpactLoader(Module);
             _impactLoader.RespectMailmap = true; // respect the .mailmap file
             _impactLoader.Updated += OnImpactUpdate;
+        }
+
+        /// <summary>
+        /// Pushes the author to the top of the author_stack
+        /// </summary>
+        /// <param name="author">Name of the author</param>
+        public bool SelectAuthor(string author)
+        {
+            lock (_dataLock)
+            {
+                if (!_authorStack.Contains(author))
+                    return false;
+
+                // Remove author from the stack
+                _authorStack.Remove(author);
+                // and add it again at the end
+                _authorStack.Add(author);
+            }
+
+            return true;
+        }
+
+        public void Stop()
+        {
+            if (_impactLoader != null)
+                _impactLoader.Stop();
+        }
+
+        public void UpdateData()
+        {
+            if (_impactLoader != null)
+            {
+                _impactLoader.ShowSubmodules = _showSubmodules;
+                _impactLoader.Execute();
+            }
         }
 
         private void Clear()
@@ -80,10 +184,56 @@ namespace GitImpact
             }
         }
 
-        public void Stop()
+        private void DrawAuthorLinesLabels(Graphics g, string author)
         {
-            if (_impactLoader != null)
-                _impactLoader.Stop();
+            lock (_dataLock)
+            {
+                if (!_lineLabels.ContainsKey(author))
+                    return;
+
+                using (Font font = new Font("Arial", LinesFontSize))
+                {
+                    Brush brush = Brushes.White;
+
+                    foreach (var label in _lineLabels[author])
+                    {
+                        SizeF sz = g.MeasureString(label.Item2.ToString(), font);
+                        PointF pt = new PointF(label.Item1.X - sz.Width / 2, label.Item1.Y - sz.Height / 2);
+                        g.DrawString(label.Item2.ToString(), font, brush, pt);
+                    }
+                }
+            }
+        }
+
+        private void DrawWeekLabels(Graphics g)
+        {
+            lock (_dataLock)
+            {
+                using (Font font = new Font("Arial", WeekFontSize))
+                {
+                    Brush brush = Brushes.Gray;
+
+                    foreach (var label in _weekLabels)
+                    {
+                        SizeF sz = g.MeasureString(label.Item2.ToString("dd. MMM yy"), font);
+                        PointF pt = new PointF(label.Item1.X - sz.Width / 2, label.Item1.Y + sz.Height / 2);
+                        g.DrawString(label.Item2.ToString("dd. MMM yy"), font, brush, pt);
+                    }
+                }
+            }
+        }
+
+        private int GenerateIntFromString(string text)
+        {
+            return text.Sum(c => (int)c);
+        }
+
+        private int GetGraphWidth()
+        {
+            lock (_dataLock)
+            {
+                return Math.Max(0, _impact.Count * (BlockWidth + TransitionWidth) - TransitionWidth);
+            }
         }
 
         private void ImpactControl_MouseWheel(object sender, MouseEventArgs e)
@@ -91,6 +241,32 @@ namespace GitImpact
             this._scrollBar.Value = Math.Min(this._scrollBar.Maximum, Math.Max(this._scrollBar.Minimum, this._scrollBar.Value + e.Delta));
             // Redraw when we've scrolled
             Invalidate();
+        }
+
+        private void InitializeComponent()
+        {
+            this._scrollBar = new System.Windows.Forms.HScrollBar();
+            this.SuspendLayout();
+            //
+            // scrollBar
+            //
+            this._scrollBar.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this._scrollBar.LargeChange = 0;
+            this._scrollBar.Location = new System.Drawing.Point(0, 133);
+            this._scrollBar.Maximum = 0;
+            this._scrollBar.Name = "_scrollBar";
+            this._scrollBar.Size = new System.Drawing.Size(150, 17);
+            this._scrollBar.SmallChange = 0;
+            this._scrollBar.TabIndex = 0;
+            this._scrollBar.Scroll += this.OnScroll;
+            //
+            // ImpactControl
+            //
+            this.Controls.Add(this._scrollBar);
+            this.Name = "ImpactControl";
+            this.Paint += this.OnPaint;
+            this.Resize += this.OnResize;
+            this.ResumeLayout(false);
         }
 
         private void OnImpactUpdate(object sender, ImpactLoader.CommitEventArgs e)
@@ -139,79 +315,6 @@ namespace GitImpact
             Invalidate();
         }
 
-        public void UpdateData()
-        {
-            if (_impactLoader != null)
-            {
-                _impactLoader.ShowSubmodules = _showSubmodules;
-                _impactLoader.Execute();
-            }
-        }
-
-        private bool _showSubmodules;
-
-        [DefaultValue(false)]
-        public bool ShowSubmodules
-        {
-            get { return _showSubmodules; }
-            set
-            {
-                _showSubmodules = value;
-                Stop();
-                Clear();
-                UpdateData();
-            }
-        }
-
-        private void InitializeComponent()
-        {
-            this._scrollBar = new System.Windows.Forms.HScrollBar();
-            this.SuspendLayout();
-            //
-            // scrollBar
-            //
-            this._scrollBar.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this._scrollBar.LargeChange = 0;
-            this._scrollBar.Location = new System.Drawing.Point(0, 133);
-            this._scrollBar.Maximum = 0;
-            this._scrollBar.Name = "_scrollBar";
-            this._scrollBar.Size = new System.Drawing.Size(150, 17);
-            this._scrollBar.SmallChange = 0;
-            this._scrollBar.TabIndex = 0;
-            this._scrollBar.Scroll += this.OnScroll;
-            //
-            // ImpactControl
-            //
-            this.Controls.Add(this._scrollBar);
-            this.Name = "ImpactControl";
-            this.Paint += this.OnPaint;
-            this.Resize += this.OnResize;
-            this.ResumeLayout(false);
-        }
-
-        private int GetGraphWidth()
-        {
-            lock (_dataLock)
-            {
-                return Math.Max(0, _impact.Count * (BlockWidth + TransitionWidth) - TransitionWidth);
-            }
-        }
-
-        private void UpdateScrollbar()
-        {
-            lock (_dataLock)
-            {
-                int RightValue = Math.Max(0, _scrollBar.Maximum - _scrollBar.LargeChange - _scrollBar.Value);
-
-                _scrollBar.Minimum = 0;
-                _scrollBar.Maximum = (int)(Math.Max(0, GetGraphWidth() - ClientSize.Width) * 1.1);
-                _scrollBar.SmallChange = _scrollBar.Maximum / 22;
-                _scrollBar.LargeChange = _scrollBar.Maximum / 11;
-
-                _scrollBar.Value = Math.Max(0, _scrollBar.Maximum - _scrollBar.LargeChange - RightValue);
-            }
-        }
-
         private void OnPaint(object sender, PaintEventArgs e)
         {
             // White background
@@ -249,49 +352,16 @@ namespace GitImpact
             DrawWeekLabels(e.Graphics);
         }
 
-        private void DrawAuthorLinesLabels(Graphics g, string author)
-        {
-            lock (_dataLock)
-            {
-                if (!_lineLabels.ContainsKey(author))
-                    return;
-
-                using (Font font = new Font("Arial", LinesFontSize))
-                {
-                    Brush brush = Brushes.White;
-
-                    foreach (var label in _lineLabels[author])
-                    {
-                        SizeF sz = g.MeasureString(label.Item2.ToString(), font);
-                        PointF pt = new PointF(label.Item1.X - sz.Width / 2, label.Item1.Y - sz.Height / 2);
-                        g.DrawString(label.Item2.ToString(), font, brush, pt);
-                    }
-                }
-            }
-        }
-
-        private void DrawWeekLabels(Graphics g)
-        {
-            lock (_dataLock)
-            {
-                using (Font font = new Font("Arial", WeekFontSize))
-                {
-                    Brush brush = Brushes.Gray;
-
-                    foreach (var label in _weekLabels)
-                    {
-                        SizeF sz = g.MeasureString(label.Item2.ToString("dd. MMM yy"), font);
-                        PointF pt = new PointF(label.Item1.X - sz.Width / 2, label.Item1.Y + sz.Height / 2);
-                        g.DrawString(label.Item2.ToString("dd. MMM yy"), font, brush, pt);
-                    }
-                }
-            }
-        }
-
         private void OnResize(object sender, EventArgs e)
         {
             UpdatePathsAndLabels();
             UpdateScrollbar();
+            Invalidate();
+        }
+
+        private void OnScroll(object sender, ScrollEventArgs e)
+        {
+            // Redraw when we've scrolled
             Invalidate();
         }
 
@@ -425,89 +495,18 @@ namespace GitImpact
             }
         }
 
-        private int GenerateIntFromString(string text)
-        {
-            return text.Sum(c => (int)c);
-        }
-
-        /// <summary>
-        /// Determines if the given coordinates are belonging to any author
-        /// </summary>
-        /// <param name="x">x coordinate</param>
-        /// <param name="y">y coordinate</param>
-        /// <returns>Name of the author</returns>
-        public string GetAuthorByScreenPosition(int x, int y)
+        private void UpdateScrollbar()
         {
             lock (_dataLock)
             {
-                foreach (var author in _authorStack.Reverse<string>())
-                    if (_paths.ContainsKey(author) && _paths[author].IsVisible(x + _scrollBar.Value, y))
-                        return author;
-            }
-            return "";
-        }
+                int RightValue = Math.Max(0, _scrollBar.Maximum - _scrollBar.LargeChange - _scrollBar.Value);
 
-        /// <summary>
-        /// Pushes the author to the top of the author_stack
-        /// </summary>
-        /// <param name="author">Name of the author</param>
-        public bool SelectAuthor(string author)
-        {
-            lock (_dataLock)
-            {
-                if (!_authorStack.Contains(author))
-                    return false;
+                _scrollBar.Minimum = 0;
+                _scrollBar.Maximum = (int)(Math.Max(0, GetGraphWidth() - ClientSize.Width) * 1.1);
+                _scrollBar.SmallChange = _scrollBar.Maximum / 22;
+                _scrollBar.LargeChange = _scrollBar.Maximum / 11;
 
-                // Remove author from the stack
-                _authorStack.Remove(author);
-                // and add it again at the end
-                _authorStack.Add(author);
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Returns the selected author
-        /// </summary>
-        public string GetSelectedAuthor()
-        {
-            if (_authorStack.Count == 0)
-                return string.Empty;
-
-            lock (_dataLock)
-            {
-                return _authorStack.Last();
-            }
-        }
-
-        private void OnScroll(object sender, ScrollEventArgs e)
-        {
-            // Redraw when we've scrolled
-            Invalidate();
-        }
-
-        public Color GetAuthorColor(string author)
-        {
-            lock (_dataLock)
-            {
-                if (_brushes.ContainsKey(author))
-                    return _brushes[author].Color;
-            }
-            return Color.Transparent;
-        }
-
-        [Browsable(false)]
-        public List<string> Authors { get { lock (_dataLock) return _authorStack; } }
-
-        public ImpactLoader.DataPoint GetAuthorInfo(string author)
-        {
-            lock (_dataLock)
-            {
-                if (_authors.ContainsKey(author))
-                    return _authors[author];
-
-                return new ImpactLoader.DataPoint(0, 0, 0);
+                _scrollBar.Value = Math.Max(0, _scrollBar.Maximum - _scrollBar.LargeChange - RightValue);
             }
         }
     }

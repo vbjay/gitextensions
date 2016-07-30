@@ -18,16 +18,14 @@ namespace GitUI.RevisionGridClasses
 
             #endregion State enum
 
+            public State CurrentState = State.Unprocessed;
+            public bool HighLight;
+            public bool IsRelative;
             private static uint debugIdNext;
 
-            private readonly List<Node> nodes = new List<Node>();
-            private readonly Dictionary<Node, int> nodeIndices = new Dictionary<Node, int>();
-
             private readonly uint debugId;
-
-            public State CurrentState = State.Unprocessed;
-            public bool IsRelative;
-            public bool HighLight;
+            private readonly Dictionary<Node, int> nodeIndices = new Dictionary<Node, int>();
+            private readonly List<Node> nodes = new List<Node>();
 
             public Junction(Node aNode, Node aParent)
             {
@@ -51,14 +49,31 @@ namespace GitUI.RevisionGridClasses
                 AddNode(aNode);
             }
 
-            public Node Youngest
+            public int NodesCount
             {
-                get { return this[0]; }
+                get { return nodes.Count; }
             }
 
             public Node Oldest
             {
                 get { return this[NodesCount - 1]; }
+            }
+
+            public Node Youngest
+            {
+                get { return this[0]; }
+            }
+
+            public Node this[int index]
+            {
+                get { return nodes[index]; }
+            }
+
+            public void Add(Node aParent)
+            {
+                aParent.Descendants.Add(this);
+                Oldest.Ancestors.Add(this);
+                AddNode(aParent);
             }
 
             public Node ChildOf(Node aParent)
@@ -73,23 +88,6 @@ namespace GitUI.RevisionGridClasses
                 }
 
                 throw new ArgumentException("Junction:\n" + ToString() + "\ndoesn't contain this parent:\n" + aParent.ToString());
-            }
-
-            public int NodesCount
-            {
-                get { return nodes.Count; }
-            }
-
-            public Node this[int index]
-            {
-                get { return nodes[index]; }
-            }
-
-            public void Add(Node aParent)
-            {
-                aParent.Descendants.Add(this);
-                Oldest.Ancestors.Add(this);
-                AddNode(aParent);
             }
 
             public void Remove(Node node)
@@ -121,6 +119,11 @@ namespace GitUI.RevisionGridClasses
                 return bottom;
             }
 
+            public override string ToString()
+            {
+                return string.Format("{3}: {0}--({2})--{1}", Youngest, Oldest, NodesCount, debugId);
+            }
+
             public Node TryGetParent(Node child)
             {
                 int childIndex;
@@ -137,11 +140,6 @@ namespace GitUI.RevisionGridClasses
             {
                 nodeIndices.Remove(node);
                 nodes.Remove(node);
-            }
-
-            public override string ToString()
-            {
-                return string.Format("{3}: {0}--({2})--{1}", Youngest, Oldest, NodesCount, debugId);
             }
         }
     }

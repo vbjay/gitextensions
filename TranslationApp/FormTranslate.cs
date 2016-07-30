@@ -12,128 +12,39 @@ namespace TranslationApp
 {
     public partial class FormTranslate : GitExtensionsForm
     {
+        private readonly TranslationCategory _allCategories = new TranslationCategory();
+
+        private readonly IDictionary<string, TranslationFile> _neutralTranslation = new Dictionary<string, TranslationFile>();
+
+        private readonly TranslationString allText = new TranslationString("All");
+
+        private readonly TranslationString editingCellPrefixText = new TranslationString("[EDITING]");
+
+        private readonly TranslationString noLanguageCodeSelected = new TranslationString("There is no language code selected." +
+                    Environment.NewLine + "Do you want to select a language code first?");
+
+        private readonly TranslationString noLanguageCodeSelectedCaption = new TranslationString("Language code");
+
+        private readonly TranslationString saveAsText = new TranslationString("Save as");
+
+        private readonly TranslationString saveAsTextFilter = new TranslationString("Translation file (*.xlf)");
+
+        private readonly TranslationString saveCurrentChangesCaption = new TranslationString("Save changes");
+
+        private readonly TranslationString saveCurrentChangesText = new TranslationString("Do you want to save the current changes?");
+
         //TranslationStrings
         private readonly TranslationString translateProgressText = new TranslationString("Translated {0} out of {1}");
 
-        private readonly TranslationString allText = new TranslationString("All");
-        private readonly TranslationString saveCurrentChangesText = new TranslationString("Do you want to save the current changes?");
-        private readonly TranslationString saveCurrentChangesCaption = new TranslationString("Save changes");
-        private readonly TranslationString saveAsText = new TranslationString("Save as");
-        private readonly TranslationString saveAsTextFilter = new TranslationString("Translation file (*.xlf)");
-
-        private readonly TranslationString noLanguageCodeSelected = new TranslationString("There is no language code selected." +
-            Environment.NewLine + "Do you want to select a language code first?");
-
-        private readonly TranslationString noLanguageCodeSelectedCaption = new TranslationString("Language code");
-        private readonly TranslationString editingCellPrefixText = new TranslationString("[EDITING]");
-
-        private IDictionary<string, List<TranslationItemWithCategory>> translationItems;
-
-        private readonly IDictionary<string, TranslationFile> _neutralTranslation = new Dictionary<string, TranslationFile>();
-        private IDictionary<string, TranslationFile> _translation = new Dictionary<string, TranslationFile>();
-        private readonly TranslationCategory _allCategories = new TranslationCategory();
-
         private bool _changesMade;
+        private IDictionary<string, TranslationFile> _translation = new Dictionary<string, TranslationFile>();
+        private TranslationItemWithCategory _translationItemWithCategoryInEditing;
+        private IDictionary<string, List<TranslationItemWithCategory>> translationItems;
 
         public FormTranslate()
             : base(true)
         {
             InitializeComponent(); Translate();
-        }
-
-        private void FormTranslate_Load(object sender, EventArgs e)
-        {
-            translations.Items.Clear();
-            translations.Sorted = true;
-            translations.Items.AddRange(Translator.GetAllTranslations());
-
-            FillNeutralTranslation();
-            _allCategories.Name = allText.Text;
-            UpdateCategoriesList();
-            translations.SelectedItem = GitCommands.AppSettings.Translation; // should be called after FillNeutralTranslation()
-            if (_translation == null)
-                LoadTranslation();
-            translateCategories.SelectedItem = _allCategories;
-            FillTranslateGrid(_allCategories);
-
-            foreach (CultureInfo cultureInfo in CultureInfo.GetCultures(CultureTypes.AllCultures))
-            {
-                if (!_NO_TRANSLATE_languageCode.Items.Contains(cultureInfo.TwoLetterISOLanguageName))
-                {
-                    _NO_TRANSLATE_languageCode.Items.Add(string.Concat(cultureInfo.TwoLetterISOLanguageName, " (", cultureInfo.DisplayName, ")"));
-                }
-            }
-
-            FormClosing += FormTranslate_FormClosing;
-        }
-
-        private void FormTranslate_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            AskForSave();
-        }
-
-        private void UpdateProgress()
-        {
-            int translatedCount = translationItems.Sum(p => p.Value.Count(translateItem => !string.IsNullOrEmpty(translateItem.TranslatedValue)));
-            int totalCount = translationItems.Count();
-            var progresMsg = string.Format(translateProgressText.Text, translatedCount, totalCount);
-            if (translateProgress.Text != progresMsg)
-            {
-                translateProgress.Text = progresMsg;
-                toolStrip1.Refresh();
-            }
-        }
-
-        private void LoadTranslation()
-        {
-            if (_translation.Count == 0)
-            {
-                var neutralItems = TranslationHelpers.GetItemsDictionary(_translation);
-                translationItems = TranslationHelpers.LoadTranslation(_translation, neutralItems);
-            }
-            else
-            {
-                var neutralItems = new Dictionary<string, List<TranslationItemWithCategory>>();
-                foreach (var pair in _neutralTranslation)
-                {
-                    var list = from item in pair.Value.TranslationCategories
-                               from translationItem in item.Body.TranslationItems
-                               select new TranslationItemWithCategory(item.Name, translationItem.Clone());
-                    neutralItems.Add(pair.Key, list.ToList());
-                }
-                translationItems = neutralItems;
-            }
-
-            UpdateProgress();
-        }
-
-        private void FillTranslateGrid(TranslationCategory filter)
-        {
-            if (translationItems == null)
-                return;
-
-            translateItemBindingSource.DataSource = null;
-
-            if (filter == _allCategories)
-                filter = null;
-
-            translateItemBindingSource.DataSource = GetCategoryItems(filter).ToList();
-
-            UpdateProgress();
-        }
-
-        private IEnumerable<TranslationItemWithCategory> GetCategoryItems(TranslationCategory filter)
-        {
-            var filteredByCategory = translationItems.SelectMany(p => p.Value).Where(
-                translateItem => filter == null || filter.Name.Equals(translateItem.Category));
-            var filteredItems = filteredByCategory.Where(
-                translateItem => !hideTranslatedItems.Checked);
-            return filteredItems;
-        }
-
-        private IEnumerable<TranslationCategory> GetCategories(IDictionary<string, TranslationFile> translation)
-        {
-            return translation.SelectMany(pair => pair.Value.TranslationCategories);
         }
 
         public void UpdateCategoriesList()
@@ -152,6 +63,17 @@ namespace TranslationApp
             if (hideTranslatedItems.Checked && !GetCategoryItems(tc).Any())
                 tc = _allCategories;
             translateCategories.SelectedItem = tc;
+        }
+
+        private void AskForSave()
+        {
+            if (_changesMade)
+            {
+                if (MessageBox.Show(this, saveCurrentChangesText.Text, saveCurrentChangesCaption.Text, MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    SaveAs();
+                }
+            }
         }
 
         private void FillNeutralTranslation()
@@ -198,10 +120,149 @@ namespace TranslationApp
             }
         }
 
-        private void translateCategories_SelectedIndexChanged(object sender, EventArgs e)
+        private void FillTranslateGrid(TranslationCategory filter)
         {
-            categoryDataGridViewTextBoxColumn.Visible = (translateCategories.SelectedItem == _allCategories);
+            if (translationItems == null)
+                return;
+
+            translateItemBindingSource.DataSource = null;
+
+            if (filter == _allCategories)
+                filter = null;
+
+            translateItemBindingSource.DataSource = GetCategoryItems(filter).ToList();
+
+            UpdateProgress();
+        }
+
+        private void FormTranslate_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            AskForSave();
+        }
+
+        private void FormTranslate_Load(object sender, EventArgs e)
+        {
+            translations.Items.Clear();
+            translations.Sorted = true;
+            translations.Items.AddRange(Translator.GetAllTranslations());
+
+            FillNeutralTranslation();
+            _allCategories.Name = allText.Text;
+            UpdateCategoriesList();
+            translations.SelectedItem = GitCommands.AppSettings.Translation; // should be called after FillNeutralTranslation()
+            if (_translation == null)
+                LoadTranslation();
+            translateCategories.SelectedItem = _allCategories;
+            FillTranslateGrid(_allCategories);
+
+            foreach (CultureInfo cultureInfo in CultureInfo.GetCultures(CultureTypes.AllCultures))
+            {
+                if (!_NO_TRANSLATE_languageCode.Items.Contains(cultureInfo.TwoLetterISOLanguageName))
+                {
+                    _NO_TRANSLATE_languageCode.Items.Add(string.Concat(cultureInfo.TwoLetterISOLanguageName, " (", cultureInfo.DisplayName, ")"));
+                }
+            }
+
+            FormClosing += FormTranslate_FormClosing;
+        }
+
+        private IEnumerable<TranslationCategory> GetCategories(IDictionary<string, TranslationFile> translation)
+        {
+            return translation.SelectMany(pair => pair.Value.TranslationCategories);
+        }
+
+        private IEnumerable<TranslationItemWithCategory> GetCategoryItems(TranslationCategory filter)
+        {
+            var filteredByCategory = translationItems.SelectMany(p => p.Value).Where(
+                translateItem => filter == null || filter.Name.Equals(translateItem.Category));
+            var filteredItems = filteredByCategory.Where(
+                translateItem => !hideTranslatedItems.Checked);
+            return filteredItems;
+        }
+
+        private string GetSelectedLanguageCode()
+        {
+            if (string.IsNullOrEmpty(_NO_TRANSLATE_languageCode.Text) || _NO_TRANSLATE_languageCode.Text.Length < 2)
+                return null;
+
+            return _NO_TRANSLATE_languageCode.Text.Substring(0, 2);
+        }
+
+        private void hideTranslatedItems_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdateCategoriesList();
             FillTranslateGrid(translateCategories.SelectedItem as TranslationCategory);
+        }
+
+        private void LoadTranslation()
+        {
+            if (_translation.Count == 0)
+            {
+                var neutralItems = TranslationHelpers.GetItemsDictionary(_translation);
+                translationItems = TranslationHelpers.LoadTranslation(_translation, neutralItems);
+            }
+            else
+            {
+                var neutralItems = new Dictionary<string, List<TranslationItemWithCategory>>();
+                foreach (var pair in _neutralTranslation)
+                {
+                    var list = from item in pair.Value.TranslationCategories
+                               from translationItem in item.Body.TranslationItems
+                               select new TranslationItemWithCategory(item.Name, translationItem.Clone());
+                    neutralItems.Add(pair.Key, list.ToList());
+                }
+                translationItems = neutralItems;
+            }
+
+            UpdateProgress();
+        }
+
+        private void nextButton_Click(object sender, EventArgs e)
+        {
+            if (translateGrid.SelectedRows.Count == 1)
+            {
+                if (translateGrid.CurrentCell.RowIndex < translateGrid.Rows.Count - 1)
+                    translateItemBindingSource.MoveNext();
+            }
+            else
+                if (translateGrid.Rows.Count > 0)
+            {
+                translateGrid.Rows[0].Selected = true;
+            }
+        }
+
+        private void previousButton_Click(object sender, EventArgs e)
+        {
+            if (translateGrid.SelectedRows.Count == 1)
+            {
+                if (translateGrid.CurrentCell.RowIndex > 0)
+                    translateItemBindingSource.MovePrevious();
+            }
+            else
+                if (translateGrid.Rows.Count > 0)
+            {
+                translateGrid.Rows[0].Selected = true;
+            }
+        }
+
+        private void SaveAs()
+        {
+            using (var fileDialog =
+                new SaveFileDialog
+                {
+                    Title = saveAsText.Text,
+                    FileName = translations.Text + ".xlf",
+                    Filter = saveAsTextFilter.Text + "|*.xlf",
+                    DefaultExt = ".xlf",
+                    AddExtension = true
+                })
+            {
+                if (fileDialog.ShowDialog(this) == DialogResult.OK)
+                {
+                    TranslationHelpers.SaveTranslation(GetSelectedLanguageCode(), translationItems, fileDialog.FileName);
+                    _changesMade = false;
+                }
+            }
         }
 
         private void saveAs_Click(object sender, EventArgs e)
@@ -213,6 +274,163 @@ namespace TranslationApp
             toolStrip1.Select();
 
             SaveAs();
+        }
+
+        private void toolStripButton1_CheckedChanged(object sender, EventArgs e)
+        {
+            splitContainer2.Panel2Collapsed = _toolStripButton1.Checked;
+        }
+
+        private void toolStripButtonNew_Click(object sender, EventArgs e)
+        {
+            translations.Text = "";
+            translations_SelectedIndexChanged(null, null);
+        }
+
+        private void translateCategories_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            categoryDataGridViewTextBoxColumn.Visible = (translateCategories.SelectedItem == _allCategories);
+            FillTranslateGrid(translateCategories.SelectedItem as TranslationCategory);
+        }
+
+        private void translatedText_Enter(object sender, System.EventArgs e)
+        {
+            if (_translationItemWithCategoryInEditing != null)
+            {
+                _translationItemWithCategoryInEditing.TranslatedValue = translatedText.Text;
+            }
+
+            _translationItemWithCategoryInEditing = (TranslationItemWithCategory)translateItemBindingSource.Current;
+
+            if (_translationItemWithCategoryInEditing != null)
+            {
+                _translationItemWithCategoryInEditing.TranslatedValue = editingCellPrefixText.Text + " " + _translationItemWithCategoryInEditing.TranslatedValue;
+            }
+        }
+
+        private void translatedText_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Alt && e.KeyCode == Keys.Up)
+            {
+                e.Handled = true;
+                previousButton_Click(sender, e);
+            }
+            else if (e.Alt && e.KeyCode == Keys.Down ||
+                e.Control && e.KeyCode == Keys.Enter)
+            {
+                e.Handled = true;
+                nextButton_Click(sender, e);
+            }
+            else if (e.Control && e.KeyCode == Keys.Down)
+            {
+                e.Handled = true;
+                translatedText.SelectAll();
+                translatedText.SelectedText = neutralText.Text;
+            }
+        }
+
+        private void translatedText_Leave(object sender, System.EventArgs e)
+        {
+            //Debug.Assert(_translationItemWithCategoryInEditing != null);
+
+            if (_translationItemWithCategoryInEditing != null)
+            {
+                _translationItemWithCategoryInEditing.TranslatedValue = translatedText.Text;
+
+                _translationItemWithCategoryInEditing = null;
+            }
+        }
+
+        private void translatedText_TextChanged(object sender, EventArgs e)
+        {
+            if (translateGrid.SelectedRows.Count == 1)
+            {
+                _changesMade = true;
+
+                UpdateProgress();
+            }
+        }
+
+        private void translateGrid_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            _changesMade = true;
+
+            UpdateProgress();
+        }
+
+        private void translateGrid_Click(object sender, EventArgs e)
+        {
+            if (translateGrid.SelectedRows.Count == 1)
+            {
+                if (_toolStripButton1.Checked)
+                {
+                    splitContainer2.Panel2Collapsed = false;
+                }
+
+                var translateItem = (TranslationItemWithCategory)translateGrid.SelectedRows[0].DataBoundItem;
+
+                if (translateItem == null) return;
+
+                neutralText.Text = translateItem.NeutralValue;
+                translatedText.Text = translateItem.TranslatedValue;
+            }
+            else
+            {
+                splitContainer2.Panel2Collapsed = true;
+            }
+        }
+
+        private void translateGrid_SelectionChanged(object sender, EventArgs e)
+        {
+            bool nowTranslatedTextInEditing = _translationItemWithCategoryInEditing != null;
+
+            translatedText_Leave(null, null);
+
+            translateGrid_Click(null, null);
+
+            if (nowTranslatedTextInEditing)
+            {
+                translatedText_Enter(null, null);
+            }
+        }
+
+        private void translations_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            AskForSave();
+            _changesMade = false;
+
+            _translation = Translator.GetTranslation(translations.Text);
+            LoadTranslation();
+            UpdateCategoriesList();
+            FillTranslateGrid(translateCategories.SelectedItem as TranslationCategory);
+
+            if (_translation == null)
+            {
+                _NO_TRANSLATE_languageCode.Text = "";
+                return;
+            }
+
+            try
+            {
+                var culture = new CultureInfo(_translation.First().Value.LanguageCode);
+                _NO_TRANSLATE_languageCode.Text = string.Concat(culture.TwoLetterISOLanguageName, " (", culture.DisplayName, ")");
+            }
+            catch
+            {
+                _NO_TRANSLATE_languageCode.Text = _translation.First().Value.LanguageCode;
+            }
+        }
+
+        private void UpdateProgress()
+        {
+            int translatedCount = translationItems.Sum(p => p.Value.Count(translateItem => !string.IsNullOrEmpty(translateItem.TranslatedValue)));
+            int totalCount = translationItems.Count();
+            var progresMsg = string.Format(translateProgressText.Text, translatedCount, totalCount);
+            if (translateProgress.Text != progresMsg)
+            {
+                translateProgress.Text = progresMsg;
+                toolStrip1.Refresh();
+            }
         }
 
         #region Move translations
@@ -310,219 +528,5 @@ namespace TranslationApp
         */
 
         #endregion Move translations
-
-        private string GetSelectedLanguageCode()
-        {
-            if (string.IsNullOrEmpty(_NO_TRANSLATE_languageCode.Text) || _NO_TRANSLATE_languageCode.Text.Length < 2)
-                return null;
-
-            return _NO_TRANSLATE_languageCode.Text.Substring(0, 2);
-        }
-
-        private void SaveAs()
-        {
-            using (var fileDialog =
-                new SaveFileDialog
-                {
-                    Title = saveAsText.Text,
-                    FileName = translations.Text + ".xlf",
-                    Filter = saveAsTextFilter.Text + "|*.xlf",
-                    DefaultExt = ".xlf",
-                    AddExtension = true
-                })
-            {
-                if (fileDialog.ShowDialog(this) == DialogResult.OK)
-                {
-                    TranslationHelpers.SaveTranslation(GetSelectedLanguageCode(), translationItems, fileDialog.FileName);
-                    _changesMade = false;
-                }
-            }
-        }
-
-        private void translations_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            AskForSave();
-            _changesMade = false;
-
-            _translation = Translator.GetTranslation(translations.Text);
-            LoadTranslation();
-            UpdateCategoriesList();
-            FillTranslateGrid(translateCategories.SelectedItem as TranslationCategory);
-
-            if (_translation == null)
-            {
-                _NO_TRANSLATE_languageCode.Text = "";
-                return;
-            }
-
-            try
-            {
-                var culture = new CultureInfo(_translation.First().Value.LanguageCode);
-                _NO_TRANSLATE_languageCode.Text = string.Concat(culture.TwoLetterISOLanguageName, " (", culture.DisplayName, ")");
-            }
-            catch
-            {
-                _NO_TRANSLATE_languageCode.Text = _translation.First().Value.LanguageCode;
-            }
-        }
-
-        private void hideTranslatedItems_CheckedChanged(object sender, EventArgs e)
-        {
-            UpdateCategoriesList();
-            FillTranslateGrid(translateCategories.SelectedItem as TranslationCategory);
-        }
-
-        private void AskForSave()
-        {
-            if (_changesMade)
-            {
-                if (MessageBox.Show(this, saveCurrentChangesText.Text, saveCurrentChangesCaption.Text, MessageBoxButtons.YesNo) == DialogResult.Yes)
-                {
-                    SaveAs();
-                }
-            }
-        }
-
-        private void translateGrid_CellEndEdit(object sender, DataGridViewCellEventArgs e)
-        {
-            _changesMade = true;
-
-            UpdateProgress();
-        }
-
-        private void toolStripButton1_CheckedChanged(object sender, EventArgs e)
-        {
-            splitContainer2.Panel2Collapsed = _toolStripButton1.Checked;
-        }
-
-        private void translatedText_TextChanged(object sender, EventArgs e)
-        {
-            if (translateGrid.SelectedRows.Count == 1)
-            {
-                _changesMade = true;
-
-                UpdateProgress();
-            }
-        }
-
-        private TranslationItemWithCategory _translationItemWithCategoryInEditing;
-
-        private void translatedText_Enter(object sender, System.EventArgs e)
-        {
-            if (_translationItemWithCategoryInEditing != null)
-            {
-                _translationItemWithCategoryInEditing.TranslatedValue = translatedText.Text;
-            }
-
-            _translationItemWithCategoryInEditing = (TranslationItemWithCategory)translateItemBindingSource.Current;
-
-            if (_translationItemWithCategoryInEditing != null)
-            {
-                _translationItemWithCategoryInEditing.TranslatedValue = editingCellPrefixText.Text + " " + _translationItemWithCategoryInEditing.TranslatedValue;
-            }
-        }
-
-        private void translatedText_Leave(object sender, System.EventArgs e)
-        {
-            //Debug.Assert(_translationItemWithCategoryInEditing != null);
-
-            if (_translationItemWithCategoryInEditing != null)
-            {
-                _translationItemWithCategoryInEditing.TranslatedValue = translatedText.Text;
-
-                _translationItemWithCategoryInEditing = null;
-            }
-        }
-
-        private void translateGrid_Click(object sender, EventArgs e)
-        {
-            if (translateGrid.SelectedRows.Count == 1)
-            {
-                if (_toolStripButton1.Checked)
-                {
-                    splitContainer2.Panel2Collapsed = false;
-                }
-
-                var translateItem = (TranslationItemWithCategory)translateGrid.SelectedRows[0].DataBoundItem;
-
-                if (translateItem == null) return;
-
-                neutralText.Text = translateItem.NeutralValue;
-                translatedText.Text = translateItem.TranslatedValue;
-            }
-            else
-            {
-                splitContainer2.Panel2Collapsed = true;
-            }
-        }
-
-        private void translateGrid_SelectionChanged(object sender, EventArgs e)
-        {
-            bool nowTranslatedTextInEditing = _translationItemWithCategoryInEditing != null;
-
-            translatedText_Leave(null, null);
-
-            translateGrid_Click(null, null);
-
-            if (nowTranslatedTextInEditing)
-            {
-                translatedText_Enter(null, null);
-            }
-        }
-
-        private void nextButton_Click(object sender, EventArgs e)
-        {
-            if (translateGrid.SelectedRows.Count == 1)
-            {
-                if (translateGrid.CurrentCell.RowIndex < translateGrid.Rows.Count - 1)
-                    translateItemBindingSource.MoveNext();
-            }
-            else
-                if (translateGrid.Rows.Count > 0)
-            {
-                translateGrid.Rows[0].Selected = true;
-            }
-        }
-
-        private void previousButton_Click(object sender, EventArgs e)
-        {
-            if (translateGrid.SelectedRows.Count == 1)
-            {
-                if (translateGrid.CurrentCell.RowIndex > 0)
-                    translateItemBindingSource.MovePrevious();
-            }
-            else
-                if (translateGrid.Rows.Count > 0)
-            {
-                translateGrid.Rows[0].Selected = true;
-            }
-        }
-
-        private void toolStripButtonNew_Click(object sender, EventArgs e)
-        {
-            translations.Text = "";
-            translations_SelectedIndexChanged(null, null);
-        }
-
-        private void translatedText_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Alt && e.KeyCode == Keys.Up)
-            {
-                e.Handled = true;
-                previousButton_Click(sender, e);
-            }
-            else if (e.Alt && e.KeyCode == Keys.Down ||
-                e.Control && e.KeyCode == Keys.Enter)
-            {
-                e.Handled = true;
-                nextButton_Click(sender, e);
-            }
-            else if (e.Control && e.KeyCode == Keys.Down)
-            {
-                e.Handled = true;
-                translatedText.SelectAll();
-                translatedText.SelectedText = neutralText.Text;
-            }
-        }
     }
 }

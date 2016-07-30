@@ -61,27 +61,32 @@ namespace GitUI.AutoCompletion
                     }, cancellationToken);
         }
 
+        private static string GetChangedFileText(GitModule module, GitItemStatus file)
+        {
+            var changes = module.GetCurrentChanges(file.Name, file.OldName, file.IsStaged, "-U1000000", module.FilesEncoding);
+
+            if (changes != null)
+                return changes.Text;
+
+            var content = module.GetFileContents(file);
+
+            if (content != null)
+                return content;
+
+            // Try to read the contents of the file: if it cannot be read, skip the operation silently.
+            try
+            {
+                return File.ReadAllText(Path.Combine(module.WorkingDir, file.Name));
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
         private static Regex GetRegexForExtension(string extension)
         {
             return s_regexes.Value.ContainsKey(extension) ? s_regexes.Value[extension] : null;
-        }
-
-        private static IEnumerable<string> ReadOrInitializeAutoCompleteRegexes()
-        {
-            var path = Path.Combine(AppSettings.ApplicationDataPath.Value, "AutoCompleteRegexes.txt");
-
-            if (File.Exists(path))
-                return File.ReadLines(path);
-
-            Stream s = Assembly.GetEntryAssembly().GetManifestResourceStream("GitExtensions.AutoCompleteRegexes.txt");
-            if (s == null)
-            {
-                throw new NotImplementedException("Please add AutoCompleteRegexes.txt file into .csproj");
-            }
-            using (var sr = new StreamReader(s))
-            {
-                return sr.ReadToEnd().Split(new char[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-            }
         }
 
         private static Dictionary<string, Regex> ParseRegexes()
@@ -106,26 +111,21 @@ namespace GitUI.AutoCompletion
             return regexes;
         }
 
-        private static string GetChangedFileText(GitModule module, GitItemStatus file)
+        private static IEnumerable<string> ReadOrInitializeAutoCompleteRegexes()
         {
-            var changes = module.GetCurrentChanges(file.Name, file.OldName, file.IsStaged, "-U1000000", module.FilesEncoding);
+            var path = Path.Combine(AppSettings.ApplicationDataPath.Value, "AutoCompleteRegexes.txt");
 
-            if (changes != null)
-                return changes.Text;
+            if (File.Exists(path))
+                return File.ReadLines(path);
 
-            var content = module.GetFileContents(file);
-
-            if (content != null)
-                return content;
-
-            // Try to read the contents of the file: if it cannot be read, skip the operation silently.
-            try
+            Stream s = Assembly.GetEntryAssembly().GetManifestResourceStream("GitExtensions.AutoCompleteRegexes.txt");
+            if (s == null)
             {
-                return File.ReadAllText(Path.Combine(module.WorkingDir, file.Name));
+                throw new NotImplementedException("Please add AutoCompleteRegexes.txt file into .csproj");
             }
-            catch
+            using (var sr = new StreamReader(s))
             {
-                return "";
+                return sr.ReadToEnd().Split(new char[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
             }
         }
     }

@@ -5,27 +5,21 @@ namespace GitStatistics
 {
     public class GitStatisticsPlugin : GitPluginBase, IGitPluginForRepository
     {
+        private StringSetting CodeFiles = new StringSetting("Code files",
+                                "*.c;*.cpp;*.cc;*.h;*.hpp;*.inl;*.idl;*.asm;*.inc;*.cs;*.xsd;*.wsdl;*.xml;*.htm;*.html;*.css;" +
+                                "*.vbs;*.vb;*.sql;*.aspx;*.asp;*.php;*.nav;*.pas;*.py;*.rb;*.js");
+
+        private StringSetting IgnoreDirectories = new StringSetting("Directories to ignore (EndsWith)", "\\Debug;\\Release;\\obj;\\bin;\\lib");
+
+        private BoolSetting IgnoreSubmodules = new BoolSetting("Ignore submodules", true);
+
         public GitStatisticsPlugin()
         {
             SetNameAndDescription("Statistics");
             Translate();
         }
 
-        private StringSetting CodeFiles = new StringSetting("Code files",
-                                "*.c;*.cpp;*.cc;*.h;*.hpp;*.inl;*.idl;*.asm;*.inc;*.cs;*.xsd;*.wsdl;*.xml;*.htm;*.html;*.css;" +
-                                "*.vbs;*.vb;*.sql;*.aspx;*.asp;*.php;*.nav;*.pas;*.py;*.rb;*.js");
-
-        private StringSetting IgnoreDirectories = new StringSetting("Directories to ignore (EndsWith)", "\\Debug;\\Release;\\obj;\\bin;\\lib");
-        private BoolSetting IgnoreSubmodules = new BoolSetting("Ignore submodules", true);
-
         #region IGitPlugin Members
-
-        public override System.Collections.Generic.IEnumerable<ISetting> GetSettings()
-        {
-            yield return CodeFiles;
-            yield return IgnoreDirectories;
-            yield return IgnoreSubmodules;
-        }
 
         public override bool Execute(GitUIBaseEventArgs gitUIEventArgs)
         {
@@ -43,6 +37,13 @@ namespace GitStatistics
                 formGitStatistics.ShowDialog(gitUIEventArgs.OwnerForm);
             }
             return false;
+        }
+
+        public override System.Collections.Generic.IEnumerable<ISetting> GetSettings()
+        {
+            yield return CodeFiles;
+            yield return IgnoreDirectories;
+            yield return IgnoreSubmodules;
         }
 
         #endregion IGitPlugin Members

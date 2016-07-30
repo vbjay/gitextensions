@@ -35,10 +35,16 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-        private void Preview_Click(object sender, EventArgs e)
+        private void Cancel_Click(object sender, EventArgs e)
         {
-            var cleanUpCmd = GitCommandHelpers.CleanUpCmd(true, RemoveDirectories.Checked, RemoveNonIgnored.Checked, RemoveIngnored.Checked, GetPathArgumentFromGui());
-            PreviewOutput.Text = FormProcess.ReadDialog(this, cleanUpCmd);
+            Close();
+        }
+
+        private void checkBoxPathFilter_CheckedChanged(object sender, EventArgs e)
+        {
+            bool filterByPath = checkBoxPathFilter.Checked;
+            textBoxPaths.Enabled = filterByPath;
+            labelPathHint.Visible = filterByPath;
         }
 
         private void Cleanup_Click(object sender, EventArgs e)
@@ -65,16 +71,10 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-        private void Cancel_Click(object sender, EventArgs e)
+        private void Preview_Click(object sender, EventArgs e)
         {
-            Close();
-        }
-
-        private void checkBoxPathFilter_CheckedChanged(object sender, EventArgs e)
-        {
-            bool filterByPath = checkBoxPathFilter.Checked;
-            textBoxPaths.Enabled = filterByPath;
-            labelPathHint.Visible = filterByPath;
+            var cleanUpCmd = GitCommandHelpers.CleanUpCmd(true, RemoveDirectories.Checked, RemoveNonIgnored.Checked, RemoveIngnored.Checked, GetPathArgumentFromGui());
+            PreviewOutput.Text = FormProcess.ReadDialog(this, cleanUpCmd);
         }
     }
 }

@@ -1,32 +1,16 @@
 ﻿using System;
-using System.IO;
-using NUnit.Framework;
-using GitCommands;
-using TestClass = NUnit.Framework.TestFixtureAttribute;
-using TestMethod = NUnit.Framework.TestAttribute;
 using System.Collections.Generic;
 using System.Linq;
+using GitCommands;
+using NUnit.Framework;
+using TestClass = NUnit.Framework.TestFixtureAttribute;
+using TestMethod = NUnit.Framework.TestAttribute;
 
 namespace GitExtensionsTest
 {
     [TestClass]
     public class PathUtilTest
     {
-        [TestMethod]
-        public void ToPosixPathTest()
-        {
-            Assert.AreEqual("C:/Work/GitExtensions/".ToPosixPath(), "C:/Work/GitExtensions/");
-            Assert.AreEqual("C:\\Work\\GitExtensions\\".ToPosixPath(), "C:/Work/GitExtensions/");
-        }
-
-        [TestMethod]
-        public void ToNativePathTest()
-        {
-            Assert.AreEqual("C:\\Work\\GitExtensions\\".ToNativePath(), "C:\\Work\\GitExtensions\\");
-            Assert.AreEqual("C:/Work/GitExtensions/".ToNativePath(), "C:\\Work\\GitExtensions\\");
-            Assert.AreEqual("\\\\my-pc\\Work\\GitExtensions\\".ToNativePath(), "\\\\my-pc\\Work\\GitExtensions\\");
-        }
-
         [TestMethod]
         public void EnsureTrailingPathSeparatorTest()
         {
@@ -40,20 +24,16 @@ namespace GitExtensionsTest
         }
 
         [TestMethod]
-        public void IsLocalFileTest()
+        public void EqualTest()
         {
-            Assert.AreEqual(PathUtil.IsLocalFile("\\\\my-pc\\Work\\GitExtensions"), true);
-            Assert.AreEqual(PathUtil.IsLocalFile("C:\\Work\\GitExtensions"), true);
-            Assert.AreEqual(PathUtil.IsLocalFile("C:\\Work\\GitExtensions\\"), true);
-            Assert.AreEqual(PathUtil.IsLocalFile("ssh://domain\\user@serverip/cache/git/something/something.git"), false);
+            Assert.AreEqual(PathUtil.Equal("C:\\Work\\GitExtensions\\", "C:/Work/GitExtensions/"), true);
+            Assert.AreEqual(PathUtil.Equal("\\\\my-pc\\Work\\GitExtensions\\", "//my-pc/Work/GitExtensions/"), true);
         }
 
         [TestMethod]
-        public void GetFileNameTest()
+        public void ExistingPathsTest()
         {
-            Assert.AreEqual(PathUtil.GetFileName("\\\\my-pc\\Work\\GitExtensions"), "GitExtensions");
-            Assert.AreEqual(PathUtil.GetFileName("C:\\Work\\GitExtensions"), "GitExtensions");
-            Assert.AreEqual(PathUtil.GetFileName("C:\\Work\\GitExtensions\\"), "");
+            Assert.IsTrue(PathUtil.PathExists(GetType().Assembly.Location));
         }
 
         [TestMethod]
@@ -70,10 +50,31 @@ namespace GitExtensionsTest
         }
 
         [TestMethod]
-        public void EqualTest()
+        public void GetEnvironmentPathsQuotedTest()
         {
-            Assert.AreEqual(PathUtil.Equal("C:\\Work\\GitExtensions\\", "C:/Work/GitExtensions/"), true);
-            Assert.AreEqual(PathUtil.Equal("\\\\my-pc\\Work\\GitExtensions\\", "//my-pc/Work/GitExtensions/"), true);
+            var paths = GetValidPaths().Concat(GetInvalidPaths());
+            var quotedPaths = paths.Select(path => path.Quote(" ")).Select(path => path.Quote());
+            string pathVariable = string.Join(";", paths);
+            var envPaths = PathUtil.GetEnvironmentPaths(pathVariable);
+            var validEnvPaths = PathUtil.GetValidPaths(envPaths);
+            CollectionAssert.AreEqual(validEnvPaths, GetValidPaths());
+        }
+
+        [TestMethod]
+        public void GetEnvironmentPathsTest()
+        {
+            string pathVariable = string.Join(";", GetValidPaths().Concat(GetInvalidPaths()));
+            var paths = PathUtil.GetEnvironmentPaths(pathVariable);
+            var validEnvPaths = PathUtil.GetValidPaths(paths);
+            CollectionAssert.AreEqual(validEnvPaths, GetValidPaths());
+        }
+
+        [TestMethod]
+        public void GetFileNameTest()
+        {
+            Assert.AreEqual(PathUtil.GetFileName("\\\\my-pc\\Work\\GitExtensions"), "GitExtensions");
+            Assert.AreEqual(PathUtil.GetFileName("C:\\Work\\GitExtensions"), "GitExtensions");
+            Assert.AreEqual(PathUtil.GetFileName("C:\\Work\\GitExtensions\\"), "");
         }
 
         [TestMethod]
@@ -95,6 +96,15 @@ namespace GitExtensionsTest
         }
 
         [TestMethod]
+        public void IsLocalFileTest()
+        {
+            Assert.AreEqual(PathUtil.IsLocalFile("\\\\my-pc\\Work\\GitExtensions"), true);
+            Assert.AreEqual(PathUtil.IsLocalFile("C:\\Work\\GitExtensions"), true);
+            Assert.AreEqual(PathUtil.IsLocalFile("C:\\Work\\GitExtensions\\"), true);
+            Assert.AreEqual(PathUtil.IsLocalFile("ssh://domain\\user@serverip/cache/git/something/something.git"), false);
+        }
+
+        [TestMethod]
         public void IsValidPathTest()
         {
             Assert.IsTrue(PathUtil.IsValidPath("\\\\my-pc\\Work\\GitExtensions\\"), "\\\\my-pc\\Work\\GitExtensions");
@@ -107,32 +117,6 @@ namespace GitExtensionsTest
         }
 
         [TestMethod]
-        public void GetEnvironmentPathsTest()
-        {
-            string pathVariable = string.Join(";", GetValidPaths().Concat(GetInvalidPaths()));
-            var paths = PathUtil.GetEnvironmentPaths(pathVariable);
-            var validEnvPaths = PathUtil.GetValidPaths(paths);
-            CollectionAssert.AreEqual(validEnvPaths, GetValidPaths());
-        }
-
-        [TestMethod]
-        public void GetEnvironmentPathsQuotedTest()
-        {
-            var paths = GetValidPaths().Concat(GetInvalidPaths());
-            var quotedPaths = paths.Select(path => path.Quote(" ")).Select(path => path.Quote());
-            string pathVariable = string.Join(";", paths);
-            var envPaths = PathUtil.GetEnvironmentPaths(pathVariable);
-            var validEnvPaths = PathUtil.GetValidPaths(envPaths);
-            CollectionAssert.AreEqual(validEnvPaths, GetValidPaths());
-        }
-
-        [TestMethod]
-        public void ExistingPathsTest()
-        {
-            Assert.IsTrue(PathUtil.PathExists(GetType().Assembly.Location));
-        }
-
-        [TestMethod]
         public void NonExistingPathsTest()
         {
             GetInvalidPaths().ForEach((path) =>
@@ -142,12 +126,19 @@ namespace GitExtensionsTest
             Assert.IsFalse(PathUtil.PathExists("c:\\94fc5ae63a6c5ed7c110219ade20374ea4d237b9.xyz"));
         }
 
-        private static IEnumerable<string> GetValidPaths()
+        [TestMethod]
+        public void ToNativePathTest()
         {
-            yield return @"c:\work";
-            yield return @"c:\work\";
-            yield return @"c:\Program Files(86)\";
-            yield return @"c:\Program Files(86)\Git";
+            Assert.AreEqual("C:\\Work\\GitExtensions\\".ToNativePath(), "C:\\Work\\GitExtensions\\");
+            Assert.AreEqual("C:/Work/GitExtensions/".ToNativePath(), "C:\\Work\\GitExtensions\\");
+            Assert.AreEqual("\\\\my-pc\\Work\\GitExtensions\\".ToNativePath(), "\\\\my-pc\\Work\\GitExtensions\\");
+        }
+
+        [TestMethod]
+        public void ToPosixPathTest()
+        {
+            Assert.AreEqual("C:/Work/GitExtensions/".ToPosixPath(), "C:/Work/GitExtensions/");
+            Assert.AreEqual("C:\\Work\\GitExtensions\\".ToPosixPath(), "C:/Work/GitExtensions/");
         }
 
         private static IEnumerable<string> GetInvalidPaths()
@@ -156,6 +147,14 @@ namespace GitExtensionsTest
             yield return "\"c:\\word\t\\\"";
             yield return @".c:\Programs\";
             yield return "c:\\Programs\\Get\"\\";
+        }
+
+        private static IEnumerable<string> GetValidPaths()
+        {
+            yield return @"c:\work";
+            yield return @"c:\work\";
+            yield return @"c:\Program Files(86)\";
+            yield return @"c:\Program Files(86)\Git";
         }
     }
 }

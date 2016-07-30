@@ -14,16 +14,6 @@ namespace GitUI
             this.pluginName = pluginName;
         }
 
-        public ISettingsSource GetSettingsSource()
-        {
-            return this;
-        }
-
-        public void SetSettingsSource(ISettingsSource settingsSource)
-        {
-            _settingsSource = settingsSource;
-        }
-
         private ISettingsSource ExternalSettings
         {
             get
@@ -32,9 +22,19 @@ namespace GitUI
             }
         }
 
+        public ISettingsSource GetSettingsSource()
+        {
+            return this;
+        }
+
         public override T GetValue<T>(string name, T defaultValue, Func<string, T> decode)
         {
             return ExternalSettings.GetValue(pluginName + name, defaultValue, decode);
+        }
+
+        public void SetSettingsSource(ISettingsSource settingsSource)
+        {
+            _settingsSource = settingsSource;
         }
 
         public override void SetValue<T>(string name, T value, Func<T, string> encode)

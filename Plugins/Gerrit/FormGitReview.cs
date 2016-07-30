@@ -11,17 +11,17 @@ namespace Gerrit
 {
     public sealed partial class FormGitReview : GitExtensionsForm, IGitUICommandsSource
     {
-        private readonly TranslationString _gitreviewOnlyInWorkingDirSupported =
-            new TranslationString(".gitreview is only supported when there is a working directory.");
-
-        private readonly TranslationString _gitreviewOnlyInWorkingDirSupportedCaption =
-            new TranslationString("No working directory");
-
         private readonly TranslationString _cannotAccessGitreview =
             new TranslationString("Failed to save .gitreview." + Environment.NewLine + "Check if file is accessible.");
 
         private readonly TranslationString _cannotAccessGitreviewCaption =
             new TranslationString("Failed to save .gitreview");
+
+        private readonly TranslationString _gitreviewOnlyInWorkingDirSupported =
+                            new TranslationString(".gitreview is only supported when there is a working directory.");
+
+        private readonly TranslationString _gitreviewOnlyInWorkingDirSupportedCaption =
+            new TranslationString("No working directory");
 
         private readonly TranslationString _saveFileQuestion =
             new TranslationString("Save changes to .gitreview?");
@@ -30,29 +30,7 @@ namespace Gerrit
             new TranslationString("Save changes?");
 
         private string _originalGitReviewFileContent = string.Empty;
-        private IGitModule Module { get { return UICommands.GitModule; } }
-
-        public event EventHandler<GitUICommandsChangedEventArgs> GitUICommandsChanged;
-
-        private void OnGitUICommandsChanged(GitUICommands oldcommands)
-        {
-            EventHandler<GitUICommandsChangedEventArgs> handler = GitUICommandsChanged;
-            if (handler != null)
-                handler(this, new GitUICommandsChangedEventArgs(oldcommands));
-        }
-
         private GitUICommands _uiCommands;
-
-        public GitUICommands UICommands
-        {
-            get { return _uiCommands; }
-            set
-            {
-                var oldcommands = _uiCommands;
-                _uiCommands = value;
-                OnGitUICommandsChanged(oldcommands);
-            }
-        }
 
         public FormGitReview(IGitUICommands aUICommands)
             : base(true)
@@ -68,6 +46,66 @@ namespace Gerrit
             }
         }
 
+        public event EventHandler<GitUICommandsChangedEventArgs> GitUICommandsChanged;
+
+        public GitUICommands UICommands
+        {
+            get { return _uiCommands; }
+            set
+            {
+                var oldcommands = _uiCommands;
+                _uiCommands = value;
+                OnGitUICommandsChanged(oldcommands);
+            }
+        }
+
+        private IGitModule Module { get { return UICommands.GitModule; } }
+
+        private void FormGitIgnoreLoad(object sender, EventArgs e)
+        {
+            if (!Module.IsBareRepository())
+                return;
+            MessageBox.Show(this, _gitreviewOnlyInWorkingDirSupported.Text, _gitreviewOnlyInWorkingDirSupportedCaption.Text);
+            Close();
+        }
+
+        private void FormGitReviewFormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (HasUnsavedChanges())
+            {
+                switch (MessageBox.Show(this, _saveFileQuestion.Text, _saveFileQuestionCaption.Text,
+                                    MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question))
+                {
+                    case DialogResult.Yes:
+                        if (!SaveGitReview())
+                        {
+                            e.Cancel = true;
+                            return;
+                        }
+                        break;
+
+                    case DialogResult.Cancel:
+                        e.Cancel = true;
+                        return;
+                }
+            }
+        }
+
+        private void GitReviewFileLoaded(object sender, EventArgs e)
+        {
+            _originalGitReviewFileContent = _NO_TRANSLATE_GitReviewEdit.GetText();
+        }
+
+        private bool HasUnsavedChanges()
+        {
+            return _originalGitReviewFileContent != _NO_TRANSLATE_GitReviewEdit.GetText();
+        }
+
+        private void lnkGitReviewPatterns_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Process.Start(@"http://github.com/openstack-infra/git-review#git-review");
+        }
+
         private void LoadGitReview()
         {
             try
@@ -79,6 +117,13 @@ namespace Gerrit
             {
                 Trace.WriteLine(ex.Message);
             }
+        }
+
+        private void OnGitUICommandsChanged(GitUICommands oldcommands)
+        {
+            EventHandler<GitUICommandsChangedEventArgs> handler = GitUICommandsChanged;
+            if (handler != null)
+                handler(this, new GitUICommandsChangedEventArgs(oldcommands));
         }
 
         private void SaveClick(object sender, EventArgs e)
@@ -112,51 +157,6 @@ namespace Gerrit
                     _cannotAccessGitreviewCaption.Text);
                 return false;
             }
-        }
-
-        private void FormGitReviewFormClosing(object sender, FormClosingEventArgs e)
-        {
-            if (HasUnsavedChanges())
-            {
-                switch (MessageBox.Show(this, _saveFileQuestion.Text, _saveFileQuestionCaption.Text,
-                                    MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question))
-                {
-                    case DialogResult.Yes:
-                        if (!SaveGitReview())
-                        {
-                            e.Cancel = true;
-                            return;
-                        }
-                        break;
-
-                    case DialogResult.Cancel:
-                        e.Cancel = true;
-                        return;
-                }
-            }
-        }
-
-        private void FormGitIgnoreLoad(object sender, EventArgs e)
-        {
-            if (!Module.IsBareRepository())
-                return;
-            MessageBox.Show(this, _gitreviewOnlyInWorkingDirSupported.Text, _gitreviewOnlyInWorkingDirSupportedCaption.Text);
-            Close();
-        }
-
-        private bool HasUnsavedChanges()
-        {
-            return _originalGitReviewFileContent != _NO_TRANSLATE_GitReviewEdit.GetText();
-        }
-
-        private void GitReviewFileLoaded(object sender, EventArgs e)
-        {
-            _originalGitReviewFileContent = _NO_TRANSLATE_GitReviewEdit.GetText();
-        }
-
-        private void lnkGitReviewPatterns_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            Process.Start(@"http://github.com/openstack-infra/git-review#git-review");
         }
     }
 }

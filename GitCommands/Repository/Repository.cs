@@ -5,12 +5,7 @@ namespace GitCommands.Repository
 {
     public class Repository
     {
-        public enum RepositoryAnchor
-        {
-            MostRecent,
-            LessRecent,
-            None
-        }
+        private string _path;
 
         public Repository()
         {
@@ -26,8 +21,21 @@ namespace GitCommands.Repository
             RepositoryType = RepositoryType.Repository;
         }
 
-        public string Title { get; set; }
-        private string _path;
+        public enum RepositoryAnchor
+        {
+            MostRecent,
+            LessRecent,
+            None
+        }
+
+        public RepositoryAnchor Anchor { get; set; }
+        public string Description { get; set; }
+
+        [XmlIgnore]
+        public bool IsRemote
+        {
+            get { return PathIsUrl(Path); }
+        }
 
         public string Path
         {
@@ -41,17 +49,18 @@ namespace GitCommands.Repository
             }
         }
 
-        public string Description { get; set; }
-        public RepositoryAnchor Anchor { get; set; }
-
-        [XmlIgnore]
-        public bool IsRemote
-        {
-            get { return PathIsUrl(Path); }
-        }
-
         [XmlIgnore]
         public RepositoryType RepositoryType { get; set; }
+
+        public string Title { get; set; }
+
+        public static bool PathIsUrl(string path)
+        {
+            return !String.IsNullOrEmpty(path) &&
+                (path.StartsWith("http", StringComparison.CurrentCultureIgnoreCase) ||
+                 path.StartsWith("git", StringComparison.CurrentCultureIgnoreCase) ||
+                 path.StartsWith("ssh", StringComparison.CurrentCultureIgnoreCase));
+        }
 
         public void Assign(Repository source)
         {
@@ -66,14 +75,6 @@ namespace GitCommands.Repository
         public override string ToString()
         {
             return Path + " (" + Anchor.ToString() + ")";
-        }
-
-        public static bool PathIsUrl(string path)
-        {
-            return !String.IsNullOrEmpty(path) &&
-                (path.StartsWith("http", StringComparison.CurrentCultureIgnoreCase) ||
-                 path.StartsWith("git", StringComparison.CurrentCultureIgnoreCase) ||
-                 path.StartsWith("ssh", StringComparison.CurrentCultureIgnoreCase));
         }
     }
 }

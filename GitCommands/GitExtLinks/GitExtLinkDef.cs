@@ -10,6 +10,22 @@ namespace GitCommands.GitExtLinks
 {
     public class GitExtLinkDef : SimpleStructured
     {
+        /// <summary>
+        /// List of formats to be applied for each revision part matched by SearchPattern
+        /// </summary>
+        public BindingList<GitExtLinkFormat> LinkFormats = new BindingList<GitExtLinkFormat>();
+
+        /// <summary></summary>
+        public HashSet<RevisionPart> SearchInParts = new HashSet<RevisionPart>();
+
+        private string _NestedSearchPattern;
+
+        private string _SearchPattern;
+
+        public GitExtLinkDef()
+        {
+        }
+
         //revision's parts that can be searched for candidates for a link
         public enum RevisionPart
         {
@@ -18,48 +34,13 @@ namespace GitCommands.GitExtLinks
             RemoteBranches
         }
 
+        /// <summary>
+        /// Non-local link def can be locally disabled
+        /// </summary>
+        public bool Enabled { get; set; }
+
         /// <summary>Short name for this link def</summary>
         public string Name { get; set; }
-
-        /// <summary></summary>
-        public HashSet<RevisionPart> SearchInParts = new HashSet<RevisionPart>();
-
-        private string _SearchPattern;
-
-        /// <summary>
-        /// RegEx for revision parts that have to be transformed into links
-        /// empty string stands for unconditionally always added link
-        /// </summary>
-        public string SearchPattern
-        {
-            get
-            {
-                return _SearchPattern;
-            }
-            set
-            {
-                _SearchPattern = value;
-                SearchPatternRegex = new Lazy<Regex>(() =>
-                    {
-                        try
-                        {
-                            return new Regex(SearchPattern, RegexOptions.Compiled);
-                        }
-                        catch (Exception e)
-                        {
-                            System.Diagnostics.Debug.Print(e.ToStringWithData());
-                            return null;
-                        }
-                    }
-                        );
-            }
-        }
-
-        /// <summary>Compiled SearchPattern</summary>
-        [XmlIgnore]
-        public Lazy<Regex> SearchPatternRegex { get; private set; }
-
-        private string _NestedSearchPattern;
 
         /// <summary>
         /// RegEx for revision parts that have to be transformed into links
@@ -95,17 +76,41 @@ namespace GitCommands.GitExtLinks
         public Lazy<Regex> NestedSearchPatternRegex { get; private set; }
 
         /// <summary>
-        /// Non-local link def can be locally disabled
+        /// RegEx for revision parts that have to be transformed into links
+        /// empty string stands for unconditionally always added link
         /// </summary>
-        public bool Enabled { get; set; }
-
-        /// <summary>
-        /// List of formats to be applied for each revision part matched by SearchPattern
-        /// </summary>
-        public BindingList<GitExtLinkFormat> LinkFormats = new BindingList<GitExtLinkFormat>();
-
-        public GitExtLinkDef()
+        public string SearchPattern
         {
+            get
+            {
+                return _SearchPattern;
+            }
+            set
+            {
+                _SearchPattern = value;
+                SearchPatternRegex = new Lazy<Regex>(() =>
+                    {
+                        try
+                        {
+                            return new Regex(SearchPattern, RegexOptions.Compiled);
+                        }
+                        catch (Exception e)
+                        {
+                            System.Diagnostics.Debug.Print(e.ToStringWithData());
+                            return null;
+                        }
+                    }
+                        );
+            }
+        }
+
+        /// <summary>Compiled SearchPattern</summary>
+        [XmlIgnore]
+        public Lazy<Regex> SearchPatternRegex { get; private set; }
+
+        public override int GetHashCode()
+        {
+            return Name.GetHashCode();
         }
 
         public IEnumerable<GitExtLink> Parse(GitRevision revision)
@@ -164,6 +169,12 @@ namespace GitCommands.GitExtLinks
             }
         }
 
+        public void RemoveEmptyFormats()
+        {
+            var toRemove = LinkFormats.Where(f => f.Caption.IsNullOrWhiteSpace() && f.Format.IsNullOrWhiteSpace()).ToArray();
+            toRemove.ForEach(f => LinkFormats.Remove(f));
+        }
+
         protected internal override IEnumerable<object> InlinedStructure()
         {
             yield return Name;
@@ -172,17 +183,6 @@ namespace GitCommands.GitExtLinks
             yield return NestedSearchPattern;
             yield return Enabled;
             yield return LinkFormats;
-        }
-
-        public override int GetHashCode()
-        {
-            return Name.GetHashCode();
-        }
-
-        public void RemoveEmptyFormats()
-        {
-            var toRemove = LinkFormats.Where(f => f.Caption.IsNullOrWhiteSpace() && f.Format.IsNullOrWhiteSpace()).ToArray();
-            toRemove.ForEach(f => LinkFormats.Remove(f));
         }
     }
 

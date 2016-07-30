@@ -126,18 +126,6 @@ namespace NetSpell.SpellChecker.Dictionary
         }
 
         /// <summary>
-        ///     Sorts a collection of words by EditDistance
-        /// </summary>
-        /// <remarks>
-        ///		The compare sorts in desc order, largest EditDistance first
-        /// </remarks>
-        public int CompareTo(Word word)
-        {
-            int result = _editDistance.CompareTo(word._editDistance);
-            return result; // * -1; // sorts desc order
-        }
-
-        /// <summary>
         ///     The affix keys that can be applied to this base word
         /// </summary>
         public string AffixKeys
@@ -190,6 +178,18 @@ namespace NetSpell.SpellChecker.Dictionary
         {
             get { return _height; }
             set { _height = value; }
+        }
+
+        /// <summary>
+        ///     Sorts a collection of words by EditDistance
+        /// </summary>
+        /// <remarks>
+        ///		The compare sorts in desc order, largest EditDistance first
+        /// </remarks>
+        public int CompareTo(Word word)
+        {
+            int result = _editDistance.CompareTo(word._editDistance);
+            return result; // * -1; // sorts desc order
         }
 
         /// <summary>

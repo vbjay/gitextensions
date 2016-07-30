@@ -12,6 +12,46 @@ namespace GitUI.Script
     /// <summary>Runs scripts.</summary>
     public static class ScriptRunner
     {
+        private static string[] Options
+        {
+            get
+            {
+                string[] options =
+                    {
+                        "{sHashes}",
+                        "{sTag}",
+                        "{sBranch}",
+                        "{sLocalBranch}",
+                        "{sRemoteBranch}",
+                        "{sRemote}",
+                        "{sRemoteUrl}",
+                        "{sRemotePathFromUrl}",
+                        "{sHash}",
+                        "{sMessage}",
+                        "{sAuthor}",
+                        "{sCommitter}",
+                        "{sAuthorDate}",
+                        "{sCommitDate}",
+                        "{cTag}",
+                        "{cBranch}",
+                        "{cLocalBranch}",
+                        "{cRemoteBranch}",
+                        "{cHash}",
+                        "{cMessage}",
+                        "{cAuthor}",
+                        "{cCommitter}",
+                        "{cAuthorDate}",
+                        "{cCommitDate}",
+                        "{cDefaultRemote}",
+                        "{cDefaultRemoteUrl}",
+                        "{cDefaultRemotePathFromUrl}",
+                        "{UserInput}",
+                        "{WorkingDir}"
+                    };
+                return options;
+            }
+        }
+
         /// <summary>Tries to run scripts identified by a <paramref name="command"/>
         /// and returns true if any executed.</summary>
         public static bool ExecuteScriptCommand(IWin32Window owner, GitModule aModule, int command, RevisionGrid revisionGrid = null)
@@ -61,20 +101,6 @@ namespace GitUI.Script
                 return false;
             }
             return RunScript(owner, aModule, scriptInfo, revisionGrid);
-        }
-
-        private static string GetRemotePath(string url)
-        {
-            Uri uri;
-            string path = "";
-            if (Uri.TryCreate(url, UriKind.Absolute, out uri))
-                path = uri.LocalPath;
-            else if (Uri.TryCreate("ssh://" + url.Replace(":", "/"), UriKind.Absolute, out uri))
-                path = uri.LocalPath;
-            int pos = path.LastIndexOf(".");
-            if (pos >= 0)
-                path = path.Substring(0, pos);
-            return path;
         }
 
         internal static bool RunScript(IWin32Window owner, GitModule aModule, ScriptInfo scriptInfo, RevisionGrid revisionGrid)
@@ -360,9 +386,22 @@ namespace GitUI.Script
             return !scriptInfo.RunInBackground;
         }
 
-        private static string ExpandCommandVariables(string originalCommand, GitModule aModule)
+        private static string askToSpecify(IEnumerable<GitRef> options, string title)
         {
-            return originalCommand.Replace("{WorkingDir}", aModule.WorkingDir);
+            using (var f = new FormRunScriptSpecify(options, title))
+            {
+                f.ShowDialog();
+                return f.ret;
+            }
+        }
+
+        private static string askToSpecify(IEnumerable<string> options, string title)
+        {
+            using (var f = new FormRunScriptSpecify(options, title))
+            {
+                f.ShowDialog();
+                return f.ret;
+            }
         }
 
         private static GitRevision CalculateSelectedRevision(RevisionGrid revisionGrid, List<GitRef> selectedRemoteBranches,
@@ -388,6 +427,11 @@ namespace GitUI.Script
                 }
             }
             return selectedRevision;
+        }
+
+        private static string ExpandCommandVariables(string originalCommand, GitModule aModule)
+        {
+            return originalCommand.Replace("{WorkingDir}", aModule.WorkingDir);
         }
 
         private static GitRevision GetCurrentRevision(GitModule aModule, RevisionGrid RevisionGrid, List<GitRef> currentTags, List<GitRef> currentLocalBranches,
@@ -426,44 +470,18 @@ namespace GitUI.Script
             return currentRevision;
         }
 
-        private static string[] Options
+        private static string GetRemotePath(string url)
         {
-            get
-            {
-                string[] options =
-                    {
-                        "{sHashes}",
-                        "{sTag}",
-                        "{sBranch}",
-                        "{sLocalBranch}",
-                        "{sRemoteBranch}",
-                        "{sRemote}",
-                        "{sRemoteUrl}",
-                        "{sRemotePathFromUrl}",
-                        "{sHash}",
-                        "{sMessage}",
-                        "{sAuthor}",
-                        "{sCommitter}",
-                        "{sAuthorDate}",
-                        "{sCommitDate}",
-                        "{cTag}",
-                        "{cBranch}",
-                        "{cLocalBranch}",
-                        "{cRemoteBranch}",
-                        "{cHash}",
-                        "{cMessage}",
-                        "{cAuthor}",
-                        "{cCommitter}",
-                        "{cAuthorDate}",
-                        "{cCommitDate}",
-                        "{cDefaultRemote}",
-                        "{cDefaultRemoteUrl}",
-                        "{cDefaultRemotePathFromUrl}",
-                        "{UserInput}",
-                        "{WorkingDir}"
-                    };
-                return options;
-            }
+            Uri uri;
+            string path = "";
+            if (Uri.TryCreate(url, UriKind.Absolute, out uri))
+                path = uri.LocalPath;
+            else if (Uri.TryCreate("ssh://" + url.Replace(":", "/"), UriKind.Absolute, out uri))
+                path = uri.LocalPath;
+            int pos = path.LastIndexOf(".");
+            if (pos >= 0)
+                path = path.Substring(0, pos);
+            return path;
         }
 
         private static string OverrideCommandWhenNecessary(string originalCommand)
@@ -482,24 +500,6 @@ namespace GitUI.Script
             if (originalCommand.Equals("{openurl}", StringComparison.CurrentCultureIgnoreCase))
                 return "explorer";
             return originalCommand;
-        }
-
-        private static string askToSpecify(IEnumerable<GitRef> options, string title)
-        {
-            using (var f = new FormRunScriptSpecify(options, title))
-            {
-                f.ShowDialog();
-                return f.ret;
-            }
-        }
-
-        private static string askToSpecify(IEnumerable<string> options, string title)
-        {
-            using (var f = new FormRunScriptSpecify(options, title))
-            {
-                f.ShowDialog();
-                return f.ret;
-            }
         }
     }
 }

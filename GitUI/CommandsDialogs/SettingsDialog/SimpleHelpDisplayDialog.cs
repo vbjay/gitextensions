@@ -10,9 +10,8 @@ namespace GitUI.CommandsDialogs.SettingsDialog
             InitializeComponent();
         }
 
-        public string DialogTitle { get; set; }
-
         public string ContentText { get; set; }
+        public string DialogTitle { get; set; }
 
         protected override void OnLoad(EventArgs e)
         {

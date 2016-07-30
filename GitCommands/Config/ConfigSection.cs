@@ -3,6 +3,27 @@ using System.Collections.Generic;
 
 namespace GitCommands.Config
 {
+    public static class ConfigSectionExt
+    {
+        public static bool GetValueAsBool(this ConfigSection section, string name, bool defaultValue)
+        {
+            bool result = defaultValue;
+
+            if (section.HasValue(name))
+            {
+                string value = section.GetValue(name);
+                bool.TryParse(value, out result);
+            }
+
+            return result;
+        }
+
+        public static void SetValueAsBool(this ConfigSection section, string name, bool value)
+        {
+            section.SetValue(name, value.ToString());
+        }
+    }
+
     /// <summary>
     ///   ConfigSection
     ///   Sections can be defined as:
@@ -47,10 +68,10 @@ namespace GitCommands.Config
                 SubSectionCaseSensitive = true;
         }
 
-        internal IDictionary<string, IList<string>> Keys { get; set; }
         public string SectionName { get; set; }
         public string SubSection { get; set; }
         public bool SubSectionCaseSensitive { get; set; }
+        internal IDictionary<string, IList<string>> Keys { get; set; }
 
         public static string FixPath(string path)
         {
@@ -60,30 +81,29 @@ namespace GitCommands.Config
             return path.Replace('\\', '/');
         }
 
-        public bool HasValue(string key)
-        {
-            return Keys.ContainsKey(key);
-        }
-
-        public void SetValue(string key, string value)
-        {
-            if (string.IsNullOrEmpty(value))
-                Keys.Remove(key);
-            else
-                Keys[key] = new List<string> { value };
-        }
-
-        public void SetPathValue(string setting, string value)
-        {
-            SetValue(setting, FixPath(value));
-        }
-
         public void AddValue(string key, string value)
         {
             if (!Keys.ContainsKey(key))
                 Keys[key] = new List<string>();
 
             Keys[key].Add(value);
+        }
+
+        public bool Equals(ConfigSection other)
+        {
+            StringComparison sc;
+            if (SubSectionCaseSensitive)
+                sc = StringComparison.Ordinal;
+            else
+                sc = StringComparison.OrdinalIgnoreCase;
+
+            return string.Equals(SectionName, other.SectionName, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(SubSection, other.SubSection, sc);
+        }
+
+        public string GetPathValue(string setting)
+        {
+            return GetValue(setting);
         }
 
         public string GetValue(string key)
@@ -104,14 +124,27 @@ namespace GitCommands.Config
             return defaultValue;
         }
 
-        public string GetPathValue(string setting)
-        {
-            return GetValue(setting);
-        }
-
         public IList<string> GetValues(string key)
         {
             return Keys.ContainsKey(key) ? Keys[key] : new List<string>();
+        }
+
+        public bool HasValue(string key)
+        {
+            return Keys.ContainsKey(key);
+        }
+
+        public void SetPathValue(string setting, string value)
+        {
+            SetValue(setting, FixPath(value));
+        }
+
+        public void SetValue(string key, string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                Keys.Remove(key);
+            else
+                Keys[key] = new List<string> { value };
         }
 
         public override string ToString()
@@ -128,39 +161,6 @@ namespace GitCommands.Config
             }
             result = result + "]";
             return result;
-        }
-
-        public bool Equals(ConfigSection other)
-        {
-            StringComparison sc;
-            if (SubSectionCaseSensitive)
-                sc = StringComparison.Ordinal;
-            else
-                sc = StringComparison.OrdinalIgnoreCase;
-
-            return string.Equals(SectionName, other.SectionName, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(SubSection, other.SubSection, sc);
-        }
-    }
-
-    public static class ConfigSectionExt
-    {
-        public static bool GetValueAsBool(this ConfigSection section, string name, bool defaultValue)
-        {
-            bool result = defaultValue;
-
-            if (section.HasValue(name))
-            {
-                string value = section.GetValue(name);
-                bool.TryParse(value, out result);
-            }
-
-            return result;
-        }
-
-        public static void SetValueAsBool(this ConfigSection section, string name, bool value)
-        {
-            section.SetValue(name, value.ToString());
         }
     }
 }

@@ -70,7 +70,6 @@ namespace GitExtensionsTest.Helpers
             {
                 return false;
             }
-
         }
 
         public static bool Compare(this FileInfo currentFile, FileInfo otherFile)

@@ -11,6 +11,11 @@ namespace GitCommands.Statistics
             return GroupAllCommitsByContributor(module, DateTime.MinValue, DateTime.MaxValue);
         }
 
+        private static string GetDateParameter(DateTime sinceDate, string paramName)
+        {
+            return string.Format(" --{1}=\"{0}\"", sinceDate.ToString("yyyy-MM-dd hh:mm:ss"), paramName);
+        }
+
         private static Tuple<Dictionary<string, int>, int> GroupAllCommitsByContributor(IGitModule module, DateTime since, DateTime until)
         {
             var sinceParam = since != DateTime.MinValue ? GetDateParameter(since, "since") : "";
@@ -55,11 +60,6 @@ namespace GitCommands.Statistics
                     commitsPerContributor[contributor] = oldCount + count;
             }
             return Tuple.Create(commitsPerContributor, totalCommits);
-        }
-
-        private static string GetDateParameter(DateTime sinceDate, string paramName)
-        {
-            return string.Format(" --{1}=\"{0}\"", sinceDate.ToString("yyyy-MM-dd hh:mm:ss"), paramName);
         }
     }
 }

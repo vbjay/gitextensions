@@ -13,30 +13,8 @@ namespace GitUI
     /// </summary>
     public partial class FormSplash : Form
     {
-        private readonly TranslationString _version = new TranslationString("Version {0}");
-
         private static FormSplash instance;
-
-        public static void ShowSplash()
-        {
-            instance = new FormSplash();
-            instance.Show();
-        }
-
-        public static void SetAction(string action)
-        {
-            if (instance != null)
-                instance.SetActionText(action);
-        }
-
-        public static void HideSplash()
-        {
-            if (instance != null)
-            {
-                instance.Dispose();
-                instance = null;
-            }
-        }
+        private readonly TranslationString _version = new TranslationString("Version {0}");
 
         private FormSplash()
         {
@@ -51,14 +29,25 @@ namespace GitUI
             pictureBox1.Image = image ?? Properties.Resources.git_extensions_logo_final_128;
         }
 
-        private void SetFont()
+        public static void HideSplash()
         {
-            Font = SystemFonts.MessageBoxFont;
+            if (instance != null)
+            {
+                instance.Dispose();
+                instance = null;
+            }
         }
 
-        private void SetActionText(string action)
+        public static void SetAction(string action)
         {
-            _NO_TRANSLATE_actionLabel.Text = action;
+            if (instance != null)
+                instance.SetActionText(action);
+        }
+
+        public static void ShowSplash()
+        {
+            instance = new FormSplash();
+            instance.Show();
         }
 
         protected override void OnLoad(EventArgs e)
@@ -73,6 +62,16 @@ namespace GitUI
                 _NO_TRANSLATE_osLabel.Text = "MacOSX";
             if (EnvUtils.RunningOnWindows())
                 _NO_TRANSLATE_osLabel.Text = "Windows";
+        }
+
+        private void SetActionText(string action)
+        {
+            _NO_TRANSLATE_actionLabel.Text = action;
+        }
+
+        private void SetFont()
+        {
+            Font = SystemFonts.MessageBoxFont;
         }
     }
 }

@@ -9,12 +9,8 @@ namespace GitCommands
 {
     public class SynchronizedProcessReader
     {
-        public Process Process { get; private set; }
-        public byte[] Output { get; private set; }
-        public byte[] Error { get; private set; }
-
-        private readonly Thread stdOutputLoaderThread;
         private readonly Thread stdErrLoaderThread;
+        private readonly Thread stdOutputLoaderThread;
 
         public SynchronizedProcessReader(Process aProcess)
         {
@@ -25,22 +21,9 @@ namespace GitCommands
             stdErrLoaderThread.Start();
         }
 
-        public void WaitForExit()
-        {
-            stdOutputLoaderThread.Join();
-            stdErrLoaderThread.Join();
-            Process.WaitForExit();
-        }
-
-        public string OutputString(Encoding encoding)
-        {
-            return encoding.GetString(Output);
-        }
-
-        public string ErrorString(Encoding encoding)
-        {
-            return encoding.GetString(Error);
-        }
+        public byte[] Error { get; private set; }
+        public byte[] Output { get; private set; }
+        public Process Process { get; private set; }
 
         /// <summary>
         /// This function reads the output to a string. This function can be dangerous, because it returns a string
@@ -78,6 +61,23 @@ namespace GitCommands
             stdOutputLoaderThread.Join();
 
             stdOutput = stdOutputLoader;
+        }
+
+        public string ErrorString(Encoding encoding)
+        {
+            return encoding.GetString(Error);
+        }
+
+        public string OutputString(Encoding encoding)
+        {
+            return encoding.GetString(Output);
+        }
+
+        public void WaitForExit()
+        {
+            stdOutputLoaderThread.Join();
+            stdErrLoaderThread.Join();
+            Process.WaitForExit();
         }
 
         private static byte[] ReadByte(Stream stream)

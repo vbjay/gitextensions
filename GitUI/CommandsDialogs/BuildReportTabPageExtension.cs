@@ -81,29 +81,40 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-        private void RevisionPropertyChanged(object sender, PropertyChangedEventArgs e)
+        private static Task<Stream> DownloadRemoteImageFileAsync(string uri)
         {
-            if (e.PropertyName == "BuildStatus")
-            {
-                // Refresh the selected Git revision
-                this.FillBuildReport(this.selectedGitRevision);
-            }
+            var request = (HttpWebRequest)WebRequest.Create(uri);
+
+            return GetWebResponseAsync(request).ContinueWith(
+                task =>
+                    {
+                        var response = task.Result;
+
+                        // Check that the remote file was found. The ContentType
+                        // check is performed since a request for a non-existent
+                        // image file might be redirected to a 404-page, which would
+                        // yield the StatusCode "OK", even though the image was not
+                        // found.
+                        if ((response.StatusCode == HttpStatusCode.OK ||
+                             response.StatusCode == HttpStatusCode.Moved ||
+                             response.StatusCode == HttpStatusCode.Redirect) &&
+                            response.ContentType.StartsWith("image", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // if the remote file was found, download it
+                            return response.GetResponseStream();
+                        }
+
+                        return null;
+                    },
+                TaskContinuationOptions.ExecuteSynchronously);
         }
 
-        private void CreateBuildReportTabPage(TabControl tabControl)
+        private static Task<HttpWebResponse> GetWebResponseAsync(HttpWebRequest webRequest)
         {
-            this.buildReportTabPage = new TabPage
-            {
-                Padding = new Padding(3),
-                TabIndex = tabControl.Controls.Count,
-                Text = "Build Report",
-                UseVisualStyleBackColor = true
-            };
-            this.buildReportWebBrowser = new WebBrowserCtrl
-            {
-                Dock = DockStyle.Fill
-            };
-            this.buildReportTabPage.Controls.Add(this.buildReportWebBrowser);
+            return Task<HttpWebResponse>.Factory.FromAsync(
+                webRequest.BeginGetResponse,
+                ar => (HttpWebResponse)webRequest.EndGetResponse(ar),
+                null);
         }
 
         private void BuildReportWebBrowserOnNavigated(object sender,
@@ -145,6 +156,22 @@ namespace GitUI.CommandsDialogs
             }
         }
 
+        private void CreateBuildReportTabPage(TabControl tabControl)
+        {
+            this.buildReportTabPage = new TabPage
+            {
+                Padding = new Padding(3),
+                TabIndex = tabControl.Controls.Count,
+                Text = "Build Report",
+                UseVisualStyleBackColor = true
+            };
+            this.buildReportWebBrowser = new WebBrowserCtrl
+            {
+                Dock = DockStyle.Fill
+            };
+            this.buildReportTabPage.Controls.Add(this.buildReportWebBrowser);
+        }
+
         private string DetermineFavIconUrl(HtmlDocument htmlDocument)
         {
             var links = htmlDocument.GetElementsByTagName("link");
@@ -163,40 +190,13 @@ namespace GitUI.CommandsDialogs
             return null;
         }
 
-        private static Task<Stream> DownloadRemoteImageFileAsync(string uri)
+        private void RevisionPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            var request = (HttpWebRequest)WebRequest.Create(uri);
-
-            return GetWebResponseAsync(request).ContinueWith(
-                task =>
-                    {
-                        var response = task.Result;
-
-                        // Check that the remote file was found. The ContentType
-                        // check is performed since a request for a non-existent
-                        // image file might be redirected to a 404-page, which would
-                        // yield the StatusCode "OK", even though the image was not
-                        // found.
-                        if ((response.StatusCode == HttpStatusCode.OK ||
-                             response.StatusCode == HttpStatusCode.Moved ||
-                             response.StatusCode == HttpStatusCode.Redirect) &&
-                            response.ContentType.StartsWith("image", StringComparison.OrdinalIgnoreCase))
-                        {
-                            // if the remote file was found, download it
-                            return response.GetResponseStream();
-                        }
-
-                        return null;
-                    },
-                TaskContinuationOptions.ExecuteSynchronously);
-        }
-
-        private static Task<HttpWebResponse> GetWebResponseAsync(HttpWebRequest webRequest)
-        {
-            return Task<HttpWebResponse>.Factory.FromAsync(
-                webRequest.BeginGetResponse,
-                ar => (HttpWebResponse)webRequest.EndGetResponse(ar),
-                null);
+            if (e.PropertyName == "BuildStatus")
+            {
+                // Refresh the selected Git revision
+                this.FillBuildReport(this.selectedGitRevision);
+            }
         }
     }
 }

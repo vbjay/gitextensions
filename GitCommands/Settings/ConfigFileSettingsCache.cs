@@ -17,6 +17,14 @@ namespace GitCommands.Settings
                 });
         }
 
+        public static ConfigFileSettingsCache Create(string aSettingsFilePath, bool aLocal, bool allowCache = true)
+        {
+            if (allowCache)
+                return FromCache(aSettingsFilePath, aLocal);
+            else
+                return new ConfigFileSettingsCache(aSettingsFilePath, false, aLocal);
+        }
+
         public static ConfigFileSettingsCache FromCache(string aSettingsFilePath, bool aLocal)
         {
             Lazy<ConfigFileSettingsCache> createSettingsCache = new Lazy<ConfigFileSettingsCache>(() =>
@@ -27,23 +35,42 @@ namespace GitCommands.Settings
             return FileSettingsCache.FromCache(aSettingsFilePath, createSettingsCache);
         }
 
-        public static ConfigFileSettingsCache Create(string aSettingsFilePath, bool aLocal, bool allowCache = true)
+        public IList<ConfigSection> GetConfigSections()
         {
-            if (allowCache)
-                return FromCache(aSettingsFilePath, aLocal);
-            else
-                return new ConfigFileSettingsCache(aSettingsFilePath, false, aLocal);
+            return LockedAction(() =>
+            {
+                EnsureSettingsAreUpToDate();
+                return _configFile.Value.ConfigSections;
+            });
         }
 
-        protected override void WriteSettings(string fileName)
+        public IList<string> GetValues(string key)
         {
-            _configFile.Value.Save(fileName);
+            return LockedAction(() =>
+            {
+                EnsureSettingsAreUpToDate();
+                return _configFile.Value.GetValues(key);
+            });
+        }
+
+        public void RemoveConfigSection(string configSectionName)
+        {
+            LockedAction(() =>
+            {
+                EnsureSettingsAreUpToDate();
+                _configFile.Value.RemoveConfigSection(configSectionName);
+            });
         }
 
         protected override void ClearImpl()
         {
             base.ClearImpl();
             ReadSettings(SettingsFilePath);
+        }
+
+        protected override string GetValueImpl(string key)
+        {
+            return _configFile.Value.GetValue(key, null);
         }
 
         protected override void ReadSettings(string fileName)
@@ -66,36 +93,9 @@ namespace GitCommands.Settings
             _configFile.Value.SetValue(key, value);
         }
 
-        protected override string GetValueImpl(string key)
+        protected override void WriteSettings(string fileName)
         {
-            return _configFile.Value.GetValue(key, null);
-        }
-
-        public IList<string> GetValues(string key)
-        {
-            return LockedAction(() =>
-            {
-                EnsureSettingsAreUpToDate();
-                return _configFile.Value.GetValues(key);
-            });
-        }
-
-        public IList<ConfigSection> GetConfigSections()
-        {
-            return LockedAction(() =>
-            {
-                EnsureSettingsAreUpToDate();
-                return _configFile.Value.ConfigSections;
-            });
-        }
-
-        public void RemoveConfigSection(string configSectionName)
-        {
-            LockedAction(() =>
-            {
-                EnsureSettingsAreUpToDate();
-                _configFile.Value.RemoveConfigSection(configSectionName);
-            });
+            _configFile.Value.Save(fileName);
         }
     }
 }

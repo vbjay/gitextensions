@@ -12,9 +12,19 @@ namespace GitUI.Editor.Diff
         {
         }
 
+        protected override List<ISegment> GetAddedLines(IDocument document, ref int line, ref bool found)
+        {
+            return LinePrefixHelper.GetLinesStartingWith(document, ref line, new string[] { "+", " +" }, ref found);
+        }
+
         protected override int GetDiffContentOffset()
         {
             return 2;
+        }
+
+        protected override List<ISegment> GetRemovedLines(IDocument document, ref int line, ref bool found)
+        {
+            return LinePrefixHelper.GetLinesStartingWith(document, ref line, new string[] { "-", " -" }, ref found);
         }
 
         protected override int TryHighlightAddedAndDeletedLines(IDocument document, int line, LineSegment lineSegment)
@@ -26,16 +36,6 @@ namespace GitUI.Editor.Diff
             ProcessLineSegment(document, ref line, lineSegment, "- ", AppSettings.DiffRemovedColor);
             ProcessLineSegment(document, ref line, lineSegment, " -", AppSettings.DiffRemovedColor);
             return line;
-        }
-
-        protected override List<ISegment> GetAddedLines(IDocument document, ref int line, ref bool found)
-        {
-            return LinePrefixHelper.GetLinesStartingWith(document, ref line, new string[] { "+", " +" }, ref found);
-        }
-
-        protected override List<ISegment> GetRemovedLines(IDocument document, ref int line, ref bool found)
-        {
-            return LinePrefixHelper.GetLinesStartingWith(document, ref line, new string[] { "-", " -" }, ref found);
         }
     }
 }

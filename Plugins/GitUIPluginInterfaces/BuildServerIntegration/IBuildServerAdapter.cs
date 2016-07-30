@@ -5,8 +5,6 @@ namespace GitUIPluginInterfaces.BuildServerIntegration
 {
     public interface IBuildServerAdapter : IDisposable
     {
-        void Initialize(IBuildServerWatcher buildServerWatcher, ISettingsSource config);
-
         /// <summary>
         /// Gets a unique key which identifies this build server.
         /// </summary>
@@ -15,5 +13,7 @@ namespace GitUIPluginInterfaces.BuildServerIntegration
         IObservable<BuildInfo> GetFinishedBuildsSince(IScheduler scheduler, DateTime? sinceDate = null);
 
         IObservable<BuildInfo> GetRunningBuilds(IScheduler scheduler);
+
+        void Initialize(IBuildServerWatcher buildServerWatcher, ISettingsSource config);
     }
 }

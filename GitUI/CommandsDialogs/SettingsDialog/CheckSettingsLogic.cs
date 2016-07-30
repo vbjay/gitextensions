@@ -12,12 +12,43 @@ namespace GitUI.CommandsDialogs.SettingsDialog
     public class CheckSettingsLogic
     {
         public readonly CommonLogic CommonLogic;
-        private GitModule Module { get { return CommonLogic.Module; } }
-        private ConfigFileSettings GlobalConfigFileSettings { get { return CommonLogic.ConfigFileSettingsSet.GlobalSettings; } }
 
         public CheckSettingsLogic(CommonLogic commonLogic)
         {
             CommonLogic = commonLogic;
+        }
+
+        private ConfigFileSettings GlobalConfigFileSettings { get { return CommonLogic.ConfigFileSettingsSet.GlobalSettings; } }
+        private GitModule Module { get { return CommonLogic.Module; } }
+
+        public static bool CheckIfFileIsInPath(string fileName)
+        {
+            string foo;
+            return PathUtil.TryFindFullPath(fileName, out foo);
+        }
+
+        public static string GetDiffToolFromConfig(ConfigFileSettings settings)
+        {
+            return settings.GetValue("diff.guitool");
+        }
+
+        public static void SetDiffToolToConfig(ConfigFileSettings settings, string diffTool)
+        {
+            settings.SetValue("diff.guitool", diffTool);
+        }
+
+        public void AutoConfigMergeToolCmd()
+        {
+            string exeName;
+            string exeFile = MergeToolsHelper.FindMergeToolFullPath(CommonLogic.ConfigFileSettingsSet, GetGlobalMergeToolText(), out exeName);
+            if (String.IsNullOrEmpty(exeFile))
+            {
+                SetMergetoolPathText("");
+                SetMergeToolCmdText("");
+            }
+
+            SetMergetoolPathText(exeFile);
+            SetMergeToolCmdText(MergeToolsHelper.AutoConfigMergeToolCmd(GetGlobalMergeToolText(), exeFile));
         }
 
         public bool AutoSolveAllSettings()
@@ -38,15 +69,74 @@ namespace GitUI.CommandsDialogs.SettingsDialog
             return valid;
         }
 
-        private bool SolveEditor()
+        public bool CanFindGitCmd()
         {
-            string editor = CommonLogic.GetGlobalEditor();
-            if (string.IsNullOrEmpty(editor))
+            return !string.IsNullOrEmpty(Module.RunGitCmd(""));
+        }
+
+        public string GetMergeToolCmdText()
+        {
+            return GlobalConfigFileSettings.GetValue(string.Format("mergetool.{0}.cmd", GetGlobalMergeToolText()));
+            // orig (TODO: remove comment and rename method):
+            //// MergeToolCmd.Text
+        }
+
+        public bool SolveDiffToolForKDiff()
+        {
+            string diffTool = GetDiffToolFromConfig(GlobalConfigFileSettings);
+            if (string.IsNullOrEmpty(diffTool))
             {
-                GlobalConfigFileSettings.SetPathValue("core.editor", "\"" + AppSettings.GetGitExtensionsFullPath() + "\" fileeditor");
+                diffTool = "kdiff3";
+                SetDiffToolToConfig(GlobalConfigFileSettings, diffTool);
             }
 
+            if (diffTool.Equals("kdiff3", StringComparison.CurrentCultureIgnoreCase))
+                return SolveDiffToolPathForKDiff();
+
             return true;
+        }
+
+        public bool SolveDiffToolPathForKDiff()
+        {
+            string kdiff3path = MergeToolsHelper.FindPathForKDiff(GlobalConfigFileSettings.GetValue("difftool.kdiff3.path"));
+            if (string.IsNullOrEmpty(kdiff3path))
+                return false;
+
+            GlobalConfigFileSettings.SetPathValue("difftool.kdiff3.path", kdiff3path);
+            return true;
+        }
+
+        public bool SolveGitCommand(string possibleNewPath = null)
+        {
+            if (EnvUtils.RunningOnWindows())
+            {
+                var command = (from cmd in GetWindowsCommandLocations(possibleNewPath)
+                               let output = Module.RunCmd(cmd, string.Empty)
+                               where !string.IsNullOrEmpty(output)
+                               select cmd).FirstOrDefault();
+
+                if (command != null)
+                {
+                    AppSettings.GitCommandValue = command;
+                    return true;
+                }
+                return false;
+            }
+            AppSettings.GitCommandValue = "git";
+            return !string.IsNullOrEmpty(Module.RunGitCmd(""));
+        }
+
+        public bool SolveGitExtensionsDir()
+        {
+            string fileName = AppSettings.GetGitExtensionsDirectory();
+
+            if (Directory.Exists(fileName))
+            {
+                AppSettings.SetInstallDir(fileName);
+                return true;
+            }
+
+            return false;
         }
 
         public bool SolveLinuxToolsDir(string possibleNewPath = null)
@@ -99,6 +189,31 @@ namespace GitUI.CommandsDialogs.SettingsDialog
             return false;
         }
 
+        public bool SolveMergeToolForKDiff()
+        {
+            string mergeTool = CommonLogic.GetGlobalMergeTool();
+            if (string.IsNullOrEmpty(mergeTool))
+            {
+                mergeTool = "kdiff3";
+                GlobalConfigFileSettings.SetValue("merge.tool", mergeTool);
+            }
+
+            if (mergeTool.Equals("kdiff3", StringComparison.CurrentCultureIgnoreCase))
+                return SolveMergeToolPathForKDiff();
+
+            return true;
+        }
+
+        public bool SolveMergeToolPathForKDiff()
+        {
+            string kdiff3path = MergeToolsHelper.FindPathForKDiff(GlobalConfigFileSettings.GetValue("mergetool.kdiff3.path"));
+            if (string.IsNullOrEmpty(kdiff3path))
+                return false;
+
+            GlobalConfigFileSettings.SetPathValue("mergetool.kdiff3.path", kdiff3path);
+            return true;
+        }
+
         private IEnumerable<string> GetGitLocations()
         {
             string envVariable = Environment.GetEnvironmentVariable("GITEXT_GIT");
@@ -124,6 +239,13 @@ namespace GitUI.CommandsDialogs.SettingsDialog
                 "Programs", "Git\\");
         }
 
+        private string GetGlobalMergeToolText()
+        {
+            return GlobalConfigFileSettings.GetValue("merge.tool");
+            // orig (TODO: remove comment and rename method):
+            //// GlobalMergeTool.Text;
+        }
+
         private IEnumerable<string> GetWindowsCommandLocations(string possibleNewPath = null)
         {
             if (!string.IsNullOrEmpty(possibleNewPath) && File.Exists(possibleNewPath))
@@ -147,122 +269,11 @@ namespace GitUI.CommandsDialogs.SettingsDialog
             yield return "git.cmd";
         }
 
-        public bool SolveGitExtensionsDir()
+        private void SetMergeToolCmdText(string text)
         {
-            string fileName = AppSettings.GetGitExtensionsDirectory();
-
-            if (Directory.Exists(fileName))
-            {
-                AppSettings.SetInstallDir(fileName);
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool SolveGitCommand(string possibleNewPath = null)
-        {
-            if (EnvUtils.RunningOnWindows())
-            {
-                var command = (from cmd in GetWindowsCommandLocations(possibleNewPath)
-                               let output = Module.RunCmd(cmd, string.Empty)
-                               where !string.IsNullOrEmpty(output)
-                               select cmd).FirstOrDefault();
-
-                if (command != null)
-                {
-                    AppSettings.GitCommandValue = command;
-                    return true;
-                }
-                return false;
-            }
-            AppSettings.GitCommandValue = "git";
-            return !string.IsNullOrEmpty(Module.RunGitCmd(""));
-        }
-
-        public static bool CheckIfFileIsInPath(string fileName)
-        {
-            string foo;
-            return PathUtil.TryFindFullPath(fileName, out foo);
-        }
-
-        public bool SolveMergeToolForKDiff()
-        {
-            string mergeTool = CommonLogic.GetGlobalMergeTool();
-            if (string.IsNullOrEmpty(mergeTool))
-            {
-                mergeTool = "kdiff3";
-                GlobalConfigFileSettings.SetValue("merge.tool", mergeTool);
-            }
-
-            if (mergeTool.Equals("kdiff3", StringComparison.CurrentCultureIgnoreCase))
-                return SolveMergeToolPathForKDiff();
-
-            return true;
-        }
-
-        public bool SolveDiffToolForKDiff()
-        {
-            string diffTool = GetDiffToolFromConfig(GlobalConfigFileSettings);
-            if (string.IsNullOrEmpty(diffTool))
-            {
-                diffTool = "kdiff3";
-                SetDiffToolToConfig(GlobalConfigFileSettings, diffTool);
-            }
-
-            if (diffTool.Equals("kdiff3", StringComparison.CurrentCultureIgnoreCase))
-                return SolveDiffToolPathForKDiff();
-
-            return true;
-        }
-
-        public static string GetDiffToolFromConfig(ConfigFileSettings settings)
-        {
-            return settings.GetValue("diff.guitool");
-        }
-
-        public static void SetDiffToolToConfig(ConfigFileSettings settings, string diffTool)
-        {
-            settings.SetValue("diff.guitool", diffTool);
-        }
-
-        public bool SolveDiffToolPathForKDiff()
-        {
-            string kdiff3path = MergeToolsHelper.FindPathForKDiff(GlobalConfigFileSettings.GetValue("difftool.kdiff3.path"));
-            if (string.IsNullOrEmpty(kdiff3path))
-                return false;
-
-            GlobalConfigFileSettings.SetPathValue("difftool.kdiff3.path", kdiff3path);
-            return true;
-        }
-
-        public bool SolveMergeToolPathForKDiff()
-        {
-            string kdiff3path = MergeToolsHelper.FindPathForKDiff(GlobalConfigFileSettings.GetValue("mergetool.kdiff3.path"));
-            if (string.IsNullOrEmpty(kdiff3path))
-                return false;
-
-            GlobalConfigFileSettings.SetPathValue("mergetool.kdiff3.path", kdiff3path);
-            return true;
-        }
-
-        public bool CanFindGitCmd()
-        {
-            return !string.IsNullOrEmpty(Module.RunGitCmd(""));
-        }
-
-        public void AutoConfigMergeToolCmd()
-        {
-            string exeName;
-            string exeFile = MergeToolsHelper.FindMergeToolFullPath(CommonLogic.ConfigFileSettingsSet, GetGlobalMergeToolText(), out exeName);
-            if (String.IsNullOrEmpty(exeFile))
-            {
-                SetMergetoolPathText("");
-                SetMergeToolCmdText("");
-            }
-
-            SetMergetoolPathText(exeFile);
-            SetMergeToolCmdText(MergeToolsHelper.AutoConfigMergeToolCmd(GetGlobalMergeToolText(), exeFile));
+            GlobalConfigFileSettings.SetPathValue(string.Format("mergetool.{0}.cmd", GetGlobalMergeToolText()), text);
+            // orig (TODO: remove comment and rename method):
+            //// MergeToolCmd.Text = ...
         }
 
         private void SetMergetoolPathText(string text)
@@ -272,25 +283,15 @@ namespace GitUI.CommandsDialogs.SettingsDialog
             //// MergetoolPath.Text = ...
         }
 
-        private void SetMergeToolCmdText(string text)
+        private bool SolveEditor()
         {
-            GlobalConfigFileSettings.SetPathValue(string.Format("mergetool.{0}.cmd", GetGlobalMergeToolText()), text);
-            // orig (TODO: remove comment and rename method):
-            //// MergeToolCmd.Text = ...
-        }
+            string editor = CommonLogic.GetGlobalEditor();
+            if (string.IsNullOrEmpty(editor))
+            {
+                GlobalConfigFileSettings.SetPathValue("core.editor", "\"" + AppSettings.GetGitExtensionsFullPath() + "\" fileeditor");
+            }
 
-        private string GetGlobalMergeToolText()
-        {
-            return GlobalConfigFileSettings.GetValue("merge.tool");
-            // orig (TODO: remove comment and rename method):
-            //// GlobalMergeTool.Text;
-        }
-
-        public string GetMergeToolCmdText()
-        {
-            return GlobalConfigFileSettings.GetValue(string.Format("mergetool.{0}.cmd", GetGlobalMergeToolText()));
-            // orig (TODO: remove comment and rename method):
-            //// MergeToolCmd.Text
+            return true;
         }
     }
 }

@@ -11,17 +11,6 @@ namespace GitCommands
     public abstract class GitCommand
     {
         /// <summary>
-        /// here commands should add theirs arguments
-        /// </summary>
-        public abstract IEnumerable<string> CollectArguments();
-
-        /// <summary>
-        ///
-        /// </summary>
-        /// <returns>name of git command eg. push, pull</returns>
-        public abstract string GitComandName();
-
-        /// <summary>
         ///
         /// </summary>
         /// <returns>if command accesses remote repository</returns>
@@ -32,6 +21,17 @@ namespace GitCommands
         /// </summary>
         /// <returns>true if repo state changes after executing this command</returns>
         public abstract bool ChangesRepoState();
+
+        /// <summary>
+        /// here commands should add theirs arguments
+        /// </summary>
+        public abstract IEnumerable<string> CollectArguments();
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <returns>name of git command eg. push, pull</returns>
+        public abstract string GitComandName();
 
         /// <summary>
         ///

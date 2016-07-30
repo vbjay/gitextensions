@@ -42,6 +42,15 @@ namespace GitUI.CommandsDialogs
             }
         }
 
+        private void BrowseClick(object sender, EventArgs e)
+        {
+            using (var browseDialog = new FolderBrowserDialog())
+            {
+                if (browseDialog.ShowDialog(this) == DialogResult.OK)
+                    Directory.Text = browseDialog.SelectedPath;
+            }
+        }
+
         private void DirectoryDropDown(object sender, EventArgs e)
         {
             Directory.DataSource = Repositories.RepositoryHistory.Repositories;
@@ -75,15 +84,6 @@ namespace GitUI.CommandsDialogs
             Repositories.AddMostRecentRepository(Directory.Text);
 
             Close();
-        }
-
-        private void BrowseClick(object sender, EventArgs e)
-        {
-            using (var browseDialog = new FolderBrowserDialog())
-            {
-                if (browseDialog.ShowDialog(this) == DialogResult.OK)
-                    Directory.Text = browseDialog.SelectedPath;
-            }
         }
     }
 }

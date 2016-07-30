@@ -6,19 +6,20 @@ namespace Gerrit
 {
     public class FormGerritBase : GitExtensionsForm
     {
-        protected GerritSettings Settings { get; private set; }
         protected readonly IGitUICommands UICommands;
-        protected IGitModule Module { get { return UICommands.GitModule; } }
-
-        private FormGerritBase()
-            : this(null)
-        { }
 
         protected FormGerritBase(IGitUICommands agitUiCommands)
             : base(true)
         {
             UICommands = agitUiCommands;
         }
+
+        private FormGerritBase()
+            : this(null)
+        { }
+
+        protected IGitModule Module { get { return UICommands.GitModule; } }
+        protected GerritSettings Settings { get; private set; }
 
         protected override void OnLoad(EventArgs e)
         {

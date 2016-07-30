@@ -10,24 +10,24 @@ namespace DeleteUnusedBranches
     /// </summary>
     internal sealed class SortableBranchesList : BindingList<Branch>
     {
-        public void AddRange(IEnumerable<Branch> branches)
-        {
-            Branches.AddRange(branches);
-        }
-
         protected override bool SupportsSortingCore
         {
             get { return true; }
         }
 
-        protected override void ApplySortCore(PropertyDescriptor propertyDescriptor, ListSortDirection direction)
-        {
-            Branches.Sort(BranchesComparer.Create(propertyDescriptor, direction == ListSortDirection.Descending));
-        }
-
         private List<Branch> Branches
         {
             get { return (List<Branch>)Items; }
+        }
+
+        public void AddRange(IEnumerable<Branch> branches)
+        {
+            Branches.AddRange(branches);
+        }
+
+        protected override void ApplySortCore(PropertyDescriptor propertyDescriptor, ListSortDirection direction)
+        {
+            Branches.Sort(BranchesComparer.Create(propertyDescriptor, direction == ListSortDirection.Descending));
         }
 
         private static class BranchesComparer

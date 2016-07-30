@@ -17,11 +17,11 @@
             }
         }
 
-        protected override void SettingsToPage()
+        protected override void PageToSettings()
         {
         }
 
-        protected override void PageToSettings()
+        protected override void SettingsToPage()
         {
         }
     }

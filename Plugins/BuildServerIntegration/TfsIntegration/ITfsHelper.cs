@@ -16,21 +16,21 @@ namespace TfsInterop.Interface
 
     public interface IBuild
     {
+        string Description { get; set; }
         string Id { get; set; }
+        bool IsFinished { get; set; }
         string Label { get; set; }
+        string Revision { get; set; }
         DateTime StartDate { get; set; }
         BuildStatus Status { get; set; }
-        bool IsFinished { get; set; }
-        string Description { get; set; }
-        string Revision { get; set; }
         string Url { get; set; }
     }
 
     public interface ITfsHelper : IDisposable
     {
-        bool IsDependencyOk();
-
         void ConnectToTfsServer(string hostname, string teamCollection, string projectName, Regex buildDefinitionFilter = null);
+
+        bool IsDependencyOk();
 
         IList<IBuild> QueryBuilds(DateTime? sinceDate, bool? running);
     }

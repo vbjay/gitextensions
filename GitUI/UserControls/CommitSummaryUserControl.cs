@@ -12,12 +12,15 @@ namespace GitUI.UserControls
     /// </summary>
     public partial class CommitSummaryUserControl : GitExtensionsControl
     {
+        private readonly Color _branchesBackColor = Color.LightSalmon;
+        private readonly string _branchesCaption;
+        private readonly int _messageHeight;
+        private readonly int _messageY;
         private readonly TranslationString _noRevision = new TranslationString("No revision");
         private readonly TranslationString _notAvailable = new TranslationString("n/a");
-        private readonly string _tagsCaption;
-        private readonly string _branchesCaption;
         private readonly Color _tagsBackColor = Color.LightSteelBlue;
-        private readonly Color _branchesBackColor = Color.LightSalmon;
+        private readonly string _tagsCaption;
+        private GitRevision _revision;
 
         public CommitSummaryUserControl()
         {
@@ -30,11 +33,6 @@ namespace GitUI.UserControls
             _messageHeight = labelMessage.Height;
             labelMessage.AutoSize = true;
         }
-
-        private GitRevision _revision;
-
-        private readonly int _messageY;
-        private readonly int _messageHeight;
 
         public GitRevision Revision
         {
@@ -96,16 +94,16 @@ namespace GitUI.UserControls
             }
         }
 
+        private void groupBox1_Resize(object sender, EventArgs e)
+        {
+            labelMessage.MaximumSize = new Size(groupBox1.Width - 15, labelMessage.MaximumSize.Height);
+        }
+
         private void labelMessage_SizeChanged(object sender, EventArgs e)
         {
             labelMessage.Location = new Point(
                 labelMessage.Location.X,
                 (int)(_messageY + _messageHeight / 2.0 - labelMessage.Height / 2.0));
-        }
-
-        private void groupBox1_Resize(object sender, EventArgs e)
-        {
-            labelMessage.MaximumSize = new Size(groupBox1.Width - 15, labelMessage.MaximumSize.Height);
         }
     }
 }

@@ -10,11 +10,15 @@ namespace GitUI
     {
         private static readonly MouseWheelRedirector instance = new MouseWheelRedirector();
 
+        private bool _active;
+
+        private bool _GEControl;
+
+        private IntPtr _previousHWnd = IntPtr.Zero;
+
         private MouseWheelRedirector()
         {
         }
-
-        private bool _active;
 
         public static bool Active
         {
@@ -31,9 +35,6 @@ namespace GitUI
                 }
             }
         }
-
-        private IntPtr _previousHWnd = IntPtr.Zero;
-        private bool _GEControl;
 
         public bool PreFilterMessage(ref Message m)
         {
@@ -66,13 +67,13 @@ namespace GitUI
 
         private static class NativeMethods
         {
+            [DllImport("user32.dll")]
+            public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wp, IntPtr lp);
+
             // P/Invoke declarations
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Portability", "CA1901:PInvokeDeclarationsShouldBePortable", MessageId = "0", Justification = "https://social.msdn.microsoft.com/Forums/en-US/180fcf90-ff90-45b2-839f-438eb17f2f07/is-this-a-bug-in-vs-code-analysis?forum=vstscode")]
             [DllImport("user32.dll")]
             public static extern IntPtr WindowFromPoint(POINT pt);
-
-            [DllImport("user32.dll")]
-            public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wp, IntPtr lp);
 
             [StructLayout(LayoutKind.Sequential)]
             public struct POINT

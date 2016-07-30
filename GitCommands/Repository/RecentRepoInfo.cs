@@ -7,13 +7,6 @@ namespace GitCommands.Repository
 {
     public class RecentRepoInfo
     {
-        public Repository Repo { get; set; }
-        public string Caption { get; set; }
-        public bool MostRecent { get; set; }
-        public DirectoryInfo DirInfo { get; set; }
-        public string ShortName { get; set; }
-        public string DirName { get; set; }
-
         public RecentRepoInfo(Repository aRepo, bool aMostRecent)
         {
             Repo = aRepo;
@@ -39,10 +32,18 @@ namespace GitCommands.Repository
             DirName = DirInfo == null ? "" : DirInfo.FullName;
         }
 
+        public string Caption { get; set; }
+        public DirectoryInfo DirInfo { get; set; }
+        public string DirName { get; set; }
+
         public bool FullPath
         {
             get { return DirInfo == null; }
         }
+
+        public bool MostRecent { get; set; }
+        public Repository Repo { get; set; }
+        public string ShortName { get; set; }
 
         public override string ToString()
         {
@@ -52,20 +53,9 @@ namespace GitCommands.Repository
 
     public class RecentRepoSplitter
     {
-        public static readonly string ShorteningStrategy_None = "";
-        public static readonly string ShorteningStrategy_MostSignDir = "MostSignDir";
         public static readonly string ShorteningStrategy_MiddleDots = "MiddleDots";
-
-        public int MaxRecentRepositories { get; set; }
-        public string ShorteningStrategy { get; set; }
-        public bool SortMostRecentRepos { get; set; }
-        public bool SortLessRecentRepos { get; set; }
-        public int RecentReposComboMinWidth { get; set; }
-
-        //need to be set before shortening using middleDots strategy
-        public Graphics Graphics { get; set; }
-
-        public Font MeasureFont { get; set; }
+        public static readonly string ShorteningStrategy_MostSignDir = "MostSignDir";
+        public static readonly string ShorteningStrategy_None = "";
 
         public RecentRepoSplitter()
         {
@@ -75,6 +65,16 @@ namespace GitCommands.Repository
             SortLessRecentRepos = AppSettings.SortLessRecentRepos;
             RecentReposComboMinWidth = AppSettings.RecentReposComboMinWidth;
         }
+
+        //need to be set before shortening using middleDots strategy
+        public Graphics Graphics { get; set; }
+
+        public int MaxRecentRepositories { get; set; }
+        public Font MeasureFont { get; set; }
+        public int RecentReposComboMinWidth { get; set; }
+        public string ShorteningStrategy { get; set; }
+        public bool SortLessRecentRepos { get; set; }
+        public bool SortMostRecentRepos { get; set; }
 
         public void SplitRecentRepos(ICollection<Repository> recentRepositories, List<RecentRepoInfo> mostRecentRepoList, List<RecentRepoInfo> lessRecentRepoList)
         {
@@ -142,61 +142,6 @@ namespace GitCommands.Repository
                 addSortedRepos(false, lessRecentRepoList);
             else
                 addNotSortedRepos(lessRecentRepos, lessRecentRepoList);
-        }
-
-        private void AddToOrderedSignDir(SortedList<string, List<RecentRepoInfo>> orderedRepos, RecentRepoInfo repoInfo, bool shortenPath)
-        {
-            List<RecentRepoInfo> list = null;
-            bool existsShortName;
-            //if there is no short name for a repo, then try to find unique caption extendig short directory path
-            if (shortenPath && repoInfo.DirInfo != null)
-            {
-                string s = repoInfo.DirName.Substring(repoInfo.DirInfo.FullName.Length);
-                if (!s.IsNullOrEmpty())
-                    s = s.Trim(Path.DirectorySeparatorChar);
-                //candidate for short name
-                repoInfo.Caption = repoInfo.ShortName;
-                if (!s.IsNullOrEmpty())
-                    repoInfo.Caption += " (" + s + ")";
-                repoInfo.DirInfo = repoInfo.DirInfo.Parent;
-            }
-            else
-                repoInfo.Caption = repoInfo.Repo.Path;
-
-            existsShortName = orderedRepos.TryGetValue(repoInfo.Caption, out list);
-            if (!existsShortName)
-            {
-                list = new List<RecentRepoInfo>();
-                orderedRepos.Add(repoInfo.Caption, list);
-            }
-
-            List<RecentRepoInfo> tmpList = new List<RecentRepoInfo>();
-            if (existsShortName)
-                for (int i = list.Count - 1; i >= 0; i--)
-                {
-                    RecentRepoInfo r = list[i];
-                    if (!r.FullPath)
-                    {
-                        tmpList.Add(r);
-                        list.RemoveAt(i);
-                    }
-                }
-
-            if (repoInfo.FullPath || !existsShortName)
-                list.Add(repoInfo);
-            else
-                tmpList.Add(repoInfo);
-
-            //find unique caption for repos with no title
-            foreach (RecentRepoInfo r in tmpList)
-                AddToOrderedSignDir(orderedRepos, r, shortenPath);
-        }
-
-        private string MakePath(string l, string r)
-        {
-            if (l == null)
-                return r;
-            return Path.Combine(l, r);
         }
 
         private void AddToOrderedMiddleDots(SortedList<string, List<RecentRepoInfo>> orderedRepos, RecentRepoInfo repoInfo)
@@ -334,6 +279,61 @@ namespace GitCommands.Repository
                 orderedRepos.Add(repoInfo.Caption, list);
             }
             list.Add(repoInfo);
+        }
+
+        private void AddToOrderedSignDir(SortedList<string, List<RecentRepoInfo>> orderedRepos, RecentRepoInfo repoInfo, bool shortenPath)
+        {
+            List<RecentRepoInfo> list = null;
+            bool existsShortName;
+            //if there is no short name for a repo, then try to find unique caption extendig short directory path
+            if (shortenPath && repoInfo.DirInfo != null)
+            {
+                string s = repoInfo.DirName.Substring(repoInfo.DirInfo.FullName.Length);
+                if (!s.IsNullOrEmpty())
+                    s = s.Trim(Path.DirectorySeparatorChar);
+                //candidate for short name
+                repoInfo.Caption = repoInfo.ShortName;
+                if (!s.IsNullOrEmpty())
+                    repoInfo.Caption += " (" + s + ")";
+                repoInfo.DirInfo = repoInfo.DirInfo.Parent;
+            }
+            else
+                repoInfo.Caption = repoInfo.Repo.Path;
+
+            existsShortName = orderedRepos.TryGetValue(repoInfo.Caption, out list);
+            if (!existsShortName)
+            {
+                list = new List<RecentRepoInfo>();
+                orderedRepos.Add(repoInfo.Caption, list);
+            }
+
+            List<RecentRepoInfo> tmpList = new List<RecentRepoInfo>();
+            if (existsShortName)
+                for (int i = list.Count - 1; i >= 0; i--)
+                {
+                    RecentRepoInfo r = list[i];
+                    if (!r.FullPath)
+                    {
+                        tmpList.Add(r);
+                        list.RemoveAt(i);
+                    }
+                }
+
+            if (repoInfo.FullPath || !existsShortName)
+                list.Add(repoInfo);
+            else
+                tmpList.Add(repoInfo);
+
+            //find unique caption for repos with no title
+            foreach (RecentRepoInfo r in tmpList)
+                AddToOrderedSignDir(orderedRepos, r, shortenPath);
+        }
+
+        private string MakePath(string l, string r)
+        {
+            if (l == null)
+                return r;
+            return Path.Combine(l, r);
         }
     }
 }

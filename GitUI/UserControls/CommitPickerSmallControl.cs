@@ -8,6 +8,8 @@ namespace GitUI.UserControls
 {
     public partial class CommitPickerSmallControl : GitModuleControl
     {
+        private string _selectedCommitHash;
+
         public CommitPickerSmallControl()
         {
             InitializeComponent();
@@ -15,9 +17,6 @@ namespace GitUI.UserControls
         }
 
         ////public event EventHandler<EventArgs> OnCommitSelected;
-
-        private string _selectedCommitHash;
-
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string SelectedCommitHash

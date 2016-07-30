@@ -48,6 +48,16 @@ namespace GitUI.CommandsDialogs
         }
 
         /// <summary>
+        /// Fires for the view to show a confirmation msgbox on the matter.
+        /// </summary>
+        public event EventHandler<ComfirmAdjustingRulesOnDeactEventArgs> ComfirmAdjustingRulesOnDeactRequested = delegate { };
+
+        /// <summary>
+        /// Fires on any prop change. Lightweight reactive.
+        /// </summary>
+        public event PropertyChangedEventHandler PropertyChanged = delegate { };
+
+        /// <summary>
         /// Whether to run the cmd to refresh WC when closing w/save.
         /// </summary>
         public bool IsRefreshWorkingCopyOnSave
@@ -197,16 +207,6 @@ namespace GitUI.CommandsDialogs
                 throw new ArgumentNullException("text");
             _sRulesTextAsOnDisk = text;
         }
-
-        /// <summary>
-        /// Fires for the view to show a confirmation msgbox on the matter.
-        /// </summary>
-        public event EventHandler<ComfirmAdjustingRulesOnDeactEventArgs> ComfirmAdjustingRulesOnDeactRequested = delegate { };
-
-        /// <summary>
-        /// Fires on any prop change. Lightweight reactive.
-        /// </summary>
-        public event PropertyChangedEventHandler PropertyChanged = delegate { };
 
         /// <summary>
         /// Make sure WC gets unsparsed when turning off sparse.

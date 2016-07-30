@@ -23,6 +23,11 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             Translate();
         }
 
+        public override bool IsInstantSavePage
+        {
+            get { return false; }
+        }
+
         protected override void Init(ISettingsPageHost aPageHost)
         {
             base.Init(aPageHost);
@@ -52,24 +57,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
                         TaskScheduler.FromCurrentSynchronizationContext());
         }
 
-        public override bool IsInstantSavePage
-        {
-            get { return false; }
-        }
-
-        protected override void SettingsToPage()
-        {
-            _populateBuildServerTypeTask.ContinueWith(
-                task =>
-                {
-                    checkBoxEnableBuildServerIntegration.SetNullableChecked(CurrentSettings.BuildServer.EnableIntegration.Value);
-                    checkBoxShowBuildSummary.SetNullableChecked(CurrentSettings.BuildServer.ShowBuildSummaryInGrid.Value);
-
-                    BuildServerType.SelectedItem = CurrentSettings.BuildServer.Type.Value ?? _noneItem.Text;
-                },
-                TaskScheduler.FromCurrentSynchronizationContext());
-        }
-
         protected override void PageToSettings()
         {
             CurrentSettings.BuildServer.EnableIntegration.Value = checkBoxEnableBuildServerIntegration.GetNullableChecked();
@@ -84,6 +71,19 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
                                         .SingleOrDefault();
             if (control != null)
                 control.SaveSettings(CurrentSettings.BuildServer.TypeSettings);
+        }
+
+        protected override void SettingsToPage()
+        {
+            _populateBuildServerTypeTask.ContinueWith(
+                task =>
+                {
+                    checkBoxEnableBuildServerIntegration.SetNullableChecked(CurrentSettings.BuildServer.EnableIntegration.Value);
+                    checkBoxShowBuildSummary.SetNullableChecked(CurrentSettings.BuildServer.ShowBuildSummaryInGrid.Value);
+
+                    BuildServerType.SelectedItem = CurrentSettings.BuildServer.Type.Value ?? _noneItem.Text;
+                },
+                TaskScheduler.FromCurrentSynchronizationContext());
         }
 
         private void ActivateBuildServerSettingsControl()
@@ -102,6 +102,11 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
 
                 buildServerSettingsPanel.Controls.Add((Control)control);
             }
+        }
+
+        private void BuildServerType_SelectedIndexChanged(object sender, System.EventArgs e)
+        {
+            ActivateBuildServerSettingsControl();
         }
 
         private IBuildServerSettingsUserControl CreateBuildServerSettingsUserControl()
@@ -127,11 +132,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             if (BuildServerType.SelectedIndex == 0)
                 return null;
             return (string)BuildServerType.SelectedItem;
-        }
-
-        private void BuildServerType_SelectedIndexChanged(object sender, System.EventArgs e)
-        {
-            ActivateBuildServerSettingsControl();
         }
     }
 }

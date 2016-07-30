@@ -6,24 +6,29 @@ using PatchApply;
 
 namespace GitUI.Editor.Diff
 {
+    public class DiffLineNum
+    {
+        public static readonly int NotApplicableLineNum = -1;
+
+        public enum DiffLineStyle
+        {
+            Header,
+            Plus,
+            Minus,
+            Context
+        }
+
+        public int LeftLineNum { get; set; }
+        public int LineNumInDiff { get; set; }
+        public int RightLineNum { get; set; }
+        public DiffLineStyle Style { get; set; }
+    }
+
     public class DiffLineNumAnalyzer
     {
         private static Regex regex = new Regex(
             @"\-(?<leftStart>\d{1,})\,{0,}(?<leftCount>\d{0,})\s\+(?<rightStart>\d{1,})\,{0,}(?<rightCount>\d{0,})",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-        public class Result
-        {
-            public Dictionary<int, DiffLineNum> LineNumbers = new Dictionary<int, DiffLineNum>();
-            public int MaxLineNumber = 0;
-        }
-
-        private void AddToResult(Result result, DiffLineNum diffLine)
-        {
-            result.LineNumbers.Add(diffLine.LineNumInDiff, diffLine);
-            result.MaxLineNumber = Math.Max(result.MaxLineNumber,
-                Math.Max(diffLine.LeftLineNum, diffLine.RightLineNum));
-        }
 
         public Result Analyze(string diffContent)
         {
@@ -140,6 +145,11 @@ namespace GitUI.Editor.Diff
             return line.StartsWith("-");
         }
 
+        private static bool IsMinusLineInCombinedDiff(string line)
+        {
+            return line.StartsWith("--") || line.StartsWith("- ") || line.StartsWith(" -");
+        }
+
         private static bool IsPlusLine(string line)
         {
             return line.StartsWith("+");
@@ -150,26 +160,17 @@ namespace GitUI.Editor.Diff
             return line.StartsWith("++") || line.StartsWith("+ ") || line.StartsWith(" +");
         }
 
-        private static bool IsMinusLineInCombinedDiff(string line)
+        private void AddToResult(Result result, DiffLineNum diffLine)
         {
-            return line.StartsWith("--") || line.StartsWith("- ") || line.StartsWith(" -");
-        }
-    }
-
-    public class DiffLineNum
-    {
-        public enum DiffLineStyle
-        {
-            Header,
-            Plus,
-            Minus,
-            Context
+            result.LineNumbers.Add(diffLine.LineNumInDiff, diffLine);
+            result.MaxLineNumber = Math.Max(result.MaxLineNumber,
+                Math.Max(diffLine.LeftLineNum, diffLine.RightLineNum));
         }
 
-        public static readonly int NotApplicableLineNum = -1;
-        public int LineNumInDiff { get; set; }
-        public int LeftLineNum { get; set; }
-        public int RightLineNum { get; set; }
-        public DiffLineStyle Style { get; set; }
+        public class Result
+        {
+            public Dictionary<int, DiffLineNum> LineNumbers = new Dictionary<int, DiffLineNum>();
+            public int MaxLineNumber = 0;
+        }
     }
 }

@@ -16,10 +16,6 @@ namespace GitUI
     [Serializable]
     public class WindowPosition
     {
-        protected WindowPosition()
-        {
-        }
-
         public WindowPosition(Rectangle rect, FormWindowState state, string name)
         {
             Rect = rect;
@@ -27,16 +23,18 @@ namespace GitUI
             Name = name;
         }
 
+        protected WindowPosition()
+        {
+        }
+
+        public string Name { get; set; }
         public Rectangle Rect { get; set; }
         public FormWindowState State { get; set; }
-        public string Name { get; set; }
     }
 
     [Serializable]
     public class WindowPositionList
     {
-        public List<WindowPosition> WindowPositions { get; set; }
-
         private static readonly string AppDataDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GitExtensions");
 
@@ -55,16 +53,7 @@ namespace GitUI
             WindowPositions = new List<WindowPosition>();
         }
 
-        public WindowPosition Get(string name)
-        {
-            return WindowPositions.FirstOrDefault(r => r.Name == name);
-        }
-
-        public void AddOrUpdate(WindowPosition pos)
-        {
-            WindowPositions.RemoveAll(r => r.Name == pos.Name);
-            WindowPositions.Add(pos);
-        }
+        public List<WindowPosition> WindowPositions { get; set; }
 
         public static WindowPositionList Load()
         {
@@ -84,6 +73,17 @@ namespace GitUI
             {
                 return new WindowPositionList();
             }
+        }
+
+        public void AddOrUpdate(WindowPosition pos)
+        {
+            WindowPositions.RemoveAll(r => r.Name == pos.Name);
+            WindowPositions.Add(pos);
+        }
+
+        public WindowPosition Get(string name)
+        {
+            return WindowPositions.FirstOrDefault(r => r.Name == name);
         }
 
         public void Save()

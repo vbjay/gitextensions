@@ -12,9 +12,9 @@ namespace GitUI.Editor.Diff
     {
         private const int TextHorizontalMargin = 4;
 
+        private Size _lastSize = new Size(0, 0);
         private int _maxValueOfLineNum;
         private bool _visible = true;
-        private Size _lastSize = new Size(0, 0);
 
         public DiffViewerLineNumberCtrl(TextArea textArea) : base(textArea)
         {
@@ -39,6 +39,40 @@ namespace GitUI.Editor.Diff
 
                 return _lastSize;
             }
+        }
+
+        private Dictionary<int, DiffLineNum> DiffLines { get; set; }
+
+        public void Clear(bool forDiff)
+        {
+            if (!forDiff)
+            {
+                _lastSize = new Size(0, 0);
+            }
+            DiffLines.Clear();
+        }
+
+        public void DisplayLineNumFor(string diff)
+        {
+            var result = new DiffLineNumAnalyzer().Analyze(diff);
+            DiffLines = result.LineNumbers;
+            _maxValueOfLineNum = result.MaxLineNumber;
+        }
+
+        public string GetLineDesc(int lineNumInDiffFile)
+        {
+            DiffLineNum line;
+            if (!DiffLines.TryGetValue(lineNumInDiffFile, out line)) return null;
+
+            if (line.LeftLineNum != DiffLineNum.NotApplicableLineNum)
+            {
+                return "L" + line.LeftLineNum;
+            }
+            if (line.RightLineNum != DiffLineNum.NotApplicableLineNum)
+            {
+                return "R" + line.RightLineNum;
+            }
+            return null;
         }
 
         public override void Paint(Graphics g, Rectangle rect)
@@ -111,40 +145,6 @@ namespace GitUI.Editor.Diff
                         new Point(TextHorizontalMargin + totalWidth / 2, backgroundRectangle.Top));
                 }
             }
-        }
-
-        private Dictionary<int, DiffLineNum> DiffLines { get; set; }
-
-        public void DisplayLineNumFor(string diff)
-        {
-            var result = new DiffLineNumAnalyzer().Analyze(diff);
-            DiffLines = result.LineNumbers;
-            _maxValueOfLineNum = result.MaxLineNumber;
-        }
-
-        public void Clear(bool forDiff)
-        {
-            if (!forDiff)
-            {
-                _lastSize = new Size(0, 0);
-            }
-            DiffLines.Clear();
-        }
-
-        public string GetLineDesc(int lineNumInDiffFile)
-        {
-            DiffLineNum line;
-            if (!DiffLines.TryGetValue(lineNumInDiffFile, out line)) return null;
-
-            if (line.LeftLineNum != DiffLineNum.NotApplicableLineNum)
-            {
-                return "L" + line.LeftLineNum;
-            }
-            if (line.RightLineNum != DiffLineNum.NotApplicableLineNum)
-            {
-                return "R" + line.RightLineNum;
-            }
-            return null;
         }
 
         public void SetVisibility(bool visible)

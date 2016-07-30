@@ -21,17 +21,11 @@ namespace GitUI.CommandsDialogs
             new TranslationString("{0} Tags created." + Environment.NewLine + Environment.NewLine +
                                   "Do not forget to delete these tags when finished.");
 
-        private readonly TranslationString selectLostObjectsToRestoreMessage = new TranslationString("Select objects to restore.");
-        private readonly TranslationString selectLostObjectsToRestoreCaption = new TranslationString("Restore lost objects");
-
-        private readonly List<LostObject> lostObjects = new List<LostObject>();
         private readonly SortableLostObjectsList filteredLostObjects = new SortableLostObjectsList();
+        private readonly List<LostObject> lostObjects = new List<LostObject>();
         private readonly DataGridViewCheckBoxHeaderCell selectedItemsHeader = new DataGridViewCheckBoxHeaderCell();
-
-        private FormVerify()
-            : this(null)
-        {
-        }
+        private readonly TranslationString selectLostObjectsToRestoreCaption = new TranslationString("Restore lost objects");
+        private readonly TranslationString selectLostObjectsToRestoreMessage = new TranslationString("Select objects to restore.");
 
         public FormVerify(GitUICommands aCommands)
             : base(aCommands)
@@ -43,69 +37,17 @@ namespace GitUI.CommandsDialogs
             Warnings.AutoGenerateColumns = false;
         }
 
+        private FormVerify()
+                    : this(null)
+        {
+        }
+
         private LostObject CurrentItem
         {
             get { return Warnings.SelectedRows.Count == 0 ? null : filteredLostObjects[Warnings.SelectedRows[0].Index]; }
         }
 
         #region Event Handlers
-
-        private void FormVerifyShown(object sender, EventArgs e)
-        {
-            UpdateLostObjects();
-            Warnings.DataSource = filteredLostObjects;
-        }
-
-        private void SaveObjectsClick(object sender, EventArgs e)
-        {
-            var options = GetOptions();
-
-            FormProcess.ShowDialog(this, "fsck-objects --lost-found" + options);
-            UpdateLostObjects();
-        }
-
-        private void RemoveClick(object sender, EventArgs e)
-        {
-            if (MessageBox.Show(this,
-                _removeDanglingObjectsQuestion.Text,
-                _removeDanglingObjectsCaption.Text,
-                MessageBoxButtons.YesNo) != DialogResult.Yes)
-                return;
-
-            FormProcess.ShowDialog(this, "prune");
-            UpdateLostObjects();
-        }
-
-        private void mnuLostObjectView_Click(object sender, EventArgs e)
-        {
-            ViewCurrentItem();
-        }
-
-        private void mnuLostObjectsCreateTag_Click(object sender, EventArgs e)
-        {
-            using (var frm = new FormCreateTag(UICommands, GetCurrentGitRevision()))
-            {
-                var dialogResult = frm.ShowDialog(this);
-                if (dialogResult == DialogResult.OK)
-                    UpdateLostObjects();
-            }
-        }
-
-        private void mnuLostObjectsCreateBranch_Click(object sender, EventArgs e)
-        {
-            using (var frm = new FormCreateBranch(UICommands, GetCurrentGitRevision()))
-            {
-                var dialogResult = frm.ShowDialog(this);
-                if (dialogResult == DialogResult.OK)
-                    UpdateLostObjects();
-            }
-        }
-
-        private void DeleteAllLostAndFoundTagsClick(object sender, EventArgs e)
-        {
-            DeleteLostFoundTags();
-            UpdateLostObjects();
-        }
 
         private void btnRestoreSelectedObjects_Click(object sender, EventArgs e)
         {
@@ -128,9 +70,16 @@ namespace GitUI.CommandsDialogs
             UpdateLostObjects();
         }
 
-        private void UnreachableCheckedChanged(object sender, EventArgs e)
+        private void DeleteAllLostAndFoundTagsClick(object sender, EventArgs e)
+        {
+            DeleteLostFoundTags();
+            UpdateLostObjects();
+        }
+
+        private void FormVerifyShown(object sender, EventArgs e)
         {
             UpdateLostObjects();
+            Warnings.DataSource = filteredLostObjects;
         }
 
         private void FullCheckCheckedChanged(object sender, EventArgs e)
@@ -138,8 +87,53 @@ namespace GitUI.CommandsDialogs
             UpdateLostObjects();
         }
 
+        private void mnuLostObjectsCreateBranch_Click(object sender, EventArgs e)
+        {
+            using (var frm = new FormCreateBranch(UICommands, GetCurrentGitRevision()))
+            {
+                var dialogResult = frm.ShowDialog(this);
+                if (dialogResult == DialogResult.OK)
+                    UpdateLostObjects();
+            }
+        }
+
+        private void mnuLostObjectsCreateTag_Click(object sender, EventArgs e)
+        {
+            using (var frm = new FormCreateTag(UICommands, GetCurrentGitRevision()))
+            {
+                var dialogResult = frm.ShowDialog(this);
+                if (dialogResult == DialogResult.OK)
+                    UpdateLostObjects();
+            }
+        }
+
+        private void mnuLostObjectView_Click(object sender, EventArgs e)
+        {
+            ViewCurrentItem();
+        }
+
         private void NoReflogsCheckedChanged(object sender, EventArgs e)
         {
+            UpdateLostObjects();
+        }
+
+        private void RemoveClick(object sender, EventArgs e)
+        {
+            if (MessageBox.Show(this,
+                _removeDanglingObjectsQuestion.Text,
+                _removeDanglingObjectsCaption.Text,
+                MessageBoxButtons.YesNo) != DialogResult.Yes)
+                return;
+
+            FormProcess.ShowDialog(this, "prune");
+            UpdateLostObjects();
+        }
+
+        private void SaveObjectsClick(object sender, EventArgs e)
+        {
+            var options = GetOptions();
+
+            FormProcess.ShowDialog(this, "fsck-objects --lost-found" + options);
             UpdateLostObjects();
         }
 
@@ -148,13 +142,9 @@ namespace GitUI.CommandsDialogs
             UpdateFilteredLostObjects();
         }
 
-        // NOTE: hack to select row under cursor on right click and context menu open
-        private void Warnings_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
+        private void UnreachableCheckedChanged(object sender, EventArgs e)
         {
-            if (e.Button == MouseButtons.Right && e.RowIndex != -1)
-            {
-                Warnings.Rows[e.RowIndex].Selected = true;
-            }
+            UpdateLostObjects();
         }
 
         private void Warnings_CellMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
@@ -169,69 +159,32 @@ namespace GitUI.CommandsDialogs
             ViewCurrentItem();
         }
 
+        // NOTE: hack to select row under cursor on right click and context menu open
+        private void Warnings_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right && e.RowIndex != -1)
+            {
+                Warnings.Rows[e.RowIndex].Selected = true;
+            }
+        }
+
         #endregion Event Handlers
 
-        private void UpdateLostObjects()
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
         {
-            Cursor.Current = Cursors.WaitCursor;
-
-            var dialogResult = FormProcess.ReadDialog(this, "fsck-objects" + GetOptions());
-
-            if (FormProcess.IsOperationAborted(dialogResult))
+            if (disposing)
             {
-                DialogResult = DialogResult.Abort;
-                return;
+                selectedItemsHeader.Detach();
+                selectedItemsHeader.Dispose();
+
+                if (components != null)
+                    components.Dispose();
             }
-
-            lostObjects.Clear();
-            lostObjects.AddRange(dialogResult
-                .Split('\r', '\n')
-                .Where(s => !string.IsNullOrEmpty(s))
-                .Select<string, LostObject>((s) => LostObject.TryParse(Module, s))
-                .Where(parsedLostObject => parsedLostObject != null));
-
-            UpdateFilteredLostObjects();
-            Cursor.Current = Cursors.Default;
-        }
-
-        private void UpdateFilteredLostObjects()
-        {
-            SuspendLayout();
-            filteredLostObjects.Clear();
-            filteredLostObjects.AddRange(lostObjects.Where(IsMatchToFilter));
-            //Warnings.DataSource = filteredLostObjects;
-            ResumeLayout();
-        }
-
-        // TODO: add textbox for simple fulltext search/filtering (useful for large repos)
-        private bool IsMatchToFilter(LostObject lostObject)
-        {
-            if (ShowOnlyCommits.Checked)
-                return lostObject.ObjectType == LostObjectType.Commit;
-            return true;
-        }
-
-        private string GetOptions()
-        {
-            var options = string.Empty;
-
-            if (Unreachable.Checked)
-                options += " --unreachable";
-
-            if (FullCheck.Checked)
-                options += " --full";
-
-            if (NoReflogs.Checked)
-                options += " --no-reflogs";
-            return options;
-        }
-
-        private void ViewCurrentItem()
-        {
-            var currenItem = CurrentItem;
-            if (currenItem == null)
-                return;
-            using (var frm = new FormEdit(Module.ShowSha1(currenItem.Hash))) frm.ShowDialog(this);
+            base.Dispose(disposing);
         }
 
         private int CreateLostFoundTags()
@@ -276,21 +229,67 @@ namespace GitUI.CommandsDialogs
             return new GitRevision(Module, currentItem.Hash);
         }
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
+        private string GetOptions()
         {
-            if (disposing)
-            {
-                selectedItemsHeader.Detach();
-                selectedItemsHeader.Dispose();
+            var options = string.Empty;
 
-                if (components != null)
-                    components.Dispose();
+            if (Unreachable.Checked)
+                options += " --unreachable";
+
+            if (FullCheck.Checked)
+                options += " --full";
+
+            if (NoReflogs.Checked)
+                options += " --no-reflogs";
+            return options;
+        }
+
+        // TODO: add textbox for simple fulltext search/filtering (useful for large repos)
+        private bool IsMatchToFilter(LostObject lostObject)
+        {
+            if (ShowOnlyCommits.Checked)
+                return lostObject.ObjectType == LostObjectType.Commit;
+            return true;
+        }
+
+        private void UpdateFilteredLostObjects()
+        {
+            SuspendLayout();
+            filteredLostObjects.Clear();
+            filteredLostObjects.AddRange(lostObjects.Where(IsMatchToFilter));
+            //Warnings.DataSource = filteredLostObjects;
+            ResumeLayout();
+        }
+
+        private void UpdateLostObjects()
+        {
+            Cursor.Current = Cursors.WaitCursor;
+
+            var dialogResult = FormProcess.ReadDialog(this, "fsck-objects" + GetOptions());
+
+            if (FormProcess.IsOperationAborted(dialogResult))
+            {
+                DialogResult = DialogResult.Abort;
+                return;
             }
-            base.Dispose(disposing);
+
+            lostObjects.Clear();
+            lostObjects.AddRange(dialogResult
+                .Split('\r', '\n')
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Select<string, LostObject>((s) => LostObject.TryParse(Module, s))
+                .Where(parsedLostObject => parsedLostObject != null));
+
+            UpdateFilteredLostObjects();
+            Cursor.Current = Cursors.Default;
+        }
+
+        private void ViewCurrentItem()
+        {
+            var currenItem = CurrentItem;
+            if (currenItem == null)
+                return;
+            using (var frm = new FormEdit(Module.ShowSha1(currenItem.Hash))) frm.ShowDialog(this);
         }
     }
 }

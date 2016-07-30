@@ -20,38 +20,18 @@ namespace GitUI.CommandsDialogs.BrowseDialog
             Translate();
         }
 
-        private void GitLogFormLoad(object sender, EventArgs e)
-        {
-            SubscribeToEvents();
-            RefreshLogItems();
-
-            RefreshCommandCacheItems();
-        }
-
-        private void GitLogForm_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            UnsubscribeFromEvents();
-            instance = null;
-        }
-
-        private void RefreshLogItems()
-        {
-            if (TabControl.SelectedTab == tabPageCommandLog)
-                RefreshListBox(LogItems, AppSettings.GitLog.GetCommands().Select(cle => cle.ToString()).ToArray());
-        }
-
-        private void RefreshCommandCacheItems()
-        {
-            if (TabControl.SelectedTab == tabPageCommandCache)
-                RefreshListBox(CommandCacheItems, GitCommandCache.CachedCommands());
-        }
-
         private static void RefreshListBox(ListBox log, string[] items)
         {
             var selectLastIndex = log.Items.Count == 0 || log.SelectedIndex == log.Items.Count - 1;
             log.DataSource = items;
             if (selectLastIndex && log.Items.Count > 0)
                 log.SelectedIndex = log.Items.Count - 1;
+        }
+
+        private void alwaysOnTopCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            TopMost = !TopMost;
+            alwaysOnTopCheckBox.Checked = TopMost;
         }
 
         private void CommandCacheItems_SelectedIndexChanged(object sender, EventArgs e)
@@ -71,27 +51,45 @@ namespace GitUI.CommandsDialogs.BrowseDialog
             }
         }
 
+        private void GitLogForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            UnsubscribeFromEvents();
+            instance = null;
+        }
+
+        private void GitLogFormLoad(object sender, EventArgs e)
+        {
+            SubscribeToEvents();
+            RefreshLogItems();
+
+            RefreshCommandCacheItems();
+        }
+
         private void LogItems_SelectedIndexChanged(object sender, EventArgs e)
         {
             LogOutput.Text = (string)LogItems.SelectedItem;
         }
 
-        private void TabControl_SelectedIndexChanged(object sender, EventArgs e)
+        private void OnCachedCommandsLogChanged(object sender, EventArgs e)
         {
-            RefreshLogItems();
-            RefreshCommandCacheItems();
+            syncContext.Post(_ => RefreshCommandCacheItems(), null);
         }
 
-        private void alwaysOnTopCheckBox_CheckedChanged(object sender, EventArgs e)
+        private void OnCommandsLogChanged(object sender, EventArgs e)
         {
-            TopMost = !TopMost;
-            alwaysOnTopCheckBox.Checked = TopMost;
+            syncContext.Post(_ => RefreshLogItems(), null);
         }
 
-        private void UnsubscribeFromEvents()
+        private void RefreshCommandCacheItems()
         {
-            AppSettings.GitLog.CommandsChanged -= OnCommandsLogChanged;
-            GitCommandCache.CachedCommandsChanged -= OnCachedCommandsLogChanged;
+            if (TabControl.SelectedTab == tabPageCommandCache)
+                RefreshListBox(CommandCacheItems, GitCommandCache.CachedCommands());
+        }
+
+        private void RefreshLogItems()
+        {
+            if (TabControl.SelectedTab == tabPageCommandLog)
+                RefreshListBox(LogItems, AppSettings.GitLog.GetCommands().Select(cle => cle.ToString()).ToArray());
         }
 
         private void SubscribeToEvents()
@@ -100,14 +98,16 @@ namespace GitUI.CommandsDialogs.BrowseDialog
             GitCommandCache.CachedCommandsChanged += OnCachedCommandsLogChanged;
         }
 
-        private void OnCommandsLogChanged(object sender, EventArgs e)
+        private void TabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
-            syncContext.Post(_ => RefreshLogItems(), null);
+            RefreshLogItems();
+            RefreshCommandCacheItems();
         }
 
-        private void OnCachedCommandsLogChanged(object sender, EventArgs e)
+        private void UnsubscribeFromEvents()
         {
-            syncContext.Post(_ => RefreshCommandCacheItems(), null);
+            AppSettings.GitLog.CommandsChanged -= OnCommandsLogChanged;
+            GitCommandCache.CachedCommandsChanged -= OnCachedCommandsLogChanged;
         }
 
         #region Single instance static members

@@ -9,11 +9,19 @@ namespace AutoCompileSubmodules
 {
     public class AutoCompileSubModulesPlugin : GitPluginBase, IGitPluginForRepository
     {
+        private const string DefaultMsBuildPath = @"C:\Windows\Microsoft.NET\Framework\v3.5\msbuild.exe";
+
         private readonly TranslationString _doYouWantBuild =
-            new TranslationString("Do you want to build {0}?\n\n{1}");
+                    new TranslationString("Do you want to build {0}?\n\n{1}");
 
         private readonly TranslationString _enterCorrectMsBuildPath =
             new TranslationString("Please enter correct MSBuild path in the plugin settings dialog and try again.");
+
+        private StringSetting MsBuildArguments = new StringSetting("msbuild.exe arguments", "/p:Configuration=Debug");
+
+        private BoolSetting MsBuildEnabled = new BoolSetting("Enabled", false);
+
+        private StringSetting MsBuildPath = new StringSetting("Path to msbuild.exe", FindMsBuild());
 
         public AutoCompileSubModulesPlugin()
         {
@@ -21,37 +29,12 @@ namespace AutoCompileSubmodules
             Translate();
         }
 
-        private BoolSetting MsBuildEnabled = new BoolSetting("Enabled", false);
-        private StringSetting MsBuildPath = new StringSetting("Path to msbuild.exe", FindMsBuild());
-        private StringSetting MsBuildArguments = new StringSetting("msbuild.exe arguments", "/p:Configuration=Debug");
-
-        private const string DefaultMsBuildPath = @"C:\Windows\Microsoft.NET\Framework\v3.5\msbuild.exe";
-
         private static string FindMsBuild()
         {
             return File.Exists(DefaultMsBuildPath) ? DefaultMsBuildPath : "";
         }
 
         #region IGitPlugin Members
-
-        public override IEnumerable<ISetting> GetSettings()
-        {
-            yield return MsBuildEnabled;
-            yield return MsBuildPath;
-            yield return MsBuildArguments;
-        }
-
-        public override void Register(IGitUICommands gitUiCommands)
-        {
-            // Connect to events
-            gitUiCommands.PostUpdateSubmodules += GitUiCommandsPostUpdateSubmodules;
-        }
-
-        public override void Unregister(IGitUICommands gitUiCommands)
-        {
-            // Connect to events
-            gitUiCommands.PostUpdateSubmodules -= GitUiCommandsPostUpdateSubmodules;
-        }
 
         public override bool Execute(GitUIBaseEventArgs e)
         {
@@ -90,16 +73,26 @@ namespace AutoCompileSubmodules
             return false;
         }
 
-        #endregion IGitPlugin Members
-
-        /// <summary>
-        ///   Automatically compile all solution files found in any submodule
-        /// </summary>
-        private void GitUiCommandsPostUpdateSubmodules(object sender, GitUIPostActionEventArgs e)
+        public override IEnumerable<ISetting> GetSettings()
         {
-            if (e.ActionDone && MsBuildEnabled.ValueOrDefault(Settings))
-                Execute(e);
+            yield return MsBuildEnabled;
+            yield return MsBuildPath;
+            yield return MsBuildArguments;
         }
+
+        public override void Register(IGitUICommands gitUiCommands)
+        {
+            // Connect to events
+            gitUiCommands.PostUpdateSubmodules += GitUiCommandsPostUpdateSubmodules;
+        }
+
+        public override void Unregister(IGitUICommands gitUiCommands)
+        {
+            // Connect to events
+            gitUiCommands.PostUpdateSubmodules -= GitUiCommandsPostUpdateSubmodules;
+        }
+
+        #endregion IGitPlugin Members
 
         private static string SolutionFilesToString(IList<FileInfo> solutionFiles)
         {
@@ -111,6 +104,15 @@ namespace AutoCompileSubmodules
                 solutionString.Append("\n");
             }
             return solutionString.ToString();
+        }
+
+        /// <summary>
+        ///   Automatically compile all solution files found in any submodule
+        /// </summary>
+        private void GitUiCommandsPostUpdateSubmodules(object sender, GitUIPostActionEventArgs e)
+        {
+            if (e.ActionDone && MsBuildEnabled.ValueOrDefault(Settings))
+                Execute(e);
         }
     }
 }

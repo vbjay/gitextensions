@@ -12,11 +12,9 @@ namespace GitUI.SpellChecker
 {
     public class SpellCheckEditControl : NativeWindow, IDisposable
     {
-        public bool IsImeStartingComposition { get; private set; }
-
-        private readonly RichTextBox _richTextBox;
         public List<TextPos> IllFormedLines = new List<TextPos>();
         public List<TextPos> Lines = new List<TextPos>();
+        private readonly RichTextBox _richTextBox;
         private Bitmap _bitmap;
         private Graphics _bufferGraphics;
         private int _lineHeight;
@@ -27,6 +25,27 @@ namespace GitUI.SpellChecker
             _richTextBox = richTextBox;
             // Start receiving messages
             AssignHandle(richTextBox.Handle);
+        }
+
+        public bool IsImeStartingComposition { get; private set; }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposing)
+                return;
+            ReleaseHandle();
+            if (_bitmap != null)
+                _bitmap.Dispose();
+            if (_bufferGraphics != null)
+                _bufferGraphics.Dispose();
+            if (_textBoxGraphics != null)
+                _textBoxGraphics.Dispose();
         }
 
         protected override void WndProc(ref Message m)
@@ -148,6 +167,18 @@ namespace GitUI.SpellChecker
             }
         }
 
+        private void DrawMark(Point start, Point end)
+        {
+            var col = Color.FromArgb(120, 255, 255, 0);
+            var linHeight = LineHeight();
+            using (var pen = new Pen(col, linHeight))
+            {
+                start.Offset(0, -linHeight / 2);
+                end.Offset(0, -linHeight / 2);
+                _bufferGraphics.DrawLine(pen, start, end);
+            }
+        }
+
         private void DrawWave(Point start, Point end)
         {
             var pen = Pens.Red;
@@ -164,18 +195,6 @@ namespace GitUI.SpellChecker
             }
             else
             {
-                _bufferGraphics.DrawLine(pen, start, end);
-            }
-        }
-
-        private void DrawMark(Point start, Point end)
-        {
-            var col = Color.FromArgb(120, 255, 255, 0);
-            var linHeight = LineHeight();
-            using (var pen = new Pen(col, linHeight))
-            {
-                start.Offset(0, -linHeight / 2);
-                end.Offset(0, -linHeight / 2);
                 _bufferGraphics.DrawLine(pen, start, end);
             }
         }
@@ -205,24 +224,5 @@ namespace GitUI.SpellChecker
         };
 
         #endregion Nested type: DrawType
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposing)
-                return;
-            ReleaseHandle();
-            if (_bitmap != null)
-                _bitmap.Dispose();
-            if (_bufferGraphics != null)
-                _bufferGraphics.Dispose();
-            if (_textBoxGraphics != null)
-                _textBoxGraphics.Dispose();
-        }
     }
 }

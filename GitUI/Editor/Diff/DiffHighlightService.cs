@@ -9,8 +9,8 @@ namespace GitUI.Editor.Diff
 {
     public class DiffHighlightService
     {
-        protected readonly LinePrefixHelper LinePrefixHelper = new LinePrefixHelper(new LineSegmentGetter());
         public static DiffHighlightService Instance = new DiffHighlightService();
+        protected readonly LinePrefixHelper LinePrefixHelper = new LinePrefixHelper(new LineSegmentGetter());
 
         protected DiffHighlightService()
         {
@@ -19,6 +19,103 @@ namespace GitUI.Editor.Diff
         public static bool IsCombinedDiff(string diff)
         {
             return PatchProcessor.IsCombinedDiff(diff);
+        }
+
+        public void AddPatchHighlighting(IDocument document)
+        {
+            var markerStrategy = document.MarkerStrategy;
+            markerStrategy.RemoveAll(m => true);
+            bool forceAbort = false;
+
+            AddExtraPatchHighlighting(document);
+
+            for (var line = 0; line < document.TotalNumberOfLines && !forceAbort; line++)
+            {
+                var lineSegment = document.GetLineSegment(line);
+
+                if (lineSegment.TotalLength == 0)
+                    continue;
+
+                if (line == document.TotalNumberOfLines - 1)
+                    forceAbort = true;
+
+                line = TryHighlightAddedAndDeletedLines(document, line, lineSegment);
+
+                ProcessLineSegment(document, ref line, lineSegment, "@", AppSettings.DiffSectionColor);
+                ProcessLineSegment(document, ref line, lineSegment, "\\", AppSettings.DiffSectionColor);
+            }
+        }
+
+        public void HighlightLine(IDocument document, int line, Color color)
+        {
+            if (line >= document.TotalNumberOfLines)
+                return;
+
+            var markerStrategy = document.MarkerStrategy;
+            var lineSegment = document.GetLineSegment(line);
+            markerStrategy.AddMarker(new TextMarker(lineSegment.Offset,
+                                                    lineSegment.Length, TextMarkerType.SolidBlock, color
+                                                    ));
+        }
+
+        public void HighlightLines(IDocument document, int startLine, int endLine, Color color)
+        {
+            if (startLine > endLine || endLine >= document.TotalNumberOfLines)
+                return;
+
+            var markerStrategy = document.MarkerStrategy;
+            var startLineSegment = document.GetLineSegment(startLine);
+            var endLineSegment = document.GetLineSegment(endLine);
+            markerStrategy.AddMarker(new TextMarker(startLineSegment.Offset,
+                                                    endLineSegment.Offset - startLineSegment.Offset + endLineSegment.Length,
+                                                    TextMarkerType.SolidBlock, color
+                                                    ));
+        }
+
+        protected virtual List<ISegment> GetAddedLines(IDocument document, ref int line, ref bool found)
+        {
+            return LinePrefixHelper.GetLinesStartingWith(document, ref line, "+", ref found);
+        }
+
+        protected virtual int GetDiffContentOffset()
+        {
+            return 1;
+        }
+
+        protected virtual List<ISegment> GetRemovedLines(IDocument document, ref int line, ref bool found)
+        {
+            return LinePrefixHelper.GetLinesStartingWith(document, ref line, "-", ref found);
+        }
+
+        protected void ProcessLineSegment(IDocument document, ref int line,
+            LineSegment lineSegment, string prefixStr, Color color)
+        {
+            if (LinePrefixHelper.DoesLineStartWith(document, lineSegment.Offset, prefixStr))
+            {
+                var endLine = document.GetLineSegment(line);
+
+                for (; line < document.TotalNumberOfLines
+                    && LinePrefixHelper.DoesLineStartWith(document, endLine.Offset, prefixStr);
+                    line++)
+                {
+                    endLine = document.GetLineSegment(line);
+                }
+                line--;
+                line--;
+                endLine = document.GetLineSegment(line);
+
+                document.MarkerStrategy.AddMarker(new TextMarker(lineSegment.Offset,
+                                                        (endLine.Offset + endLine.TotalLength) -
+                                                        lineSegment.Offset, TextMarkerType.SolidBlock, color,
+                                                        ColorHelper.GetForeColorForBackColor(color)));
+            }
+        }
+
+        protected virtual int TryHighlightAddedAndDeletedLines(IDocument document, int line, LineSegment lineSegment)
+        {
+            ProcessLineSegment(document, ref line, lineSegment, "+", AppSettings.DiffAddedColor);
+            ProcessLineSegment(document, ref line, lineSegment, "-", AppSettings.DiffRemovedColor);
+            return line;
         }
 
         private static void MarkDifference(IDocument document, List<ISegment> linesRemoved, List<ISegment> linesAdded, int beginOffset)
@@ -112,103 +209,6 @@ namespace GitUI.Editor.Diff
 
                 MarkDifference(document, linesRemoved, linesAdded, diffContentOffset);
             }
-        }
-
-        protected virtual int GetDiffContentOffset()
-        {
-            return 1;
-        }
-
-        protected virtual List<ISegment> GetAddedLines(IDocument document, ref int line, ref bool found)
-        {
-            return LinePrefixHelper.GetLinesStartingWith(document, ref line, "+", ref found);
-        }
-
-        protected virtual List<ISegment> GetRemovedLines(IDocument document, ref int line, ref bool found)
-        {
-            return LinePrefixHelper.GetLinesStartingWith(document, ref line, "-", ref found);
-        }
-
-        protected void ProcessLineSegment(IDocument document, ref int line,
-            LineSegment lineSegment, string prefixStr, Color color)
-        {
-            if (LinePrefixHelper.DoesLineStartWith(document, lineSegment.Offset, prefixStr))
-            {
-                var endLine = document.GetLineSegment(line);
-
-                for (; line < document.TotalNumberOfLines
-                    && LinePrefixHelper.DoesLineStartWith(document, endLine.Offset, prefixStr);
-                    line++)
-                {
-                    endLine = document.GetLineSegment(line);
-                }
-                line--;
-                line--;
-                endLine = document.GetLineSegment(line);
-
-                document.MarkerStrategy.AddMarker(new TextMarker(lineSegment.Offset,
-                                                        (endLine.Offset + endLine.TotalLength) -
-                                                        lineSegment.Offset, TextMarkerType.SolidBlock, color,
-                                                        ColorHelper.GetForeColorForBackColor(color)));
-            }
-        }
-
-        public void AddPatchHighlighting(IDocument document)
-        {
-            var markerStrategy = document.MarkerStrategy;
-            markerStrategy.RemoveAll(m => true);
-            bool forceAbort = false;
-
-            AddExtraPatchHighlighting(document);
-
-            for (var line = 0; line < document.TotalNumberOfLines && !forceAbort; line++)
-            {
-                var lineSegment = document.GetLineSegment(line);
-
-                if (lineSegment.TotalLength == 0)
-                    continue;
-
-                if (line == document.TotalNumberOfLines - 1)
-                    forceAbort = true;
-
-                line = TryHighlightAddedAndDeletedLines(document, line, lineSegment);
-
-                ProcessLineSegment(document, ref line, lineSegment, "@", AppSettings.DiffSectionColor);
-                ProcessLineSegment(document, ref line, lineSegment, "\\", AppSettings.DiffSectionColor);
-            }
-        }
-
-        protected virtual int TryHighlightAddedAndDeletedLines(IDocument document, int line, LineSegment lineSegment)
-        {
-            ProcessLineSegment(document, ref line, lineSegment, "+", AppSettings.DiffAddedColor);
-            ProcessLineSegment(document, ref line, lineSegment, "-", AppSettings.DiffRemovedColor);
-            return line;
-        }
-
-        public void HighlightLine(IDocument document, int line, Color color)
-        {
-            if (line >= document.TotalNumberOfLines)
-                return;
-
-            var markerStrategy = document.MarkerStrategy;
-            var lineSegment = document.GetLineSegment(line);
-            markerStrategy.AddMarker(new TextMarker(lineSegment.Offset,
-                                                    lineSegment.Length, TextMarkerType.SolidBlock, color
-                                                    ));
-        }
-
-        public void HighlightLines(IDocument document, int startLine, int endLine, Color color)
-        {
-            if (startLine > endLine || endLine >= document.TotalNumberOfLines)
-                return;
-
-            var markerStrategy = document.MarkerStrategy;
-            var startLineSegment = document.GetLineSegment(startLine);
-            var endLineSegment = document.GetLineSegment(endLine);
-            markerStrategy.AddMarker(new TextMarker(startLineSegment.Offset,
-                                                    endLineSegment.Offset - startLineSegment.Offset + endLineSegment.Length,
-                                                    TextMarkerType.SolidBlock, color
-                                                    ));
         }
     }
 }

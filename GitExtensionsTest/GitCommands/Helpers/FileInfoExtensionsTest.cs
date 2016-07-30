@@ -18,11 +18,56 @@ namespace GitExtensionsTest.Helpers
         private string _file2Path;
         private string _file3Path;
 
-        private void FillFilePaths()
+        [TestCleanup]
+        public void Cleanup()
         {
-            _file1Path = Path.Combine(Path.GetTempPath(), File1Name);
-            _file2Path = Path.Combine(Path.GetTempPath(), File2Name);
-            _file3Path = Path.Combine(Path.GetTempPath(), File3Name);
+            if (File.Exists(_file1Path))
+                File.Delete(_file1Path);
+            if (File.Exists(_file2Path))
+                File.Delete(_file2Path);
+            if (File.Exists(_file3Path))
+                File.Delete(_file3Path);
+        }
+
+        [TestMethod]
+        public void TestChecksum()
+        {
+            FillFilePaths();
+            CreateTestFiles();
+
+            var file1CheckSum = new FileInfo(_file1Path).CheckSum();
+            var file2CheckSum = new FileInfo(_file2Path).CheckSum();
+
+            Assert.AreEqual(file1CheckSum, file2CheckSum);
+        }
+
+        [TestMethod]
+        public void TestCompare()
+        {
+            FillFilePaths();
+            CreateTestFiles();
+
+            var file1Info = new FileInfo(_file1Path);
+            var file2Info = new FileInfo(_file2Path);
+            var file3Info = new FileInfo(_file3Path);
+
+            Assert.IsTrue(file1Info.Compare(_file2Path));
+            Assert.IsFalse(file1Info.Compare(_file3Path));
+            Assert.IsTrue(file1Info.Compare(file2Info));
+            Assert.IsFalse(file1Info.Compare(file3Info));
+        }
+
+        [TestMethod]
+        public void TestCompareWithNonExistingFile()
+        {
+            Assert.IsFalse(new FileInfo("inexistentFile").Compare("anotherInexistentFile"));
+            Assert.IsFalse(new FileInfo(String.Format("inexistentFolder{0}inexistentFile", Path.PathSeparator)).Compare(String.Format("anotherInexistentFolder{0}anotherInexistentFile", Path.PathSeparator)));
+        }
+
+        [TestMethod]
+        public void TestCompareWithNullFileInfo()
+        {
+            Assert.IsFalse(new FileInfo("inexistentFile").Compare(new FileInfo("anotherInexistentFile")));
         }
 
         private void CreateTestFiles()
@@ -49,59 +94,11 @@ namespace GitExtensionsTest.Helpers
             }
         }
 
-        [TestMethod]
-        public void TestCompare()
+        private void FillFilePaths()
         {
-
-            FillFilePaths();
-            CreateTestFiles();
-
-            var file1Info = new FileInfo(_file1Path);
-            var file2Info = new FileInfo(_file2Path);
-            var file3Info = new FileInfo(_file3Path);
-
-            Assert.IsTrue(file1Info.Compare(_file2Path));
-            Assert.IsFalse(file1Info.Compare(_file3Path));
-            Assert.IsTrue(file1Info.Compare(file2Info));
-            Assert.IsFalse(file1Info.Compare(file3Info));
-
+            _file1Path = Path.Combine(Path.GetTempPath(), File1Name);
+            _file2Path = Path.Combine(Path.GetTempPath(), File2Name);
+            _file3Path = Path.Combine(Path.GetTempPath(), File3Name);
         }
-
-        [TestMethod]
-        public void TestChecksum()
-        {
-            FillFilePaths();
-            CreateTestFiles();
-
-            var file1CheckSum = new FileInfo(_file1Path).CheckSum();
-            var file2CheckSum = new FileInfo(_file2Path).CheckSum();
-
-            Assert.AreEqual(file1CheckSum, file2CheckSum);
-        }
-
-        [TestMethod]
-        public void TestCompareWithNonExistingFile()
-        {
-            Assert.IsFalse(new FileInfo("inexistentFile").Compare("anotherInexistentFile"));
-            Assert.IsFalse(new FileInfo(String.Format("inexistentFolder{0}inexistentFile", Path.PathSeparator)).Compare(String.Format("anotherInexistentFolder{0}anotherInexistentFile", Path.PathSeparator)));
-        }
-
-        [TestMethod]
-        public void TestCompareWithNullFileInfo()
-        {
-            Assert.IsFalse(new FileInfo("inexistentFile").Compare(new FileInfo("anotherInexistentFile")));
-        }
-
-        [TestCleanup]
-        public void Cleanup()
-        {
-            if(File.Exists(_file1Path))
-                File.Delete(_file1Path);
-            if(File.Exists(_file2Path))
-                File.Delete(_file2Path);
-            if(File.Exists(_file3Path))
-                File.Delete(_file3Path);
-        }
-
     }
 }

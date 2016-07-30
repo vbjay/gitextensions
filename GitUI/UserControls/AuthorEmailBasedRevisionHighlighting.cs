@@ -8,13 +8,13 @@ namespace GitUI.UserControls
 {
     internal class AuthorEmailBasedRevisionHighlighting
     {
+        private GitRevision _currentSelectedRevision;
+
         public enum SelectionChangeAction
         {
             NoAction,
             RefreshUserInterface,
         }
-
-        private GitRevision _currentSelectedRevision;
 
         public string AuthorEmailToHighlight { get; private set; }
 

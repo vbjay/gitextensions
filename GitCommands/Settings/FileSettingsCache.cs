@@ -7,16 +7,13 @@ namespace GitCommands.Settings
     public abstract class FileSettingsCache : SettingsCache
     {
         private const double SAVETIME = 2000;
-        private DateTime? LastFileRead = null;
-        private DateTime LastFileModificationDate = DateTime.MaxValue;
-        private DateTime? LastModificationDate = null;
         private readonly FileSystemWatcher _fileWatcher = new FileSystemWatcher();
-        private bool canEnableFileWatcher = false;
-
-        private System.Timers.Timer SaveTimer = new System.Timers.Timer(SAVETIME);
         private bool _autoSave = true;
-
-        public string SettingsFilePath { get; private set; }
+        private bool canEnableFileWatcher = false;
+        private DateTime LastFileModificationDate = DateTime.MaxValue;
+        private DateTime? LastFileRead = null;
+        private DateTime? LastModificationDate = null;
+        private System.Timers.Timer SaveTimer = new System.Timers.Timer(SAVETIME);
 
         public FileSettingsCache(string aSettingsFilePath, bool autoSave = true)
         {
@@ -43,15 +40,12 @@ namespace GitCommands.Settings
             FileChanged();
         }
 
-        private void _fileWatcher_Created(object sender, FileSystemEventArgs e)
-        {
-            LastFileRead = null;
-            FileChanged();
-        }
+        public string SettingsFilePath { get; private set; }
 
-        private void _fileWatcher_Renamed(object sender, RenamedEventArgs e)
+        public static T FromCache<T>(string aSettingsFilePath, Lazy<T> createSettingsCache)
+             where T : FileSettingsCache
         {
-            FileChanged();
+            return WeakRefCache.Default.Get(aSettingsFilePath + ":" + typeof(T).FullName, createSettingsCache);
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "SaveTimer", Justification = "SaveTimer is disposed inside lambda but Code Analysis could not determine that")]
@@ -83,38 +77,33 @@ namespace GitCommands.Settings
             base.Dispose(disposing);
         }
 
-        public static T FromCache<T>(string aSettingsFilePath, Lazy<T> createSettingsCache)
-             where T : FileSettingsCache
+        protected override void LoadImpl()
         {
-            return WeakRefCache.Default.Get(aSettingsFilePath + ":" + typeof(T).FullName, createSettingsCache);
-        }
-
-        private void _fileWatcher_Changed(object sender, FileSystemEventArgs e)
-        {
-            FileChanged();
-        }
-
-        private void FileChanged()
-        {
-            LastFileModificationDate = GetLastFileModificationUTC();
-        }
-
-        private DateTime GetLastFileModificationUTC()
-        {
-            try
+            if (File.Exists(SettingsFilePath))
             {
-                if (File.Exists(SettingsFilePath))
-                    return File.GetLastWriteTimeUtc(SettingsFilePath);
-                else
-                    return DateTime.MaxValue;
+                try
+                {
+                    ReadSettings(SettingsFilePath);
+                    LastFileRead = DateTime.UtcNow;
+                    _fileWatcher.EnableRaisingEvents = canEnableFileWatcher;
+                }
+                catch (IOException e)
+                {
+                    System.Diagnostics.Debug.WriteLine(e.Message);
+                    throw;
+                }
             }
-            catch (Exception)
+            else
             {
-                return DateTime.MaxValue;
+                LastFileRead = DateTime.UtcNow;
+                LastFileModificationDate = LastFileRead.Value;
             }
         }
 
-        protected abstract void WriteSettings(string fileName);
+        protected override bool NeedRefresh()
+        {
+            return !LastFileRead.HasValue || LastFileModificationDate > LastFileRead.Value;
+        }
 
         protected abstract void ReadSettings(string fileName);
 
@@ -153,34 +142,6 @@ namespace GitCommands.Settings
             }
         }
 
-        protected override void LoadImpl()
-        {
-            if (File.Exists(SettingsFilePath))
-            {
-                try
-                {
-                    ReadSettings(SettingsFilePath);
-                    LastFileRead = DateTime.UtcNow;
-                    _fileWatcher.EnableRaisingEvents = canEnableFileWatcher;
-                }
-                catch (IOException e)
-                {
-                    System.Diagnostics.Debug.WriteLine(e.Message);
-                    throw;
-                }
-            }
-            else
-            {
-                LastFileRead = DateTime.UtcNow;
-                LastFileModificationDate = LastFileRead.Value;
-            }
-        }
-
-        protected override bool NeedRefresh()
-        {
-            return !LastFileRead.HasValue || LastFileModificationDate > LastFileRead.Value;
-        }
-
         protected override void SettingsChanged()
         {
             base.SettingsChanged();
@@ -189,6 +150,44 @@ namespace GitCommands.Settings
 
             if (_autoSave)
                 StartSaveTimer();
+        }
+
+        protected abstract void WriteSettings(string fileName);
+
+        private void _fileWatcher_Changed(object sender, FileSystemEventArgs e)
+        {
+            FileChanged();
+        }
+
+        private void _fileWatcher_Created(object sender, FileSystemEventArgs e)
+        {
+            LastFileRead = null;
+            FileChanged();
+        }
+
+        private void _fileWatcher_Renamed(object sender, RenamedEventArgs e)
+        {
+            FileChanged();
+        }
+
+        private void FileChanged()
+        {
+            LastFileModificationDate = GetLastFileModificationUTC();
+        }
+
+        private DateTime GetLastFileModificationUTC()
+        {
+            try
+            {
+                if (File.Exists(SettingsFilePath))
+                    return File.GetLastWriteTimeUtc(SettingsFilePath);
+                else
+                    return DateTime.MaxValue;
+            }
+            catch (Exception)
+            {
+                return DateTime.MaxValue;
+            }
         }
 
         //Used to eliminate multiple settings file open and close to save multiple values.  Settings will be saved SAVETIME milliseconds after the last setvalue is called

@@ -8,21 +8,6 @@ namespace GitUI.HelperDialogs
     {
         private readonly GitRevision _revision;
 
-        private FormCommitDiff(GitUICommands aCommands)
-            : base(aCommands)
-        {
-            InitializeComponent();
-            Translate();
-            DiffText.ExtraDiffArgumentsChanged += DiffText_ExtraDiffArgumentsChanged;
-            DiffFiles.Focus();
-            DiffFiles.GitItemStatuses = null;
-        }
-
-        private FormCommitDiff()
-            : this(null)
-        {
-        }
-
         public FormCommitDiff(GitUICommands aCommands, string revision)
             : this(aCommands)
         {
@@ -39,7 +24,27 @@ namespace GitUI.HelperDialogs
             }
         }
 
+        private FormCommitDiff(GitUICommands aCommands)
+                    : base(aCommands)
+        {
+            InitializeComponent();
+            Translate();
+            DiffText.ExtraDiffArgumentsChanged += DiffText_ExtraDiffArgumentsChanged;
+            DiffFiles.Focus();
+            DiffFiles.GitItemStatuses = null;
+        }
+
+        private FormCommitDiff()
+            : this(null)
+        {
+        }
+
         private void DiffFiles_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ViewSelectedDiff();
+        }
+
+        private void DiffText_ExtraDiffArgumentsChanged(object sender, EventArgs e)
         {
             ViewSelectedDiff();
         }
@@ -52,11 +57,6 @@ namespace GitUI.HelperDialogs
                 DiffText.ViewChanges(_revision.Guid, DiffFiles.SelectedItemParent, DiffFiles.SelectedItem, String.Empty);
                 Cursor.Current = Cursors.Default;
             }
-        }
-
-        private void DiffText_ExtraDiffArgumentsChanged(object sender, EventArgs e)
-        {
-            ViewSelectedDiff();
         }
     }
 }

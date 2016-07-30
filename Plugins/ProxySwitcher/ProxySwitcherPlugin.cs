@@ -11,14 +11,6 @@ namespace ProxySwitcher
             Translate();
         }
 
-        public override System.Collections.Generic.IEnumerable<ISetting> GetSettings()
-        {
-            yield return SettingsKey.Username;
-            yield return SettingsKey.Password;
-            yield return SettingsKey.HttpProxy;
-            yield return SettingsKey.HttpProxyPort;
-        }
-
         public override bool Execute(GitUIBaseEventArgs gitUiCommands)
         {
             using (var form = new ProxySwitcherForm(Settings, gitUiCommands))
@@ -26,6 +18,14 @@ namespace ProxySwitcher
                 form.ShowDialog(gitUiCommands.OwnerForm);
             }
             return false;
+        }
+
+        public override System.Collections.Generic.IEnumerable<ISetting> GetSettings()
+        {
+            yield return SettingsKey.Username;
+            yield return SettingsKey.Password;
+            yield return SettingsKey.HttpProxy;
+            yield return SettingsKey.HttpProxyPort;
         }
     }
 }

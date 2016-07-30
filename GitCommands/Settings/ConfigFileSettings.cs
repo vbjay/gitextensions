@@ -9,27 +9,49 @@ namespace GitCommands.Settings
 {
     public class ConfigFileSettings : SettingsContainer<ConfigFileSettings, ConfigFileSettingsCache>
     {
+        public readonly CorePath core;
+
+        public readonly MergeToolPath mergetool;
+
         public ConfigFileSettings(ConfigFileSettings aLowerPriority, ConfigFileSettingsCache aSettingsCache)
-            : base(aLowerPriority, aSettingsCache)
+                            : base(aLowerPriority, aSettingsCache)
         {
             core = new CorePath(this);
             mergetool = new MergeToolPath(this);
         }
 
+        public Encoding CommitEncoding
+        {
+            get
+            {
+                return GetEncoding("i18n.commitEncoding");
+            }
+        }
+
+        public Encoding FilesEncoding
+        {
+            get
+            {
+                return GetEncoding("i18n.filesEncoding");
+            }
+
+            set
+            {
+                SetEncoding("i18n.filesEncoding", value);
+            }
+        }
+
+        public Encoding LogOutputEncoding
+        {
+            get
+            {
+                return GetEncoding("i18n.logoutputencoding");
+            }
+        }
+
         public static ConfigFileSettings CreateEffective(GitModule aModule)
         {
             return CreateLocal(aModule, CreateGlobal(CreateSystemWide()));
-        }
-
-        public static ConfigFileSettings CreateLocal(GitModule aModule, bool allowCache = true)
-        {
-            return CreateLocal(aModule, null, allowCache);
-        }
-
-        private static ConfigFileSettings CreateLocal(GitModule aModule, ConfigFileSettings aLowerPriority, bool allowCache = true)
-        {
-            return new ConfigFileSettings(aLowerPriority,
-                ConfigFileSettingsCache.Create(Path.Combine(aModule.GetGitDirectory(), "config"), true, allowCache));
         }
 
         public static ConfigFileSettings CreateGlobal(bool allowCache = true)
@@ -47,6 +69,11 @@ namespace GitCommands.Settings
                 ConfigFileSettingsCache.Create(configPath, false, allowCache));
         }
 
+        public static ConfigFileSettings CreateLocal(GitModule aModule, bool allowCache = true)
+        {
+            return CreateLocal(aModule, null, allowCache);
+        }
+
         public static ConfigFileSettings CreateSystemWide(bool allowCache = true)
         {
             string configPath = Path.Combine(AppSettings.GitBinDir, "..", "etc", "gitconfig");
@@ -57,8 +84,10 @@ namespace GitCommands.Settings
                 ConfigFileSettingsCache.Create(configPath, false, allowCache));
         }
 
-        public readonly CorePath core;
-        public readonly MergeToolPath mergetool;
+        public IList<ConfigSection> GetConfigSections()
+        {
+            return SettingsCache.GetConfigSections();
+        }
 
         public string GetValue(string setting)
         {
@@ -68,6 +97,16 @@ namespace GitCommands.Settings
         public IList<string> GetValues(string setting)
         {
             return SettingsCache.GetValues(setting);
+        }
+
+        public void RemoveConfigSection(string configSectionName)
+        {
+            SettingsCache.RemoveConfigSection(configSectionName);
+        }
+
+        public void SetPathValue(string setting, string value)
+        {
+            SetValue(setting, ConfigSection.FixPath(value));
         }
 
         public void SetValue(string setting, string value)
@@ -81,48 +120,10 @@ namespace GitCommands.Settings
             this.SetString(setting, value);
         }
 
-        public void SetPathValue(string setting, string value)
+        private static ConfigFileSettings CreateLocal(GitModule aModule, ConfigFileSettings aLowerPriority, bool allowCache = true)
         {
-            SetValue(setting, ConfigSection.FixPath(value));
-        }
-
-        public IList<ConfigSection> GetConfigSections()
-        {
-            return SettingsCache.GetConfigSections();
-        }
-
-        public void RemoveConfigSection(string configSectionName)
-        {
-            SettingsCache.RemoveConfigSection(configSectionName);
-        }
-
-        public Encoding FilesEncoding
-        {
-            get
-            {
-                return GetEncoding("i18n.filesEncoding");
-            }
-
-            set
-            {
-                SetEncoding("i18n.filesEncoding", value);
-            }
-        }
-
-        public Encoding CommitEncoding
-        {
-            get
-            {
-                return GetEncoding("i18n.commitEncoding");
-            }
-        }
-
-        public Encoding LogOutputEncoding
-        {
-            get
-            {
-                return GetEncoding("i18n.logoutputencoding");
-            }
+            return new ConfigFileSettings(aLowerPriority,
+                ConfigFileSettingsCache.Create(Path.Combine(aModule.GetGitDirectory(), "config"), true, allowCache));
         }
 
         private Encoding GetEncoding(string settingName)

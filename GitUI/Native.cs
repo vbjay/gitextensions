@@ -4,18 +4,64 @@ using System.Text;
 
 namespace GitUI
 {
+    internal sealed class NativeConstants
+    {
+        internal const int CP_NOCLOSE_BUTTON = 0x200;
+
+        internal const uint MA_ACTIVATE = 1;
+
+        internal const uint MA_ACTIVATEANDEAT = 2;
+
+        internal const uint MA_NOACTIVATE = 3;
+
+        internal const uint MA_NOACTIVATEANDEAT = 4;
+
+        internal const uint WM_MOUSEACTIVATE = 0x21;
+
+        private NativeConstants()
+        {
+        }
+    }
+
     internal class NativeMethods
     {
         #region Unmanaged Code
 
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct RECT
-        {
-            public int Left;
-            public int Top;
-            public int Right;
-            public int Bottom;
-        }
+        internal const int EM_CHARFROMPOS = 0x00D7;
+
+        internal const int EM_FORMATRANGE = WM_USER + 57;
+
+        internal const int EM_GETFIRSTVISIBLELINE = 0xCE;
+
+        internal const int EM_LINEINDEX = 0x00BB;
+
+        internal const int EM_LINELENGTH = 0x00C1;
+
+        internal const int EM_POSFROMCHAR = 0x00D6;
+
+        internal const int WM_USER = 0x0400;
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        internal static extern int GetLongPathName(string lpszShortPath, StringBuilder lpszLongPath, int cchBuffer);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        internal static extern uint GetShortPathName(string lpszLongPath, StringBuilder lpszShortPath, int cchBuffer);
+
+        [DllImport("user32")]
+        internal static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wp, ref FORMATRANGE lp);
+
+        [DllImport("user32", CharSet = CharSet.Auto, EntryPoint = "SendMessage")]
+        internal extern static IntPtr SendMessageInt(
+            IntPtr handle,
+            uint msg,
+            IntPtr wParam,
+            IntPtr lParam
+            );
+
+        [DllImport("user32", EntryPoint = "ShowCaret")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal extern static bool ShowCaretAPI(
+            IntPtr hwnd);
 
         [StructLayout(LayoutKind.Sequential)]
         internal struct CHARRANGE
@@ -34,55 +80,19 @@ namespace GitUI
             public CHARRANGE chrg;         //Range of text to draw (see earlier declaration)
         }
 
-        internal const int WM_USER = 0x0400;
-        internal const int EM_FORMATRANGE = WM_USER + 57;
-
-        [DllImport("user32")]
-        internal static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wp, ref FORMATRANGE lp);
-
-        [DllImport("user32", CharSet = CharSet.Auto, EntryPoint = "SendMessage")]
-        internal extern static IntPtr SendMessageInt(
-            IntPtr handle,
-            uint msg,
-            IntPtr wParam,
-            IntPtr lParam
-            );
-
-        internal const int EM_LINEINDEX = 0x00BB;
-        internal const int EM_LINELENGTH = 0x00C1;
-        internal const int EM_POSFROMCHAR = 0x00D6;
-        internal const int EM_CHARFROMPOS = 0x00D7;
-        internal const int EM_GETFIRSTVISIBLELINE = 0xCE;
-
-        [DllImport("user32", EntryPoint = "ShowCaret")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal extern static bool ShowCaretAPI(
-            IntPtr hwnd);
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        internal static extern uint GetShortPathName(string lpszLongPath, StringBuilder lpszShortPath, int cchBuffer);
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        internal static extern int GetLongPathName(string lpszShortPath, StringBuilder lpszLongPath, int cchBuffer);
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
 
         #endregion Unmanaged Code
 
         private NativeMethods()
         {
         }
-    }
-
-    internal sealed class NativeConstants
-    {
-        private NativeConstants()
-        {
-        }
-
-        internal const uint WM_MOUSEACTIVATE = 0x21;
-        internal const uint MA_ACTIVATE = 1;
-        internal const uint MA_ACTIVATEANDEAT = 2;
-        internal const uint MA_NOACTIVATE = 3;
-        internal const uint MA_NOACTIVATEANDEAT = 4;
-        internal const int CP_NOCLOSE_BUTTON = 0x200;
     }
 }

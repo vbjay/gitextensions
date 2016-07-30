@@ -13,13 +13,11 @@ namespace Github3
             this.RemoteRepositoryName = RemoteRepositoryName;
         }
 
-        public IHostedRepository GetHostedRepository()
-        {
-            if (repo == null)
-                repo = new GithubRepo(Github3Plugin.github.getRepository(Owner, RemoteRepositoryName));
+        public string Data { get { return Owner + "/" + RemoteRepositoryName; } }
 
-            return repo;
-        }
+        public string DisplayData { get { return Data; } }
+
+        public bool IsOwnedByMe { get { return GithubLoginInfo.username == Owner; } }
 
         /// <summary>
         /// Local name of the remote, 'origin'
@@ -38,8 +36,12 @@ namespace Github3
         /// </summary>
         public string RemoteRepositoryName { get; private set; }
 
-        public string Data { get { return Owner + "/" + RemoteRepositoryName; } }
-        public string DisplayData { get { return Data; } }
-        public bool IsOwnedByMe { get { return GithubLoginInfo.username == Owner; } }
+        public IHostedRepository GetHostedRepository()
+        {
+            if (repo == null)
+                repo = new GithubRepo(Github3Plugin.github.getRepository(Owner, RemoteRepositoryName));
+
+            return repo;
+        }
     }
 }

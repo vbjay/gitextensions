@@ -2,20 +2,11 @@
 using TestClass = NUnit.Framework.TestFixtureAttribute;
 using TestMethod = NUnit.Framework.TestAttribute;
 
-
 namespace GitExtensionsTest.PatchTest
 {
     [TestClass]
-    class PatchTest
+    internal class PatchTest
     {
-        [TestMethod]
-        public void TestPatchConstructor()
-        {
-            PatchApply.Patch patch = new PatchApply.Patch();
-
-            Assert.IsNotNull(patch);
-        }
-
         [TestMethod]
         public void TestAppendText()
         {
@@ -38,6 +29,14 @@ namespace GitExtensionsTest.PatchTest
             var expected = "text1\ntext2\ntext3\n";
 
             Assert.AreEqual(expected, patch.Text);
+        }
+
+        [TestMethod]
+        public void TestPatchConstructor()
+        {
+            PatchApply.Patch patch = new PatchApply.Patch();
+
+            Assert.IsNotNull(patch);
         }
     }
 }

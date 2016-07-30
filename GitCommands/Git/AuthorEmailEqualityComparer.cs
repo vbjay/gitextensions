@@ -20,14 +20,14 @@ namespace GitCommands.Git
             return Equals(x.AuthorEmail, y.AuthorEmail);
         }
 
-        public int GetHashCode(GitRevision revision)
-        {
-            return GetHashCode(revision.AuthorEmail);
-        }
-
         public bool Equals(string firstAuthorEmail, string secondAuthorEmail)
         {
             return String.Equals(firstAuthorEmail, secondAuthorEmail, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public int GetHashCode(GitRevision revision)
+        {
+            return GetHashCode(revision.AuthorEmail);
         }
 
         public int GetHashCode(string authorEmail)

@@ -8,12 +8,11 @@ namespace GitUI.UserControls
 {
     public partial class BranchSelector : GitModuleControl
     {
-        private string[] _containRevisons;
+        public string CommitToCompare;
         private readonly bool _isLoading;
+        private string[] _containRevisons;
         private List<string> _localBranches;
         private List<string> _remoteBranches;
-
-        public event EventHandler SelectedIndexChanged;
 
         public BranchSelector()
         {
@@ -30,7 +29,7 @@ namespace GitUI.UserControls
             }
         }
 
-        public string CommitToCompare;
+        public event EventHandler SelectedIndexChanged;
 
         public bool IsRemoteBranchChecked
         {
@@ -45,6 +44,19 @@ namespace GitUI.UserControls
         public override string Text
         {
             get { return Branches.Text; }
+        }
+
+        public new void Focus()
+        {
+            Branches.Focus();
+        }
+
+        public IList<string> GetLocalBranches()
+        {
+            if (_localBranches == null)
+                _localBranches = Module.GetRefs(false).Select(b => b.Name).ToList();
+
+            return _localBranches;
         }
 
         public void Initialize(bool remote, string[] containRevisons)
@@ -78,6 +90,24 @@ namespace GitUI.UserControls
                 Branches.Text = null;
         }
 
+        public void SetCurrentBranch(string branch, bool remote)
+        {
+            //Set current branch after initialize, because initialize will reset it
+            if (!string.IsNullOrEmpty(branch))
+            {
+                Branches.Items.Add(branch);
+                Branches.SelectedItem = branch;
+            }
+
+            if (_containRevisons != null)
+            {
+                if (Branches.Items.Count == 0)
+                {
+                    Initialize(remote, _containRevisons);
+                }
+            }
+        }
+
         private void Branches_SelectedIndexChanged(object sender, EventArgs e)
         {
             lbChanges.Text = "";
@@ -96,20 +126,12 @@ namespace GitUI.UserControls
             }
         }
 
-        public IList<string> GetLocalBranches()
+        private void FireSelectionChangedEvent(object sender, EventArgs e)
         {
-            if (_localBranches == null)
-                _localBranches = Module.GetRefs(false).Select(b => b.Name).ToList();
-
-            return _localBranches;
-        }
-
-        private IList<string> GetRemoteBranches()
-        {
-            if (_remoteBranches == null)
-                _remoteBranches = Module.GetRefs(true, true).Where(h => h.IsRemote && !h.IsTag).Select(b => b.Name).ToList();
-
-            return _remoteBranches;
+            if (SelectedIndexChanged != null)
+            {
+                SelectedIndexChanged(sender, e);
+            }
         }
 
         private IList<string> GetContainsRevisionBranches()
@@ -136,22 +158,12 @@ namespace GitUI.UserControls
             return result.ToList();
         }
 
-        public void SetCurrentBranch(string branch, bool remote)
+        private IList<string> GetRemoteBranches()
         {
-            //Set current branch after initialize, because initialize will reset it
-            if (!string.IsNullOrEmpty(branch))
-            {
-                Branches.Items.Add(branch);
-                Branches.SelectedItem = branch;
-            }
+            if (_remoteBranches == null)
+                _remoteBranches = Module.GetRefs(true, true).Where(h => h.IsRemote && !h.IsTag).Select(b => b.Name).ToList();
 
-            if (_containRevisons != null)
-            {
-                if (Branches.Items.Count == 0)
-                {
-                    Initialize(remote, _containRevisons);
-                }
-            }
+            return _remoteBranches;
         }
 
         private void LocalBranch_CheckedChanged(object sender, EventArgs e)
@@ -169,19 +181,6 @@ namespace GitUI.UserControls
                 Initialize(IsRemoteBranchChecked, null);
             }
             FireSelectionChangedEvent(sender, e);
-        }
-
-        private void FireSelectionChangedEvent(object sender, EventArgs e)
-        {
-            if (SelectedIndexChanged != null)
-            {
-                SelectedIndexChanged(sender, e);
-            }
-        }
-
-        public new void Focus()
-        {
-            Branches.Focus();
         }
     }
 }

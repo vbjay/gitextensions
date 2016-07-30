@@ -9,11 +9,27 @@ using ResourceManager;
 
 namespace ReleaseNotesGenerator
 {
+    public class LogLine
+    {
+        public string Commit;
+
+        public IList<string> MessageLines;
+
+        /// <summary>
+        /// one revision
+        /// </summary>
+        public LogLine()
+        {
+            MessageLines = new List<string>();
+        }
+    }
+
     /// <summary>
     /// Test on GE repository from "2.00" to "2.10". Should display 687 items.
     /// </summary>
     public partial class ReleaseNotesGeneratorForm : GitExtensionsFormBase
     {
+        private const string mostRecentHint = "most recent changes are listed on top";
         private readonly TranslationString _commitLogFrom = new TranslationString("Commit log from '{0}' to '{1}' ({2}):");
 
         private readonly GitUIBaseEventArgs _gitUiCommands;
@@ -28,9 +44,30 @@ namespace ReleaseNotesGenerator
             Icon = _gitUiCommands != null ? _gitUiCommands.GitUICommands.FormIcon : null;
         }
 
-        private void ReleaseNotesGeneratorForm_Load(object sender, EventArgs e)
+        private void buttonCopyAsHtml_Click(object sender, EventArgs e)
         {
-            textBoxResult_TextChanged(null, null);
+            string headerHtml = string.Format("<p>Commit log from '{0}' to '{1}' ({2}):</p>",
+                textBoxRevFrom.Text, textBoxRevTo.Text, mostRecentHint);
+            string tableHtml = CreateHtmlTable(_lastGeneratedLogLines);
+            HtmlFragment.CopyToClipboard(headerHtml + tableHtml);
+            ////HtmlFragment.CopyToClipboard("<table><tr><td>A</td><td>B</td></tr><tr><td>C</td><td>D</td></tr></table>");
+        }
+
+        private void buttonCopyAsPlainText_Click(object sender, EventArgs e)
+        {
+            string result = CreateTextTable(_lastGeneratedLogLines, true, true);
+            Clipboard.SetText(result);
+        }
+
+        private void buttonCopyAsTextTableSpace_Click(object sender, EventArgs e)
+        {
+            string result = CreateTextTable(_lastGeneratedLogLines, true, false);
+            Clipboard.SetText(result);
+        }
+
+        private void buttonCopyOrigOutput_Click(object sender, EventArgs e)
+        {
+            Clipboard.SetText(textBoxResult.Text);
         }
 
         private void buttonGenerate_Click(object sender, EventArgs e)
@@ -60,37 +97,17 @@ namespace ReleaseNotesGenerator
             textBoxResult_TextChanged(null, null);
         }
 
-        private void textBoxResult_TextChanged(object sender, EventArgs e)
+        private string CreateHtmlTable(IEnumerable<LogLine> logLines)
         {
-            groupBoxCopy.Enabled = _lastGeneratedLogLines != null && _lastGeneratedLogLines.Any();
-        }
-
-        private void buttonCopyOrigOutput_Click(object sender, EventArgs e)
-        {
-            Clipboard.SetText(textBoxResult.Text);
-        }
-
-        private void buttonCopyAsPlainText_Click(object sender, EventArgs e)
-        {
-            string result = CreateTextTable(_lastGeneratedLogLines, true, true);
-            Clipboard.SetText(result);
-        }
-
-        private void buttonCopyAsTextTableSpace_Click(object sender, EventArgs e)
-        {
-            string result = CreateTextTable(_lastGeneratedLogLines, true, false);
-            Clipboard.SetText(result);
-        }
-
-        private const string mostRecentHint = "most recent changes are listed on top";
-
-        private void buttonCopyAsHtml_Click(object sender, EventArgs e)
-        {
-            string headerHtml = string.Format("<p>Commit log from '{0}' to '{1}' ({2}):</p>",
-                textBoxRevFrom.Text, textBoxRevTo.Text, mostRecentHint);
-            string tableHtml = CreateHtmlTable(_lastGeneratedLogLines);
-            HtmlFragment.CopyToClipboard(headerHtml + tableHtml);
-            ////HtmlFragment.CopyToClipboard("<table><tr><td>A</td><td>B</td></tr><tr><td>C</td><td>D</td></tr></table>");
+            var stringBuilder = new StringBuilder();
+            stringBuilder.Append("<table>\r\n");
+            foreach (var logLine in logLines)
+            {
+                string message = string.Join("<br/>", logLine.MessageLines.Select(a => WebUtility.HtmlEncode(a)));
+                stringBuilder.AppendFormat("<tr>\r\n  <td>{0}</td>\r\n  <td>{1}</td>\r\n</tr>\r\n", logLine.Commit, message);
+            }
+            stringBuilder.Append("</table>");
+            return stringBuilder.ToString();
         }
 
         private IEnumerable<LogLine> CreateLogLinesFromGitOutput(string[] lines)
@@ -150,31 +167,14 @@ namespace ReleaseNotesGenerator
             return result;
         }
 
-        private string CreateHtmlTable(IEnumerable<LogLine> logLines)
+        private void ReleaseNotesGeneratorForm_Load(object sender, EventArgs e)
         {
-            var stringBuilder = new StringBuilder();
-            stringBuilder.Append("<table>\r\n");
-            foreach (var logLine in logLines)
-            {
-                string message = string.Join("<br/>", logLine.MessageLines.Select(a => WebUtility.HtmlEncode(a)));
-                stringBuilder.AppendFormat("<tr>\r\n  <td>{0}</td>\r\n  <td>{1}</td>\r\n</tr>\r\n", logLine.Commit, message);
-            }
-            stringBuilder.Append("</table>");
-            return stringBuilder.ToString();
-        }
-    }
-
-    public class LogLine
-    {
-        /// <summary>
-        /// one revision
-        /// </summary>
-        public LogLine()
-        {
-            MessageLines = new List<string>();
+            textBoxResult_TextChanged(null, null);
         }
 
-        public string Commit;
-        public IList<string> MessageLines;
+        private void textBoxResult_TextChanged(object sender, EventArgs e)
+        {
+            groupBoxCopy.Enabled = _lastGeneratedLogLines != null && _lastGeneratedLogLines.Any();
+        }
     }
 }

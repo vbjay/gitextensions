@@ -18,13 +18,6 @@ namespace GitUI.Hotkey
             return keyData & Keys.KeyCode;
         }
 
-        public static bool IsModifierKey(this Keys key)
-        {
-            return key == Keys.ShiftKey ||
-                   key == Keys.ControlKey ||
-                   key == Keys.Alt;
-        }
-
         public static Keys[] GetModifiers(this Keys key)
         {
             // Retrieve the modifiers, mask away the rest
@@ -40,13 +33,11 @@ namespace GitUI.Hotkey
             return modifierList.ToArray();
         }
 
-        public static string ToText(this Keys key)
+        public static bool IsModifierKey(this Keys key)
         {
-            return string.Join("+",
-              key.GetModifiers()
-              .Union(new[] { key.GetKeyCode() })
-              .Select(k => k.ToFormattedString())
-              .ToArray());
+            return key == Keys.ShiftKey ||
+                   key == Keys.ControlKey ||
+                   key == Keys.Alt;
         }
 
         public static string ToFormattedString(this Keys key)
@@ -64,6 +55,15 @@ namespace GitUI.Hotkey
         public static string ToShortcutKeyDisplayString(this Keys key)
         {
             return key.ToText() ?? "";
+        }
+
+        public static string ToText(this Keys key)
+        {
+            return string.Join("+",
+              key.GetModifiers()
+              .Union(new[] { key.GetKeyCode() })
+              .Select(k => k.ToFormattedString())
+              .ToArray());
         }
 
         private static string ToCultureSpecificString(this Keys key)

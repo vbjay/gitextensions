@@ -9,16 +9,9 @@ namespace GitCommands
 {
     public static class PathUtil
     {
-        /// <summary>Replaces native path separator with posix path separator.</summary>
-        public static string ToPosixPath(this string path)
+        public static IEqualityComparer<string> CreatePathEqualityComparer()
         {
-            return path.Replace(Path.DirectorySeparatorChar, AppSettings.PosixPathSeparator);
-        }
-
-        /// <summary>Replaces '\' with '/'.</summary>
-        public static string ToNativePath(this string path)
-        {
-            return path.Replace(AppSettings.PosixPathSeparator, Path.DirectorySeparatorChar);
+            return new PathEqualityComparer();
         }
 
         /// <summary>
@@ -41,23 +34,15 @@ namespace GitCommands
             return dirPath;
         }
 
-        public static bool IsLocalFile(string fileName)
+        public static bool Equal(string path1, string path2)
         {
-            Regex regex = new Regex(@"^(\w+):\/\/([\S]+)");
-            if (regex.IsMatch(fileName))
-            {
-                return false;
-            }
-            return true;
-        }
+            path1 = Path.GetFullPath(path1).TrimEnd('\\');
+            path2 = Path.GetFullPath(path2).TrimEnd('\\');
+            StringComparison comprasion = EnvUtils.RunningOnUnix()
+                                              ? StringComparison.InvariantCulture
+                                              : StringComparison.InvariantCultureIgnoreCase;
 
-        public static string GetFileName(string fileName)
-        {
-            var pathSeparators = new[] { Path.DirectorySeparatorChar, AppSettings.PosixPathSeparator };
-            var pos = fileName.LastIndexOfAny(pathSeparators);
-            if (pos != -1)
-                fileName = fileName.Substring(pos + 1);
-            return fileName;
+            return String.Compare(path1, path2, comprasion) == 0;
         }
 
         public static string GetDirectoryName(string fileName)
@@ -71,36 +56,35 @@ namespace GitCommands
             return fileName;
         }
 
-        public static bool Equal(string path1, string path2)
+        public static IEnumerable<string> GetEnvironmentPaths(string aPathVariable)
         {
-            path1 = Path.GetFullPath(path1).TrimEnd('\\');
-            path2 = Path.GetFullPath(path2).TrimEnd('\\');
-            StringComparison comprasion = EnvUtils.RunningOnUnix()
-                                              ? StringComparison.InvariantCulture
-                                              : StringComparison.InvariantCultureIgnoreCase;
+            if (aPathVariable.IsNullOrWhiteSpace())
+                yield break;
 
-            return String.Compare(path1, path2, comprasion) == 0;
-        }
-
-        private class PathEqualityComparer : IEqualityComparer<string>
-        {
-            public bool Equals(string path1, string path2)
+            foreach (string rawdir in aPathVariable.Split(';'))
             {
-                return Equal(path1, path2);
-            }
-
-            public int GetHashCode(string path)
-            {
-                path = Path.GetFullPath(path).TrimEnd('\\');
-                if (!EnvUtils.RunningOnUnix())
-                    path = path.ToLower();
-                return path.GetHashCode();
+                string dir = rawdir;
+                // Usually, paths with spaces are not quoted on %PATH%, but it's well possible, and .NET won't consume a quoted path
+                // This does not handle the full grammar of the %PATH%, but at least prevents Illegal Characters in Path exceptions (see #2924)
+                dir = dir.Trim(new char[] { ' ', '"', '\t' });
+                if (dir.Length == 0)
+                    continue;
+                yield return dir;
             }
         }
 
-        public static IEqualityComparer<string> CreatePathEqualityComparer()
+        public static IEnumerable<string> GetEnvironmentValidPaths()
         {
-            return new PathEqualityComparer();
+            return GetValidPaths(GetEnvironmentPaths());
+        }
+
+        public static string GetFileName(string fileName)
+        {
+            var pathSeparators = new[] { Path.DirectorySeparatorChar, AppSettings.PosixPathSeparator };
+            var pos = fileName.LastIndexOfAny(pathSeparators);
+            if (pos != -1)
+                fileName = fileName.Substring(pos + 1);
+            return fileName;
         }
 
         public static string GetRepositoryName(string repositoryUrl)
@@ -122,37 +106,19 @@ namespace GitCommands
             return name;
         }
 
-        public static IEnumerable<string> GetEnvironmentValidPaths()
-        {
-            return GetValidPaths(GetEnvironmentPaths());
-        }
-
         public static IEnumerable<string> GetValidPaths(IEnumerable<string> paths)
         {
             return paths.Where(aPath => IsValidPath(aPath));
         }
 
-        private static IEnumerable<string> GetEnvironmentPaths()
+        public static bool IsLocalFile(string fileName)
         {
-            string pathVariable = Environment.GetEnvironmentVariable("PATH");
-            return GetEnvironmentPaths(pathVariable);
-        }
-
-        public static IEnumerable<string> GetEnvironmentPaths(string aPathVariable)
-        {
-            if (aPathVariable.IsNullOrWhiteSpace())
-                yield break;
-
-            foreach (string rawdir in aPathVariable.Split(';'))
+            Regex regex = new Regex(@"^(\w+):\/\/([\S]+)");
+            if (regex.IsMatch(fileName))
             {
-                string dir = rawdir;
-                // Usually, paths with spaces are not quoted on %PATH%, but it's well possible, and .NET won't consume a quoted path
-                // This does not handle the full grammar of the %PATH%, but at least prevents Illegal Characters in Path exceptions (see #2924)
-                dir = dir.Trim(new char[] { ' ', '"', '\t' });
-                if (dir.Length == 0)
-                    continue;
-                yield return dir;
+                return false;
             }
+            return true;
         }
 
         public static bool IsValidPath(string aPath)
@@ -183,6 +149,18 @@ namespace GitCommands
             return fi != null && fi.Exists;
         }
 
+        /// <summary>Replaces '\' with '/'.</summary>
+        public static string ToNativePath(this string path)
+        {
+            return path.Replace(AppSettings.PosixPathSeparator, Path.DirectorySeparatorChar);
+        }
+
+        /// <summary>Replaces native path separator with posix path separator.</summary>
+        public static string ToPosixPath(this string path)
+        {
+            return path.Replace(Path.DirectorySeparatorChar, AppSettings.PosixPathSeparator);
+        }
+
         public static bool TryFindFullPath(string aFileName, out string fullPath)
         {
             if (PathUtil.PathExists(aFileName))
@@ -200,6 +178,28 @@ namespace GitCommands
 
             fullPath = null;
             return false;
+        }
+
+        private static IEnumerable<string> GetEnvironmentPaths()
+        {
+            string pathVariable = Environment.GetEnvironmentVariable("PATH");
+            return GetEnvironmentPaths(pathVariable);
+        }
+
+        private class PathEqualityComparer : IEqualityComparer<string>
+        {
+            public bool Equals(string path1, string path2)
+            {
+                return Equal(path1, path2);
+            }
+
+            public int GetHashCode(string path)
+            {
+                path = Path.GetFullPath(path).TrimEnd('\\');
+                if (!EnvUtils.RunningOnUnix())
+                    path = path.ToLower();
+                return path.GetHashCode();
+            }
         }
     }
 }

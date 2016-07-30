@@ -7,6 +7,14 @@ namespace ResourceManager.Xliff
     [DebuggerDisplay("{_name}")]
     public class TranslationCategory : IComparable<TranslationCategory>
     {
+        private TranslationBody _body = new TranslationBody();
+
+        private string _datatype = "plaintext";
+
+        private string _name;
+
+        private string _source;
+
         public TranslationCategory()
         {
         }
@@ -17,7 +25,18 @@ namespace ResourceManager.Xliff
             this._source = source;
         }
 
-        private string _datatype = "plaintext";
+        [XmlElement(ElementName = "body")]
+        public TranslationBody Body
+        {
+            get
+            {
+                return _body;
+            }
+            set
+            {
+                _body = value;
+            }
+        }
 
         [XmlAttribute("datatype")]
         public string Datatype
@@ -32,8 +51,6 @@ namespace ResourceManager.Xliff
             }
         }
 
-        private string _name;
-
         [XmlAttribute("original")]
         public string Name
         {
@@ -47,8 +64,6 @@ namespace ResourceManager.Xliff
             }
         }
 
-        private string _source;
-
         [XmlAttribute("source-language")]
         public string Source
         {
@@ -59,21 +74,6 @@ namespace ResourceManager.Xliff
             set
             {
                 _source = value;
-            }
-        }
-
-        private TranslationBody _body = new TranslationBody();
-
-        [XmlElement(ElementName = "body")]
-        public TranslationBody Body
-        {
-            get
-            {
-                return _body;
-            }
-            set
-            {
-                _body = value;
             }
         }
 

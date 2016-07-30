@@ -4,44 +4,10 @@ using RestSharp;
 
 namespace Stash
 {
-    internal class Repository
-    {
-        public static Repository Parse(JObject json)
-        {
-            return new Repository
-            {
-                Id = json["id"].ToString(),
-                RepoName = json["name"].ToString(),
-                ProjectName = json["project"]["name"].ToString(),
-                ProjectKey = json["project"]["key"].ToString()
-            };
-        }
-
-        public string Id { get; set; }
-        public string ProjectKey { get; set; }
-        public string ProjectName { get; set; }
-        public string RepoName { get; set; }
-
-        public string DisplayName
-        {
-            get { return string.Format("{0}/{1}", ProjectName, RepoName); }
-        }
-    }
-
     internal class GetRelatedRepoRequest : StashRequestBase<List<Repository>>
     {
         public GetRelatedRepoRequest(Settings settings) : base(settings)
         {
-        }
-
-        protected override object RequestBody
-        {
-            get { return null; }
-        }
-
-        protected override Method RequestMethod
-        {
-            get { return Method.GET; }
         }
 
         protected override string ApiUrl
@@ -54,6 +20,16 @@ namespace Stash
             }
         }
 
+        protected override object RequestBody
+        {
+            get { return null; }
+        }
+
+        protected override Method RequestMethod
+        {
+            get { return Method.GET; }
+        }
+
         protected override List<Repository> ParseResponse(JObject json)
         {
             var result = new List<Repository>();
@@ -62,6 +38,33 @@ namespace Stash
                 result.Add(Repository.Parse(val));
             }
             return result;
+        }
+    }
+
+    internal class Repository
+    {
+        public string DisplayName
+        {
+            get { return string.Format("{0}/{1}", ProjectName, RepoName); }
+        }
+
+        public string Id { get; set; }
+
+        public string ProjectKey { get; set; }
+
+        public string ProjectName { get; set; }
+
+        public string RepoName { get; set; }
+
+        public static Repository Parse(JObject json)
+        {
+            return new Repository
+            {
+                Id = json["id"].ToString(),
+                RepoName = json["name"].ToString(),
+                ProjectName = json["project"]["name"].ToString(),
+                ProjectKey = json["project"]["key"].ToString()
+            };
         }
     }
 }

@@ -10,41 +10,6 @@ namespace ResourceManager
     {
         private const int COMMITHEADER_STRING_LENGTH = 16;
 
-        private static string GetEmail(string author)
-        {
-            if (String.IsNullOrEmpty(author))
-                return "";
-            int ind = author.IndexOf("<");
-            if (ind == -1)
-                return "";
-            ++ind;
-            return author.Substring(ind, author.LastIndexOf(">") - ind);
-        }
-
-        /// <summary>
-        /// Generate header.
-        /// </summary>
-        /// <param name="commitData"></param>
-        /// <returns></returns>
-        public static string GetHeaderPlain(this CommitData commitData)
-        {
-            StringBuilder header = new StringBuilder();
-            header.AppendLine(FillToLength(Strings.GetAuthorText() + ":", COMMITHEADER_STRING_LENGTH) +
-                              commitData.Author);
-            header.AppendLine(FillToLength(Strings.GetAuthorDateText() + ":", COMMITHEADER_STRING_LENGTH) +
-                              LocalizationHelpers.GetRelativeDateString(DateTime.UtcNow, commitData.AuthorDate.UtcDateTime) +
-                              " (" + LocalizationHelpers.GetFullDateString(commitData.AuthorDate) + ")");
-            header.AppendLine(FillToLength(Strings.GetCommitterText() + ":", COMMITHEADER_STRING_LENGTH) +
-                              commitData.Committer);
-            header.AppendLine(FillToLength(Strings.GetCommitDateText() + ":", COMMITHEADER_STRING_LENGTH) +
-                              LocalizationHelpers.GetRelativeDateString(DateTime.UtcNow, commitData.CommitDate.UtcDateTime) +
-                              " (" + LocalizationHelpers.GetFullDateString(commitData.CommitDate) + ")");
-            header.Append(FillToLength(Strings.GetCommitHashText() + ":", COMMITHEADER_STRING_LENGTH) +
-                          commitData.Guid);
-
-            return RemoveRedundancies(header.ToString());
-        }
-
         /// <summary>
         /// Generate header.
         /// </summary>
@@ -108,6 +73,120 @@ namespace ResourceManager
             return RemoveRedundancies(header.ToString());
         }
 
+        /// <summary>
+        /// Generate header.
+        /// </summary>
+        /// <param name="commitData"></param>
+        /// <returns></returns>
+        public static string GetHeaderPlain(this CommitData commitData)
+        {
+            StringBuilder header = new StringBuilder();
+            header.AppendLine(FillToLength(Strings.GetAuthorText() + ":", COMMITHEADER_STRING_LENGTH) +
+                              commitData.Author);
+            header.AppendLine(FillToLength(Strings.GetAuthorDateText() + ":", COMMITHEADER_STRING_LENGTH) +
+                              LocalizationHelpers.GetRelativeDateString(DateTime.UtcNow, commitData.AuthorDate.UtcDateTime) +
+                              " (" + LocalizationHelpers.GetFullDateString(commitData.AuthorDate) + ")");
+            header.AppendLine(FillToLength(Strings.GetCommitterText() + ":", COMMITHEADER_STRING_LENGTH) +
+                              commitData.Committer);
+            header.AppendLine(FillToLength(Strings.GetCommitDateText() + ":", COMMITHEADER_STRING_LENGTH) +
+                              LocalizationHelpers.GetRelativeDateString(DateTime.UtcNow, commitData.CommitDate.UtcDateTime) +
+                              " (" + LocalizationHelpers.GetFullDateString(commitData.CommitDate) + ")");
+            header.Append(FillToLength(Strings.GetCommitHashText() + ":", COMMITHEADER_STRING_LENGTH) +
+                          commitData.Guid);
+
+            return RemoveRedundancies(header.ToString());
+        }
+
+        private static string FillToLength(string input, int length)
+        {
+            return FillToLength(input, length, 0);
+        }
+
+        private static string FillToLength(string input, int length, int skip)
+        {
+            // length
+            const int tabsize = 8;
+            if ((input.Length - skip) < length)
+            {
+                int l = length - (input.Length - skip);
+                return input + new string('\t', (l / tabsize) + ((l % tabsize) == 0 ? 0 : 1));
+            }
+
+            return input;
+        }
+
+        private static string GetEmail(string author)
+        {
+            if (String.IsNullOrEmpty(author))
+                return "";
+            int ind = author.IndexOf("<");
+            if (ind == -1)
+                return "";
+            ++ind;
+            return author.Substring(ind, author.LastIndexOf(">") - ind);
+        }
+
+        private static string GetField(string data, string header)
+        {
+            int valueIndex = IndexOfValue(data, header);
+
+            if (valueIndex == -1)
+                return null;
+
+            int length = LengthOfValue(data, valueIndex);
+            return data.Substring(valueIndex, length);
+        }
+
+        private static int IndexOfValue(string data, string header)
+        {
+            int headerIndex = data.IndexOf(header);
+
+            if (headerIndex == -1)
+                return -1;
+
+            int valueIndex = headerIndex + header.Length;
+
+            while (data[valueIndex] == '\t')
+            {
+                valueIndex++;
+
+                if (valueIndex == data.Length)
+                    return -1;
+            }
+
+            return valueIndex;
+        }
+
+        private static int LengthOfValue(string data, int valueIndex)
+        {
+            if (valueIndex == -1)
+                return 0;
+
+            int endIndex = data.IndexOf('\n', valueIndex);
+
+            if (endIndex == -1)
+                endIndex = data.Length - 1;
+
+            return endIndex - valueIndex;
+        }
+
+        private static string RemoveField(string data, string header)
+        {
+            int headerIndex = data.IndexOf(header);
+
+            if (headerIndex == -1)
+                return data;
+
+            int endIndex = data.IndexOf('\n', headerIndex);
+
+            if (endIndex == -1)
+                endIndex = data.Length - 1;
+
+            int length = endIndex - headerIndex + 1;
+
+            return data.Remove(headerIndex, length);
+        }
+
         private static string RemoveRedundancies(string info)
         {
             string author = GetField(info, Strings.GetAuthorText() + ":");
@@ -130,85 +209,6 @@ namespace ResourceManager
             }
 
             return info;
-        }
-
-        private static string FillToLength(string input, int length)
-        {
-            return FillToLength(input, length, 0);
-        }
-
-        private static string FillToLength(string input, int length, int skip)
-        {
-            // length
-            const int tabsize = 8;
-            if ((input.Length - skip) < length)
-            {
-                int l = length - (input.Length - skip);
-                return input + new string('\t', (l / tabsize) + ((l % tabsize) == 0 ? 0 : 1));
-            }
-
-            return input;
-        }
-
-        private static string RemoveField(string data, string header)
-        {
-            int headerIndex = data.IndexOf(header);
-
-            if (headerIndex == -1)
-                return data;
-
-            int endIndex = data.IndexOf('\n', headerIndex);
-
-            if (endIndex == -1)
-                endIndex = data.Length - 1;
-
-            int length = endIndex - headerIndex + 1;
-
-            return data.Remove(headerIndex, length);
-        }
-
-        private static string GetField(string data, string header)
-        {
-            int valueIndex = IndexOfValue(data, header);
-
-            if (valueIndex == -1)
-                return null;
-
-            int length = LengthOfValue(data, valueIndex);
-            return data.Substring(valueIndex, length);
-        }
-
-        private static int LengthOfValue(string data, int valueIndex)
-        {
-            if (valueIndex == -1)
-                return 0;
-
-            int endIndex = data.IndexOf('\n', valueIndex);
-
-            if (endIndex == -1)
-                endIndex = data.Length - 1;
-
-            return endIndex - valueIndex;
-        }
-
-        private static int IndexOfValue(string data, string header)
-        {
-            int headerIndex = data.IndexOf(header);
-
-            if (headerIndex == -1)
-                return -1;
-
-            int valueIndex = headerIndex + header.Length;
-
-            while (data[valueIndex] == '\t')
-            {
-                valueIndex++;
-
-                if (valueIndex == data.Length)
-                    return -1;
-            }
-
-            return valueIndex;
         }
     }
 }

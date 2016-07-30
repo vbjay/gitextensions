@@ -11,6 +11,61 @@ namespace GitPlugin.Commands
     /// </summary>
     public abstract class ItemCommandBase : CommandBase
     {
+        [Flags]
+        protected enum CommandTarget
+        {
+            /// <summary>
+            /// Solution file selected in solution explorer.
+            /// </summary>
+            Solution = 1,
+
+            /// <summary>
+            /// Project file selected in solution explorer.
+            /// </summary>
+            Project = 2,
+
+            /// <summary>
+            /// Physical folder selected in solution explorer.
+            /// </summary>
+            PhysicalFolder = 4,
+
+            /// <summary>
+            /// Project item file selected in solution explorer.
+            /// </summary>
+            File = 8,
+
+            /// <summary>
+            /// Virtual folder selected in solution explorer.
+            /// </summary>
+            VirtualFolder = 16,
+
+            /// <summary>
+            /// Nothing is selected, no current solution.
+            /// </summary>
+            Empty = 32,
+
+            /// <summary>
+            /// Any solution explorer item that presented by physical file.
+            /// </summary>
+            SolutionExplorerFileItem = Solution | Project | File,
+
+            /// <summary>
+            /// Any target including empty.
+            /// </summary>
+            Any = SolutionExplorerFileItem | PhysicalFolder | VirtualFolder | Empty
+        }
+
+        protected abstract CommandTarget SupportedTargets { get; }
+
+        public override bool IsEnabled(DTE2 application)
+        {
+            return application.SelectedItems.Count == 0
+                ? IsTargetSupported(application.Solution.IsOpen ? CommandTarget.Solution : CommandTarget.Empty)
+                : application.SelectedItems
+                    .Cast<SelectedItem>()
+                    .All(item => IsTargetSupported(GetSelectedItemTarget(item, application)));
+        }
+
         public override void OnCommand(DTE2 application, OutputWindowPane pane)
         {
             if (!RunForSelection)
@@ -58,6 +113,37 @@ namespace GitPlugin.Commands
             }
         }
 
+        protected abstract void OnExecute(SelectedItem item, string fileName, OutputWindowPane pane);
+
+        private static CommandTarget GetProjectItemTarget(ProjectItem projectItem)
+        {
+            switch (projectItem.Kind.ToUpper())
+            {
+                case Constants.vsProjectItemKindPhysicalFile:
+                    return CommandTarget.File;
+
+                case Constants.vsProjectItemKindVirtualFolder:
+                    return CommandTarget.VirtualFolder;
+
+                case Constants.vsProjectItemKindPhysicalFolder:
+                    return CommandTarget.PhysicalFolder;
+
+                default:
+                    return CommandTarget.Any;
+            }
+        }
+
+        private static CommandTarget GetSelectedItemTarget(SelectedItem selectedItem, DTE2 application)
+        {
+            if (selectedItem.ProjectItem != null)
+                return GetProjectItemTarget(selectedItem.ProjectItem);
+            if (selectedItem.Project != null)
+                return CommandTarget.Project;
+            if (application.Solution.IsOpen)
+                return CommandTarget.Solution;
+            return CommandTarget.Empty;
+        }
+
         private void ExecuteOnSolutionItem(SelectedItem solutionItem, DTE2 application, OutputWindowPane pane)
         {
             if (solutionItem.ProjectItem != null && IsTargetSupported(GetProjectItemTarget(solutionItem.ProjectItem)))
@@ -88,95 +174,9 @@ namespace GitPlugin.Commands
             MessageBox.Show("You need to select a file or project to use this function.", "Git Extensions", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        public override bool IsEnabled(DTE2 application)
-        {
-            return application.SelectedItems.Count == 0
-                ? IsTargetSupported(application.Solution.IsOpen ? CommandTarget.Solution : CommandTarget.Empty)
-                : application.SelectedItems
-                    .Cast<SelectedItem>()
-                    .All(item => IsTargetSupported(GetSelectedItemTarget(item, application)));
-        }
-
-        protected abstract void OnExecute(SelectedItem item, string fileName, OutputWindowPane pane);
-
-        protected abstract CommandTarget SupportedTargets { get; }
-
         private bool IsTargetSupported(CommandTarget commandTarget)
         {
             return (SupportedTargets & commandTarget) == commandTarget;
-        }
-
-        private static CommandTarget GetSelectedItemTarget(SelectedItem selectedItem, DTE2 application)
-        {
-            if (selectedItem.ProjectItem != null)
-                return GetProjectItemTarget(selectedItem.ProjectItem);
-            if (selectedItem.Project != null)
-                return CommandTarget.Project;
-            if (application.Solution.IsOpen)
-                return CommandTarget.Solution;
-            return CommandTarget.Empty;
-        }
-
-        private static CommandTarget GetProjectItemTarget(ProjectItem projectItem)
-        {
-            switch (projectItem.Kind.ToUpper())
-            {
-                case Constants.vsProjectItemKindPhysicalFile:
-                    return CommandTarget.File;
-
-                case Constants.vsProjectItemKindVirtualFolder:
-                    return CommandTarget.VirtualFolder;
-
-                case Constants.vsProjectItemKindPhysicalFolder:
-                    return CommandTarget.PhysicalFolder;
-
-                default:
-                    return CommandTarget.Any;
-            }
-        }
-
-        [Flags]
-        protected enum CommandTarget
-        {
-            /// <summary>
-            /// Solution file selected in solution explorer.
-            /// </summary>
-            Solution = 1,
-
-            /// <summary>
-            /// Project file selected in solution explorer.
-            /// </summary>
-            Project = 2,
-
-            /// <summary>
-            /// Physical folder selected in solution explorer.
-            /// </summary>
-            PhysicalFolder = 4,
-
-            /// <summary>
-            /// Project item file selected in solution explorer.
-            /// </summary>
-            File = 8,
-
-            /// <summary>
-            /// Virtual folder selected in solution explorer.
-            /// </summary>
-            VirtualFolder = 16,
-
-            /// <summary>
-            /// Nothing is selected, no current solution.
-            /// </summary>
-            Empty = 32,
-
-            /// <summary>
-            /// Any solution explorer item that presented by physical file.
-            /// </summary>
-            SolutionExplorerFileItem = Solution | Project | File,
-
-            /// <summary>
-            /// Any target including empty.
-            /// </summary>
-            Any = SolutionExplorerFileItem | PhysicalFolder | VirtualFolder | Empty
         }
     }
 }

@@ -13,6 +13,15 @@ namespace Stash
             _repo = repo;
         }
 
+        protected override string ApiUrl
+        {
+            get
+            {
+                return string.Format("/rest/api/1.0/projects/{0}/repos/{1}/branches?limit=1000",
+                                     _repo.ProjectKey, _repo.RepoName);
+            }
+        }
+
         protected override object RequestBody
         {
             get { return null; }
@@ -21,15 +30,6 @@ namespace Stash
         protected override Method RequestMethod
         {
             get { return Method.GET; }
-        }
-
-        protected override string ApiUrl
-        {
-            get
-            {
-                return string.Format("/rest/api/1.0/projects/{0}/repos/{1}/branches?limit=1000",
-                                     _repo.ProjectKey, _repo.RepoName);
-            }
         }
 
         protected override JObject ParseResponse(JObject json)

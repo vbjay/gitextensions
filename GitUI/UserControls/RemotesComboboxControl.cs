@@ -4,16 +4,14 @@ namespace GitUI.UserControls
 {
     public partial class RemotesComboboxControl : GitModuleControl
     {
+        private bool _allowMultiselect;
+
         public RemotesComboboxControl()
         {
             InitializeComponent();
             Translate();
             AllowMultiselect = false;
         }
-
-        public string SelectedRemote { get { return (string)comboBoxRemotes.Text; } set { comboBoxRemotes.Text = value; } }
-
-        private bool _allowMultiselect;
 
         public bool AllowMultiselect
         {
@@ -28,6 +26,8 @@ namespace GitUI.UserControls
                 }
             }
         }
+
+        public string SelectedRemote { get { return (string)comboBoxRemotes.Text; } set { comboBoxRemotes.Text = value; } }
 
         private void RemotesComboboxControl_Load(object sender, EventArgs e)
         {

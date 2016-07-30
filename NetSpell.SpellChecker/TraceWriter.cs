@@ -32,18 +32,6 @@ internal static class TraceWriter
             Trace.WriteLine(value, GetCallingMethod(new StackTrace(1)));
     }
 
-    public static void TraceWarning(string format, params object[] args)
-    {
-        if (Switch.TraceWarning)
-            Trace.WriteLine(string.Format(format, args), GetCallingMethod(new StackTrace(1)));
-    }
-
-    public static void TraceWarning(string value)
-    {
-        if (Switch.TraceWarning)
-            Trace.WriteLine(value, GetCallingMethod(new StackTrace(1)));
-    }
-
     public static void TraceVerbose(string format, params object[] args)
     {
         if (Switch.TraceVerbose)
@@ -53,6 +41,18 @@ internal static class TraceWriter
     public static void TraceVerbose(string value)
     {
         if (Switch.TraceVerbose)
+            Trace.WriteLine(value, GetCallingMethod(new StackTrace(1)));
+    }
+
+    public static void TraceWarning(string format, params object[] args)
+    {
+        if (Switch.TraceWarning)
+            Trace.WriteLine(string.Format(format, args), GetCallingMethod(new StackTrace(1)));
+    }
+
+    public static void TraceWarning(string value)
+    {
+        if (Switch.TraceWarning)
             Trace.WriteLine(value, GetCallingMethod(new StackTrace(1)));
     }
 

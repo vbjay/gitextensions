@@ -7,15 +7,6 @@ namespace ResourceManager.Xliff
     /// <summary>Serializes and deserialize a <see cref="TranslationFile"/>.</summary>
     public static class TranslationSerializer
     {
-        public static void Serialize(TranslationFile translation, string path)
-        {
-            using (TextWriter tw = new StreamWriter(path, false))
-            {
-                XmlSerializer serializer = new XmlSerializer(typeof(TranslationFile));
-                serializer.Serialize(tw, translation);
-            }
-        }
-
         public static TranslationFile Deserialize(string path)
         {
             if (!File.Exists(path))
@@ -36,6 +27,15 @@ namespace ResourceManager.Xliff
             {
                 if (stringReader != null)
                     stringReader.Dispose();
+            }
+        }
+
+        public static void Serialize(TranslationFile translation, string path)
+        {
+            using (TextWriter tw = new StreamWriter(path, false))
+            {
+                XmlSerializer serializer = new XmlSerializer(typeof(TranslationFile));
+                serializer.Serialize(tw, translation);
             }
         }
     }

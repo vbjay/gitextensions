@@ -17,16 +17,6 @@ namespace GitUI
             });
         }
 
-        public static void SelectPathInFileExplorer(string filePath)
-        {
-            Process.Start("explorer.exe", "/select, " + filePath);
-        }
-
-        public static void OpenWithFileExplorer(string filePath)
-        {
-            Process.Start("explorer.exe", filePath);
-        }
-
         /// <summary>
         /// opens urls even with anchor
         /// </summary>
@@ -40,6 +30,16 @@ namespace GitUI
                 var defaultBrowserPath = Regex.Match(browserRegistryString, @"(\"".*?\"")").Captures[0].ToString();
                 Process.Start(defaultBrowserPath, url);
             }
+        }
+
+        public static void OpenWithFileExplorer(string filePath)
+        {
+            Process.Start("explorer.exe", filePath);
+        }
+
+        public static void SelectPathInFileExplorer(string filePath)
+        {
+            Process.Start("explorer.exe", "/select, " + filePath);
         }
     }
 }

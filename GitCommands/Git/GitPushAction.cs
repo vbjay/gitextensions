@@ -9,15 +9,6 @@ namespace GitCommands
     /// Update remote refs along with associated objects.</summary>
     public class GitPush
     {
-        /// <summary>Gets the name or URL of the remote repo to push to.</summary>
-        public string Remote { get; private set; }
-
-        /// <summary>Gets the set of LocalBranch:RemoteBranch actions.</summary>
-        public IEnumerable<GitPushAction> PushActions { get; private set; }
-
-        /// <summary>Indicates whether to report progress during the push operation.</summary>
-        public bool ReportProgress { get; set; }
-
         /// <summary>Works like 'git push {remote}', where {remote} is the current branch’s remote.
         ///  (or 'origin', if no remote is configured for the current branch).</summary>
         public GitPush()
@@ -56,6 +47,15 @@ namespace GitCommands
             PushActions = pushActions;
         }
 
+        /// <summary>Gets the set of LocalBranch:RemoteBranch actions.</summary>
+        public IEnumerable<GitPushAction> PushActions { get; private set; }
+
+        /// <summary>Gets the name or URL of the remote repo to push to.</summary>
+        public string Remote { get; private set; }
+
+        /// <summary>Indicates whether to report progress during the push operation.</summary>
+        public bool ReportProgress { get; set; }
+
         /// <summary>Creates the 'push' command string. <example>"push --progress origin master:master"</example></summary>
         public override string ToString()
         {
@@ -72,9 +72,9 @@ namespace GitCommands
     /// <summary>Part of a 'git push', which specifies the local and/or remote branch.</summary>
     public class GitPushAction
     {
+        private bool _force;
         private string _localBranch;
         private string _remoteBranch;
-        private bool _force;
 
         /// <summary>
         /// Push a local branch to a remote one, optionally forcing a non-fast-forward commit.

@@ -12,6 +12,14 @@ namespace GitUI.CommandsDialogs.SettingsDialog
     {
     }
 
+    public class SettingsPageReferenceByPlugin : SettingsPageReferenceByType
+    {
+        public SettingsPageReferenceByPlugin(IGitPlugin gitPlugin)
+            : base(gitPlugin.GetType())
+        {
+        }
+    }
+
     /// <summary>
     /// Type may be a SettingsPage type or a IGitPlugin subclass type
     /// </summary>
@@ -39,14 +47,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog
         public override string ToString()
         {
             return SettingsPageType.ToString();
-        }
-    }
-
-    public class SettingsPageReferenceByPlugin : SettingsPageReferenceByType
-    {
-        public SettingsPageReferenceByPlugin(IGitPlugin gitPlugin)
-            : base(gitPlugin.GetType())
-        {
         }
     }
 }

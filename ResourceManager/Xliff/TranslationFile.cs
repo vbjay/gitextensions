@@ -8,6 +8,8 @@ namespace ResourceManager.Xliff
     [XmlRoot("xliff")]
     public class TranslationFile : ITranslation
     {
+        private string _languageCode;
+
         public TranslationFile()
         {
             Version = "1.0";
@@ -21,19 +23,30 @@ namespace ResourceManager.Xliff
             _languageCode = languageCode;
         }
 
-        [XmlAttribute("version")]
-        public string Version { get; set; }
-
         [XmlAttribute("GitExVersion")]
         public string GitExVersion { get; set; }
-
-        private string _languageCode;
 
         [XmlAttribute("LanguageCode")]
         public string LanguageCode { get { return _languageCode; } }
 
         [XmlElement(ElementName = "file")]
         public List<TranslationCategory> TranslationCategories { get; set; }
+
+        [XmlAttribute("version")]
+        public string Version { get; set; }
+
+        public void AddTranslationCategory(TranslationCategory translationCategory)
+        {
+            if (string.IsNullOrEmpty(translationCategory.Name))
+                throw new InvalidOperationException("Cannot add translationCategory without name");
+
+            TranslationCategories.Add(translationCategory);
+        }
+
+        public void AddTranslationItem(string category, string item, string property, string neutralValue)
+        {
+            FindOrAddTranslationCategory(category).Body.AddTranslationItemIfNotExist(new TranslationItem(item, property, neutralValue));
+        }
 
         public TranslationCategory FindOrAddTranslationCategory(string translationCategory)
         {
@@ -46,14 +59,6 @@ namespace ResourceManager.Xliff
             return tc;
         }
 
-        public void AddTranslationCategory(TranslationCategory translationCategory)
-        {
-            if (string.IsNullOrEmpty(translationCategory.Name))
-                throw new InvalidOperationException("Cannot add translationCategory without name");
-
-            TranslationCategories.Add(translationCategory);
-        }
-
         public TranslationCategory GetTranslationCategory(string name)
         {
             return TranslationCategories.Find(t => t.Name.TrimStart('_') == name.TrimStart('_'));
@@ -64,11 +69,6 @@ namespace ResourceManager.Xliff
             TranslationCategories.Sort();
             foreach (TranslationCategory tc in TranslationCategories)
                 tc.Body.TranslationItems.Sort();
-        }
-
-        public void AddTranslationItem(string category, string item, string property, string neutralValue)
-        {
-            FindOrAddTranslationCategory(category).Body.AddTranslationItemIfNotExist(new TranslationItem(item, property, neutralValue));
         }
 
         public string TranslateItem(string category, string item, string property, Func<string> provideDefaultValue)

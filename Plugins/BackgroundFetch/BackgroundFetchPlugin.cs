@@ -9,19 +9,29 @@ namespace BackgroundFetch
 {
     public class BackgroundFetchPlugin : GitPluginBase, IGitPluginForRepository
     {
+        private BoolSetting AutoRefresh = new BoolSetting("Refresh view after fetch", false);
+
+        private IDisposable cancellationToken;
+
+        private IGitUICommands currentGitUiCommands;
+
+        private BoolSetting FetchAllSubmodules = new BoolSetting("Fetch all submodules", false);
+
+        private NumberSetting<int> FetchInterval = new NumberSetting<int>("Fetch every (seconds) - set to 0 to disable", 0);
+
+        private StringSetting GitCommand = new StringSetting("Arguments of git command to run", "fetch --all");
+
         public BackgroundFetchPlugin()
         {
             SetNameAndDescription("Periodic background fetch");
             Translate();
         }
 
-        private IDisposable cancellationToken;
-        private IGitUICommands currentGitUiCommands;
-
-        private StringSetting GitCommand = new StringSetting("Arguments of git command to run", "fetch --all");
-        private NumberSetting<int> FetchInterval = new NumberSetting<int>("Fetch every (seconds) - set to 0 to disable", 0);
-        private BoolSetting AutoRefresh = new BoolSetting("Refresh view after fetch", false);
-        private BoolSetting FetchAllSubmodules = new BoolSetting("Fetch all submodules", false);
+        public override bool Execute(GitUIBaseEventArgs gitUiArgs)
+        {
+            gitUiArgs.GitUICommands.StartSettingsDialog(this);
+            return false;
+        }
 
         public override IEnumerable<ISetting> GetSettings()
         {
@@ -40,6 +50,28 @@ namespace BackgroundFetch
             currentGitUiCommands.PostSettings += OnPostSettings;
 
             RecreateObservable();
+        }
+
+        public override void Unregister(IGitUICommands gitUiCommands)
+        {
+            CancelBackgroundOperation();
+
+            if (currentGitUiCommands != null)
+            {
+                currentGitUiCommands.PostSettings -= OnPostSettings;
+                currentGitUiCommands = null;
+            }
+
+            base.Unregister(gitUiCommands);
+        }
+
+        private void CancelBackgroundOperation()
+        {
+            if (cancellationToken != null)
+            {
+                cancellationToken.Dispose();
+                cancellationToken = null;
+            }
         }
 
         private void OnPostSettings(object sender, GitUIPostActionEventArgs e)
@@ -81,34 +113,6 @@ namespace BackgroundFetch
                                   }
                                   );
             }
-        }
-
-        private void CancelBackgroundOperation()
-        {
-            if (cancellationToken != null)
-            {
-                cancellationToken.Dispose();
-                cancellationToken = null;
-            }
-        }
-
-        public override void Unregister(IGitUICommands gitUiCommands)
-        {
-            CancelBackgroundOperation();
-
-            if (currentGitUiCommands != null)
-            {
-                currentGitUiCommands.PostSettings -= OnPostSettings;
-                currentGitUiCommands = null;
-            }
-
-            base.Unregister(gitUiCommands);
-        }
-
-        public override bool Execute(GitUIBaseEventArgs gitUiArgs)
-        {
-            gitUiArgs.GitUICommands.StartSettingsDialog(this);
-            return false;
         }
     }
 }

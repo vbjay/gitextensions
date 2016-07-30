@@ -30,26 +30,9 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-        private void SearchForCandidates(IList<T> candidates)
+        public T SelectedItem
         {
-            var selectionStart = textBox1.SelectionStart;
-            var selectionLength = textBox1.SelectionLength;
-            listBox1.BeginUpdate();
-            listBox1.Items.Clear();
-
-            for (int i = 0; i < candidates.Count && i < 20; i++)
-            {
-                listBox1.Items.Add(candidates[i]);
-            }
-
-            listBox1.EndUpdate();
-            if (candidates.Count > 0)
-            {
-                listBox1.SelectedIndex = 0;
-            }
-            textBox1.SelectionStart = selectionStart;
-            textBox1.SelectionLength = selectionLength;
-            AutoFit();
+            get { return (T)listBox1.SelectedItem; }
         }
 
         private void AutoFit()
@@ -76,37 +59,41 @@ namespace GitUI.CommandsDialogs
             Width = listBox1.Width + 15;
         }
 
-        public T SelectedItem
+        private void listBox1_DoubleClick(object sender, EventArgs e)
         {
-            get { return (T)listBox1.SelectedItem; }
+            Close();
+        }
+
+        private void listBox1_KeyUp(object sender, KeyEventArgs e)
+        {
+            textBox1_KeyUp(sender, e);
+        }
+
+        private void SearchForCandidates(IList<T> candidates)
+        {
+            var selectionStart = textBox1.SelectionStart;
+            var selectionLength = textBox1.SelectionLength;
+            listBox1.BeginUpdate();
+            listBox1.Items.Clear();
+
+            for (int i = 0; i < candidates.Count && i < 20; i++)
+            {
+                listBox1.Items.Add(candidates[i]);
+            }
+
+            listBox1.EndUpdate();
+            if (candidates.Count > 0)
+            {
+                listBox1.SelectedIndex = 0;
+            }
+            textBox1.SelectionStart = selectionStart;
+            textBox1.SelectionLength = selectionLength;
+            AutoFit();
         }
 
         private void SearchWindow_FormClosing(object sender, FormClosingEventArgs e)
         {
             backgroundLoader.Cancel();
-        }
-
-        private void textBox1_TextChanged(object sender, EventArgs e)
-        {
-            string _selectedText = textBox1.Text;
-
-            backgroundLoader.Load(() => getCandidates(_selectedText), SearchForCandidates);
-        }
-
-        private void textBox1_KeyUp(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter)
-            {
-                e.Handled = true;
-                e.SuppressKeyPress = true;
-                Close();
-            }
-            else if (e.KeyCode == Keys.Escape)
-            {
-                listBox1.SelectedItem = null;
-                e.SuppressKeyPress = true;
-                Close();
-            }
         }
 
         private void textBox1_KeyDown(object sender, KeyEventArgs e)
@@ -137,14 +124,27 @@ namespace GitUI.CommandsDialogs
                 e.SuppressKeyPress = true;
         }
 
-        private void listBox1_KeyUp(object sender, KeyEventArgs e)
+        private void textBox1_KeyUp(object sender, KeyEventArgs e)
         {
-            textBox1_KeyUp(sender, e);
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                Close();
+            }
+            else if (e.KeyCode == Keys.Escape)
+            {
+                listBox1.SelectedItem = null;
+                e.SuppressKeyPress = true;
+                Close();
+            }
         }
 
-        private void listBox1_DoubleClick(object sender, EventArgs e)
+        private void textBox1_TextChanged(object sender, EventArgs e)
         {
-            Close();
+            string _selectedText = textBox1.Text;
+
+            backgroundLoader.Load(() => getCandidates(_selectedText), SearchForCandidates);
         }
     }
 }

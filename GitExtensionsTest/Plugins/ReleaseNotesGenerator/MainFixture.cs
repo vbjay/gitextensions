@@ -1,16 +1,18 @@
-﻿using NUnit.Framework;
+﻿using FluentAssertions;
+using NUnit.Framework;
 using ReleaseNotesGenerator;
-using FluentAssertions;
 
 namespace GitExtensionsTest.Plugins.ReleaseNotesGenerator
 {
     [TestFixture]
     public class MainFixture
     {
-        [Test]
-        public void FormatStringTest()
+        [Test, RequiresSTA]
+        public void CopyToClipboard()
         {
-            HtmlFragment.To8DigitString(15).Should().Be("00000015");
+            HtmlFragment.CopyToClipboard("<p>Hallo</p>");
+            // Verify manually that the content can be pasted as text and into MS Word or
+            // LibreOffice Writer. There it should create a formatted table.
         }
 
         [Test]
@@ -29,12 +31,10 @@ EndFragment:00000143
 </body></html>");
         }
 
-        [Test, RequiresSTA]
-        public void CopyToClipboard()
+        [Test]
+        public void FormatStringTest()
         {
-            HtmlFragment.CopyToClipboard("<p>Hallo</p>");
-            // Verify manually that the content can be pasted as text and into MS Word or
-            // LibreOffice Writer. There it should create a formatted table.
+            HtmlFragment.To8DigitString(15).Should().Be("00000015");
         }
     }
 }

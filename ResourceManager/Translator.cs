@@ -9,37 +9,10 @@ namespace ResourceManager
     {
         private static readonly string EnglishTranslationName = "English";
 
-        //Try to cache the translation as long as possible
-        private static IDictionary<string, TranslationFile> _translation = new Dictionary<string, TranslationFile>();
-
         private static string _name;
 
-        public static IDictionary<string, TranslationFile> GetTranslation(string translationName)
-        {
-            if (string.IsNullOrEmpty(translationName))
-            {
-                _translation = new Dictionary<string, TranslationFile>();
-            }
-            else if (!translationName.Equals(_name))
-            {
-                _translation = new Dictionary<string, TranslationFile>();
-                var result = Directory.EnumerateFiles(GetTranslationDir(), translationName + "*.xlf");
-                foreach (var file in result)
-                {
-                    var name = Path.GetFileNameWithoutExtension(file).Substring(translationName.Length);
-                    var t = TranslationSerializer.Deserialize(file) ??
-                            new TranslationFile();
-                    _translation[name] = t;
-                }
-            }
-            _name = translationName;
-            return _translation;
-        }
-
-        public static string GetTranslationDir()
-        {
-            return Path.Combine(Path.GetDirectoryName(typeof(Translator).Assembly.Location), "Translation");
-        }
+        //Try to cache the translation as long as possible
+        private static IDictionary<string, TranslationFile> _translation = new Dictionary<string, TranslationFile>();
 
         public static string[] GetAllTranslations()
         {
@@ -66,6 +39,33 @@ namespace ResourceManager
             {
             }
             return translations.ToArray();
+        }
+
+        public static IDictionary<string, TranslationFile> GetTranslation(string translationName)
+        {
+            if (string.IsNullOrEmpty(translationName))
+            {
+                _translation = new Dictionary<string, TranslationFile>();
+            }
+            else if (!translationName.Equals(_name))
+            {
+                _translation = new Dictionary<string, TranslationFile>();
+                var result = Directory.EnumerateFiles(GetTranslationDir(), translationName + "*.xlf");
+                foreach (var file in result)
+                {
+                    var name = Path.GetFileNameWithoutExtension(file).Substring(translationName.Length);
+                    var t = TranslationSerializer.Deserialize(file) ??
+                            new TranslationFile();
+                    _translation[name] = t;
+                }
+            }
+            _name = translationName;
+            return _translation;
+        }
+
+        public static string GetTranslationDir()
+        {
+            return Path.Combine(Path.GetDirectoryName(typeof(Translator).Assembly.Location), "Translation");
         }
 
         public static void Translate(ITranslate obj, string translationName)

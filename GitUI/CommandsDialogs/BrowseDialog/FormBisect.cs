@@ -16,8 +16,15 @@ namespace GitUI.CommandsDialogs.BrowseDialog
 
         private readonly RevisionGrid _revisionGrid;
 
+        public FormBisect(RevisionGrid revisionGrid)
+            : this(revisionGrid.UICommands)
+        {
+            _revisionGrid = revisionGrid;
+            UpdateButtonsState();
+        }
+
         private FormBisect()
-            : this((GitUICommands)null)
+                    : this((GitUICommands)null)
         { }
 
         private FormBisect(GitUICommands aCommands)
@@ -27,21 +34,36 @@ namespace GitUI.CommandsDialogs.BrowseDialog
             Translate();
         }
 
-        public FormBisect(RevisionGrid revisionGrid)
-            : this(revisionGrid.UICommands)
+        private void Bad_Click(object sender, EventArgs e)
         {
-            _revisionGrid = revisionGrid;
-            UpdateButtonsState();
+            ContinueBisect(GitBisectOption.Bad);
         }
 
-        private void UpdateButtonsState()
+        private void BisectRange(string startRevision, string endRevision)
         {
-            bool inTheMiddleOfBisect = Module.InTheMiddleOfBisect();
-            Start.Enabled = !inTheMiddleOfBisect;
-            Good.Enabled = inTheMiddleOfBisect;
-            Bad.Enabled = inTheMiddleOfBisect;
-            Stop.Enabled = inTheMiddleOfBisect;
-            btnSkip.Enabled = inTheMiddleOfBisect;
+            var command = GitCommandHelpers.ContinueBisectCmd(GitBisectOption.Good, startRevision);
+            var errorOccurred = !FormProcess.ShowDialog(this, command);
+            if (errorOccurred)
+                return;
+
+            command = GitCommandHelpers.ContinueBisectCmd(GitBisectOption.Bad, endRevision);
+            FormProcess.ShowDialog(this, command);
+        }
+
+        private void btnSkip_Click(object sender, EventArgs e)
+        {
+            ContinueBisect(GitBisectOption.Skip);
+        }
+
+        private void ContinueBisect(GitBisectOption bisectOption)
+        {
+            FormProcess.ShowDialog(this, GitCommandHelpers.ContinueBisectCmd(bisectOption), false);
+            Close();
+        }
+
+        private void Good_Click(object sender, EventArgs e)
+        {
+            ContinueBisect(GitBisectOption.Good);
         }
 
         private void Start_Click(object sender, EventArgs e)
@@ -60,42 +82,20 @@ namespace GitUI.CommandsDialogs.BrowseDialog
             }
         }
 
-        private void BisectRange(string startRevision, string endRevision)
-        {
-            var command = GitCommandHelpers.ContinueBisectCmd(GitBisectOption.Good, startRevision);
-            var errorOccurred = !FormProcess.ShowDialog(this, command);
-            if (errorOccurred)
-                return;
-
-            command = GitCommandHelpers.ContinueBisectCmd(GitBisectOption.Bad, endRevision);
-            FormProcess.ShowDialog(this, command);
-        }
-
-        private void Good_Click(object sender, EventArgs e)
-        {
-            ContinueBisect(GitBisectOption.Good);
-        }
-
-        private void Bad_Click(object sender, EventArgs e)
-        {
-            ContinueBisect(GitBisectOption.Bad);
-        }
-
         private void Stop_Click(object sender, EventArgs e)
         {
             FormProcess.ShowDialog(this, GitCommandHelpers.StopBisectCmd());
             Close();
         }
 
-        private void btnSkip_Click(object sender, EventArgs e)
+        private void UpdateButtonsState()
         {
-            ContinueBisect(GitBisectOption.Skip);
-        }
-
-        private void ContinueBisect(GitBisectOption bisectOption)
-        {
-            FormProcess.ShowDialog(this, GitCommandHelpers.ContinueBisectCmd(bisectOption), false);
-            Close();
+            bool inTheMiddleOfBisect = Module.InTheMiddleOfBisect();
+            Start.Enabled = !inTheMiddleOfBisect;
+            Good.Enabled = inTheMiddleOfBisect;
+            Bad.Enabled = inTheMiddleOfBisect;
+            Stop.Enabled = inTheMiddleOfBisect;
+            btnSkip.Enabled = inTheMiddleOfBisect;
         }
     }
 }

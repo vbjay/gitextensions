@@ -9,16 +9,7 @@ namespace GitUI.HelperDialogs
 {
     public partial class FormChooseCommit : GitModuleForm
     {
-        private FormChooseCommit()
-            : this(null)
-        { }
-
-        private FormChooseCommit(GitUICommands aCommands)
-            : base(aCommands)
-        {
-            InitializeComponent();
-            Translate();
-        }
+        private Dictionary<string, string> _parents;
 
         public FormChooseCommit(GitUICommands aCommands, string preselectCommit)
             : this(aCommands)
@@ -35,8 +26,18 @@ namespace GitUI.HelperDialogs
             }
         }
 
+        private FormChooseCommit()
+                            : this(null)
+        { }
+
+        private FormChooseCommit(GitUICommands aCommands)
+            : base(aCommands)
+        {
+            InitializeComponent();
+            Translate();
+        }
+
         public GitCommands.GitRevision SelectedRevision { get; private set; }
-        private Dictionary<string, string> _parents;
 
         protected override void OnLoad(EventArgs e)
         {
@@ -56,16 +57,6 @@ namespace GitUI.HelperDialogs
             }
         }
 
-        private void revisionGrid_DoubleClickRevision(object sender, DoubleClickRevisionEventArgs e)
-        {
-            if (e.Revision != null)
-            {
-                SelectedRevision = e.Revision;
-                DialogResult = DialogResult.OK;
-                Close();
-            }
-        }
-
         private void buttonGotoCommit_Click(object sender, EventArgs e)
         {
             revisionGrid.MenuCommands.GotoCommitExcecute();
@@ -74,6 +65,16 @@ namespace GitUI.HelperDialogs
         private void linkLabelParent_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             revisionGrid.SetSelectedRevision(new GitRevision(revisionGrid.Module, _parents[((LinkLabel)sender).Text]));
+        }
+
+        private void revisionGrid_DoubleClickRevision(object sender, DoubleClickRevisionEventArgs e)
+        {
+            if (e.Revision != null)
+            {
+                SelectedRevision = e.Revision;
+                DialogResult = DialogResult.OK;
+                Close();
+            }
         }
 
         private void revisionGrid_SelectionChanged(object sender, EventArgs e)

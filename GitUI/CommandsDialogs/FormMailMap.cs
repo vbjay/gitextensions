@@ -9,11 +9,7 @@ namespace GitUI.CommandsDialogs
 {
     public partial class FormMailMap : GitModuleForm
     {
-        private readonly TranslationString _mailmapOnlyInWorkingDirSupported =
-            new TranslationString(".mailmap is only supported when there is a working directory.");
-
-        private readonly TranslationString _mailmapOnlyInWorkingDirSupportedCaption =
-            new TranslationString("No working directory");
+        public string MailMapFile = string.Empty;
 
         private readonly TranslationString _cannotAccessMailmap =
             new TranslationString("Failed to save .mailmap." + Environment.NewLine + "Check if file is accessible.");
@@ -21,13 +17,17 @@ namespace GitUI.CommandsDialogs
         private readonly TranslationString _cannotAccessMailmapCaption =
             new TranslationString("Failed to save .mailmap");
 
+        private readonly TranslationString _mailmapOnlyInWorkingDirSupported =
+                                    new TranslationString(".mailmap is only supported when there is a working directory.");
+
+        private readonly TranslationString _mailmapOnlyInWorkingDirSupportedCaption =
+            new TranslationString("No working directory");
+
         private readonly TranslationString _saveFileQuestion =
             new TranslationString("Save changes to .mailmap?");
 
         private readonly TranslationString _saveFileQuestionCaption =
             new TranslationString("Save changes?");
-
-        public string MailMapFile = string.Empty;
 
         public FormMailMap(GitUICommands aCommands)
             : base(aCommands)
@@ -41,55 +41,6 @@ namespace GitUI.CommandsDialogs
             base.OnRuntimeLoad(e);
             LoadFile();
             _NO_TRANSLATE_MailMapText.TextLoaded += MailMapFileLoaded;
-        }
-
-        private void LoadFile()
-        {
-            try
-            {
-                if (File.Exists(Module.WorkingDir + ".mailmap"))
-                {
-                    _NO_TRANSLATE_MailMapText.ViewFile(Module.WorkingDir + ".mailmap");
-                }
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine(ex.Message);
-            }
-        }
-
-        private void SaveClick(object sender, EventArgs e)
-        {
-            SaveFile();
-            Close();
-        }
-
-        private bool SaveFile()
-        {
-            try
-            {
-                FileInfoExtensions
-                    .MakeFileTemporaryWritable(
-                        Module.WorkingDir + ".mailmap",
-                        x =>
-                        {
-                            this.MailMapFile = _NO_TRANSLATE_MailMapText.GetText();
-                            if (!this.MailMapFile.EndsWith(Environment.NewLine))
-                                this.MailMapFile += Environment.NewLine;
-
-                            File.WriteAllBytes(x, GitModule.SystemEncoding.GetBytes(this.MailMapFile));
-                        });
-
-                UICommands.RepoChangedNotifier.Notify();
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(this, _cannotAccessMailmap.Text + Environment.NewLine + ex.Message,
-                    _cannotAccessMailmapCaption.Text);
-                return false;
-            }
         }
 
         private void FormMailMapFormClosing(object sender, FormClosingEventArgs e)
@@ -132,9 +83,58 @@ namespace GitUI.CommandsDialogs
             return MailMapFile == _NO_TRANSLATE_MailMapText.GetText();
         }
 
+        private void LoadFile()
+        {
+            try
+            {
+                if (File.Exists(Module.WorkingDir + ".mailmap"))
+                {
+                    _NO_TRANSLATE_MailMapText.ViewFile(Module.WorkingDir + ".mailmap");
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex.Message);
+            }
+        }
+
         private void MailMapFileLoaded(object sender, EventArgs e)
         {
             MailMapFile = _NO_TRANSLATE_MailMapText.GetText();
+        }
+
+        private void SaveClick(object sender, EventArgs e)
+        {
+            SaveFile();
+            Close();
+        }
+
+        private bool SaveFile()
+        {
+            try
+            {
+                FileInfoExtensions
+                    .MakeFileTemporaryWritable(
+                        Module.WorkingDir + ".mailmap",
+                        x =>
+                        {
+                            this.MailMapFile = _NO_TRANSLATE_MailMapText.GetText();
+                            if (!this.MailMapFile.EndsWith(Environment.NewLine))
+                                this.MailMapFile += Environment.NewLine;
+
+                            File.WriteAllBytes(x, GitModule.SystemEncoding.GetBytes(this.MailMapFile));
+                        });
+
+                UICommands.RepoChangedNotifier.Notify();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, _cannotAccessMailmap.Text + Environment.NewLine + ex.Message,
+                    _cannotAccessMailmapCaption.Text);
+                return false;
+            }
         }
     }
 }

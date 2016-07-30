@@ -6,10 +6,10 @@ namespace GitUI
 {
     public sealed class ProcessOutputTimer : IDisposable
     {
-        public delegate void DoOutputCallback(string text);
-
         private readonly Timer _timer;
+
         private readonly StringBuilder textToAdd = new StringBuilder();
+
         private DoOutputCallback doOutput;
 
         /// <summary>
@@ -21,6 +21,36 @@ namespace GitUI
             this.doOutput = doOutput;
             _timer = new Timer();
             _timer.Tick += _timer_Elapsed;
+        }
+
+        public delegate void DoOutputCallback(string text);
+
+        /// <summary>
+        /// Can be called on any thread.
+        /// </summary>
+        public void Append(string text)
+        {
+            lock (textToAdd)
+            {
+                textToAdd.Append(text);
+            }
+        }
+
+        public void Clear()
+        {
+            lock (textToAdd)
+            {
+                textToAdd.Remove(0, textToAdd.Length);
+            }
+        }
+
+        public void Dispose()
+        {
+            Stop(false);
+            //clear will lock, to prevent outputting to disposed object
+            Clear();
+            doOutput = null;
+            _timer.Dispose();
         }
 
         public void Start(int interval)
@@ -42,17 +72,6 @@ namespace GitUI
                 _timer_Elapsed(null, null);
         }
 
-        /// <summary>
-        /// Can be called on any thread.
-        /// </summary>
-        public void Append(string text)
-        {
-            lock (textToAdd)
-            {
-                textToAdd.Append(text);
-            }
-        }
-
         private void _timer_Elapsed(object sender, EventArgs eventArgs)
         {
             lock (textToAdd)
@@ -61,23 +80,6 @@ namespace GitUI
                     doOutput(textToAdd.ToString());
                 Clear();
             }
-        }
-
-        public void Clear()
-        {
-            lock (textToAdd)
-            {
-                textToAdd.Remove(0, textToAdd.Length);
-            }
-        }
-
-        public void Dispose()
-        {
-            Stop(false);
-            //clear will lock, to prevent outputting to disposed object
-            Clear();
-            doOutput = null;
-            _timer.Dispose();
         }
     }
 }

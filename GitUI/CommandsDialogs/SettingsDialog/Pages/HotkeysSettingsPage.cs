@@ -9,14 +9,14 @@
             Translate();
         }
 
-        protected override void SettingsToPage()
-        {
-            controlHotkeys.ReloadSettings();
-        }
-
         protected override void PageToSettings()
         {
             controlHotkeys.SaveSettings();
+        }
+
+        protected override void SettingsToPage()
+        {
+            controlHotkeys.ReloadSettings();
         }
     }
 }

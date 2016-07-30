@@ -4,18 +4,18 @@ namespace GitUIPluginInterfaces.RepositoryHosts
 {
     public interface IRepositoryHostPlugin : IGitPlugin
     {
-        IList<IHostedRepository> SearchForRepository(string search);
+        bool ConfigurationOk { get; }
+
+        List<IHostedRemote> GetHostedRemotesForModule(IGitModule aModule);
+
+        IList<IHostedRepository> GetMyRepos();
 
         IList<IHostedRepository> GetRepositoriesOfUser(string user);
 
         IHostedRepository GetRepository(string user, string repositoryName);
 
-        IList<IHostedRepository> GetMyRepos();
-
-        bool ConfigurationOk { get; }
-
         bool GitModuleIsRelevantToMe(IGitModule aModule);
 
-        List<IHostedRemote> GetHostedRemotesForModule(IGitModule aModule);
+        IList<IHostedRepository> SearchForRepository(string search);
     }
 }

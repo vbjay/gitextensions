@@ -27,10 +27,10 @@ namespace NetSpell.SpellChecker
         private Regex _htmlRegex = new Regex(@"</[c-g\d]+>|</[i-o\d]+>|</[a\d]+>|</[q-z\d]+>|<[cg]+[^>]*>|<[i-o]+[^>]*>|<[q-z]+[^>]*>|<[a]+[^>]*>|<(\[^\]*\|'[^']*'|[^'\>])*>", RegexOptions.IgnoreCase & RegexOptions.Compiled);
         private MatchCollection _htmlTags;
         private Regex _letterRegex = new Regex(@"\D", RegexOptions.Compiled);
+        private SuggestionEnum _suggestionMode = SuggestionEnum.PhoneticNearMiss;
         private Regex _upperRegex = new Regex(@"[^\p{Lu}]", RegexOptions.Compiled); // @"[^A-Z]
         private Regex _wordEx = new Regex(@"\b[\w']+\b", RegexOptions.Compiled); // @"\b[A-Za-z0-9_'À-ÿ]+\b"
         private MatchCollection _words;
-        private SuggestionEnum _suggestionMode = SuggestionEnum.PhoneticNearMiss;
 
         #endregion Global Regex
 
@@ -41,6 +41,42 @@ namespace NetSpell.SpellChecker
         #endregion private variables
 
         #region Events
+
+        /// <summary>
+        ///     This represents the delegate method prototype that
+        ///     event receivers must implement
+        /// </summary>
+        public delegate void DeletedWordEventHandler(object sender, SpellingEventArgs e);
+
+        /// <summary>
+        ///     This represents the delegate method prototype that
+        ///     event receivers must implement
+        /// </summary>
+        public delegate void DoubledWordEventHandler(object sender, SpellingEventArgs e);
+
+        /// <summary>
+        ///     This represents the delegate method prototype that
+        ///     event receivers must implement
+        /// </summary>
+        public delegate void EndOfTextEventHandler(object sender, System.EventArgs e);
+
+        /// <summary>
+        ///     This represents the delegate method prototype that
+        ///     event receivers must implement
+        /// </summary>
+        public delegate void IgnoredWordEventHandler(object sender, SpellingEventArgs e);
+
+        /// <summary>
+        ///     This represents the delegate method prototype that
+        ///     event receivers must implement
+        /// </summary>
+        public delegate void MisspelledWordEventHandler(object sender, SpellingEventArgs e);
+
+        /// <summary>
+        ///     This represents the delegate method prototype that
+        ///     event receivers must implement
+        /// </summary>
+        public delegate void ReplacedWordEventHandler(object sender, ReplaceWordEventArgs e);
 
         /// <summary>
         ///     This event is fired when a word is deleted
@@ -79,42 +115,6 @@ namespace NetSpell.SpellChecker
         ///		Use this event to update the parent text
         /// </remarks>
         public event ReplacedWordEventHandler ReplacedWord;
-
-        /// <summary>
-        ///     This represents the delegate method prototype that
-        ///     event receivers must implement
-        /// </summary>
-        public delegate void DeletedWordEventHandler(object sender, SpellingEventArgs e);
-
-        /// <summary>
-        ///     This represents the delegate method prototype that
-        ///     event receivers must implement
-        /// </summary>
-        public delegate void DoubledWordEventHandler(object sender, SpellingEventArgs e);
-
-        /// <summary>
-        ///     This represents the delegate method prototype that
-        ///     event receivers must implement
-        /// </summary>
-        public delegate void EndOfTextEventHandler(object sender, System.EventArgs e);
-
-        /// <summary>
-        ///     This represents the delegate method prototype that
-        ///     event receivers must implement
-        /// </summary>
-        public delegate void IgnoredWordEventHandler(object sender, SpellingEventArgs e);
-
-        /// <summary>
-        ///     This represents the delegate method prototype that
-        ///     event receivers must implement
-        /// </summary>
-        public delegate void MisspelledWordEventHandler(object sender, SpellingEventArgs e);
-
-        /// <summary>
-        ///     This represents the delegate method prototype that
-        ///     event receivers must implement
-        /// </summary>
-        public delegate void ReplacedWordEventHandler(object sender, ReplaceWordEventArgs e);
 
         /// <summary>
         ///     This is the method that is responsible for notifying
@@ -319,42 +319,6 @@ namespace NetSpell.SpellChecker
 
         #region ISpell Near Miss Suggetion methods
 
-        private void SuggestWord(string word, List<Word> tempSuggestion)
-        {
-            Word ws = new Word();
-            ws.Text = word;
-            ws.EditDistance = EditDistance(CurrentWord, word);
-            tempSuggestion.Add(ws);
-        }
-
-        /// <summary>
-        ///     suggestions for a typical fault of spelling, that
-        ///		differs with more, than 1 letter from the right form.
-        /// </summary>
-        private void ReplaceChars(List<Word> tempSuggestion)
-        {
-            List<string> replacementChars = Dictionary.ReplaceCharacters;
-            for (int i = 0; i < replacementChars.Count; i++)
-            {
-                int split = replacementChars[i].IndexOf(' ');
-                string key = replacementChars[i].Substring(0, split);
-                string replacement = replacementChars[i].Substring(split + 1);
-
-                int pos = CurrentWord.IndexOf(key, StringComparison.InvariantCulture);
-                while (pos > -1)
-                {
-                    string tempWord = CurrentWord.Substring(0, pos);
-                    tempWord += replacement;
-                    tempWord += CurrentWord.Substring(pos + key.Length);
-
-                    if (FindWord(ref tempWord))
-                        SuggestWord(tempWord, tempSuggestion);
-
-                    pos = CurrentWord.IndexOf(key, pos + 1, StringComparison.InvariantCulture);
-                }
-            }
-        }
-
         /// <summary>
         ///		swap out each char one by one and try all the tryme
         ///		chars in its place to see if that makes a good word
@@ -414,6 +378,42 @@ namespace NetSpell.SpellChecker
                         SuggestWord(word, tempSuggestion);
                 }
             }
+        }
+
+        /// <summary>
+        ///     suggestions for a typical fault of spelling, that
+        ///		differs with more, than 1 letter from the right form.
+        /// </summary>
+        private void ReplaceChars(List<Word> tempSuggestion)
+        {
+            List<string> replacementChars = Dictionary.ReplaceCharacters;
+            for (int i = 0; i < replacementChars.Count; i++)
+            {
+                int split = replacementChars[i].IndexOf(' ');
+                string key = replacementChars[i].Substring(0, split);
+                string replacement = replacementChars[i].Substring(split + 1);
+
+                int pos = CurrentWord.IndexOf(key, StringComparison.InvariantCulture);
+                while (pos > -1)
+                {
+                    string tempWord = CurrentWord.Substring(0, pos);
+                    tempWord += replacement;
+                    tempWord += CurrentWord.Substring(pos + key.Length);
+
+                    if (FindWord(ref tempWord))
+                        SuggestWord(tempWord, tempSuggestion);
+
+                    pos = CurrentWord.IndexOf(key, pos + 1, StringComparison.InvariantCulture);
+                }
+            }
+        }
+
+        private void SuggestWord(string word, List<Word> tempSuggestion)
+        {
+            Word ws = new Word();
+            ws.Text = word;
+            ws.EditDistance = EditDistance(CurrentWord, word);
+            tempSuggestion.Add(ws);
         }
 
         /// <summary>
@@ -612,6 +612,34 @@ namespace NetSpell.SpellChecker
         public int EditDistance(string source, string target)
         {
             return EditDistance(source, target, true);
+        }
+
+        /// <summary>
+        ///     Checks to see if the word is in the dictionary
+        /// </summary>
+        /// <param name="word" type="string">
+        ///     <para>
+        ///         The word to check
+        ///     </para>
+        /// </param>
+        /// <returns>
+        ///     Returns true if word is found in dictionary
+        /// </returns>
+        public bool FindWord(ref string word)
+        {
+            Initialize();
+
+            TraceWriter.TraceVerbose("Find Word: {0}", word);
+
+            if (Dictionary.Contains(word))
+                return true;
+            string wordLower = word.ToLowerInvariant();
+            if (word != wordLower && Dictionary.Contains(wordLower))
+            {
+                word = wordLower;
+                return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -1114,41 +1142,14 @@ namespace NetSpell.SpellChecker
             return false;
         }
 
-        /// <summary>
-        ///     Checks to see if the word is in the dictionary
-        /// </summary>
-        /// <param name="word" type="string">
-        ///     <para>
-        ///         The word to check
-        ///     </para>
-        /// </param>
-        /// <returns>
-        ///     Returns true if word is found in dictionary
-        /// </returns>
-        public bool FindWord(ref string word)
-        {
-            Initialize();
-
-            TraceWriter.TraceVerbose("Find Word: {0}", word);
-
-            if (Dictionary.Contains(word))
-                return true;
-            string wordLower = word.ToLowerInvariant();
-            if (word != wordLower && Dictionary.Contains(wordLower))
-            {
-                word = wordLower;
-                return true;
-            }
-            return false;
-        }
-
         #endregion public methods
 
         #region public properties
 
         private bool _alertComplete = true;
-        private WordDictionary _dictionary;
         private HashSet<string> _autoCompleteWords = new HashSet<string>();
+        private string _currentWord = string.Empty;
+        private WordDictionary _dictionary;
         private bool _ignoreAllCapsWords = true;
         private bool _ignoreHtml = true;
         private List<string> _ignoreList = new List<string>();
@@ -1160,7 +1161,6 @@ namespace NetSpell.SpellChecker
         private List<string> _suggestions = new List<string>();
         private StringBuilder _text = new StringBuilder();
         private int _wordIndex;
-        private string _currentWord = string.Empty;
 
         /// <summary>
         ///     The suggestion strategy to use when generating suggestions

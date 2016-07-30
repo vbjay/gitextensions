@@ -10,8 +10,8 @@ namespace GitStatistics
     /// </summary>
     public class CodeFile
     {
-        private readonly bool _isDesignerFile;
         protected int NumberCodeFiles;
+        private readonly bool _isDesignerFile;
         private bool _inCodeGeneratedRegion;
         private bool _inCommentBlock;
         private bool _skipResetFlag;
@@ -25,28 +25,11 @@ namespace GitStatistics
 
         public FileInfo File { get; private set; }
 
-        protected internal int NumberLines { get; protected set; }
-
-        protected internal int NumberBlankLines { get; protected set; }
-
-        protected internal int NumberLinesInDesignerFiles { get; protected set; }
-
-        protected internal int NumberCommentsLines { get; protected set; }
-
         internal bool IsTestFile { get; private set; }
-
-        private bool IsDesignerFile()
-        {
-            return
-                IsWebReferenceFile() ||
-                (CultureInfo.CurrentCulture.CompareInfo.IndexOf(File.Name, ".Designer.", CompareOptions.IgnoreCase) != -1);
-        }
-
-        private bool IsWebReferenceFile()
-        {
-            return File.FullName.Contains(@"\Web References\") &&
-                   File.Name == "Reference.cs"; // Ugh
-        }
+        protected internal int NumberBlankLines { get; protected set; }
+        protected internal int NumberCommentsLines { get; protected set; }
+        protected internal int NumberLines { get; protected set; }
+        protected internal int NumberLinesInDesignerFiles { get; protected set; }
 
         public void CountLines()
         {
@@ -63,14 +46,6 @@ namespace GitStatistics
                         IncrementLineCountsFromLine(line.TrimStart());
                 }
             }
-        }
-
-        private void InitializeCountLines()
-        {
-            SetLineCountsToZero();
-            NumberCodeFiles = 1;
-            _inCodeGeneratedRegion = false;
-            _inCommentBlock = false;
         }
 
         protected void SetLineCountsToZero()
@@ -107,6 +82,75 @@ namespace GitStatistics
 
             if (!_skipResetFlag)
                 ResetCodeBlockFlags(line);
+        }
+
+        private void InitializeCountLines()
+        {
+            SetLineCountsToZero();
+            NumberCodeFiles = 1;
+            _inCodeGeneratedRegion = false;
+            _inCommentBlock = false;
+        }
+
+        private bool IsDesignerFile()
+        {
+            return
+                IsWebReferenceFile() ||
+                (CultureInfo.CurrentCulture.CompareInfo.IndexOf(File.Name, ".Designer.", CompareOptions.IgnoreCase) != -1);
+        }
+
+        private bool IsWebReferenceFile()
+        {
+            return File.FullName.Contains(@"\Web References\") &&
+                   File.Name == "Reference.cs"; // Ugh
+        }
+
+        private void ResetCodeBlockFlags(string line)
+        {
+            if (_inCodeGeneratedRegion && (line.Contains("#endregion") || line.Contains("#End Region")))
+                _inCodeGeneratedRegion = false;
+
+            if (_inCommentBlock && line.Contains("*/"))
+                _inCommentBlock = false;
+
+            if (File.Extension.ToLower() == ".pas" || File.Extension.ToLower() == ".inc")
+            {
+                if (line.Contains("*)") || line.Contains("}"))
+                    _inCommentBlock = false;
+            }
+
+            if (File.Extension.Equals(".rb", StringComparison.OrdinalIgnoreCase) && line.Contains("=end"))
+                _inCommentBlock = false;
+            else if (File.Extension.Equals(".pl", StringComparison.OrdinalIgnoreCase) && line.Contains("=end"))
+                _inCommentBlock = false;
+            else if (File.Extension.Equals(".lua", StringComparison.OrdinalIgnoreCase) && line.Contains("]]"))
+                _inCommentBlock = false;
+
+            if (File.Extension.Equals(".xml", StringComparison.OrdinalIgnoreCase) ||
+                (File.Extension.Equals(".resx", StringComparison.OrdinalIgnoreCase) && !_inCodeGeneratedRegion) ||
+                File.Extension.Equals(".html", StringComparison.OrdinalIgnoreCase) ||
+                File.Extension.Equals(".cshtml", StringComparison.OrdinalIgnoreCase) ||
+                File.Extension.Equals(".htm", StringComparison.OrdinalIgnoreCase))
+            {
+                if (line.Contains("-->"))
+                {
+                    _inCommentBlock = false;
+                }
+            }
+
+            if (File.Extension.Equals(".aspx", StringComparison.OrdinalIgnoreCase))
+            {
+                if (line.Contains("--%>"))
+                {
+                    _inCommentBlock = false;
+                }
+            }
+
+            if (File.Extension.Equals(".py", StringComparison.OrdinalIgnoreCase))
+            {
+                if (line.Contains("'''") || line.Contains("\"\"\""))
+                    _inCommentBlock = false;
+            }
         }
 
         private void SetCodeBlockFlags(string line)
@@ -177,54 +221,6 @@ namespace GitStatistics
             if (!_inCommentBlock && !_inCodeGeneratedRegion && line.StartsWith("[Test"))
             {
                 IsTestFile = true;
-            }
-        }
-
-        private void ResetCodeBlockFlags(string line)
-        {
-            if (_inCodeGeneratedRegion && (line.Contains("#endregion") || line.Contains("#End Region")))
-                _inCodeGeneratedRegion = false;
-
-            if (_inCommentBlock && line.Contains("*/"))
-                _inCommentBlock = false;
-
-            if (File.Extension.ToLower() == ".pas" || File.Extension.ToLower() == ".inc")
-            {
-                if (line.Contains("*)") || line.Contains("}"))
-                    _inCommentBlock = false;
-            }
-
-            if (File.Extension.Equals(".rb", StringComparison.OrdinalIgnoreCase) && line.Contains("=end"))
-                _inCommentBlock = false;
-            else if (File.Extension.Equals(".pl", StringComparison.OrdinalIgnoreCase) && line.Contains("=end"))
-                _inCommentBlock = false;
-            else if (File.Extension.Equals(".lua", StringComparison.OrdinalIgnoreCase) && line.Contains("]]"))
-                _inCommentBlock = false;
-
-            if (File.Extension.Equals(".xml", StringComparison.OrdinalIgnoreCase) ||
-                (File.Extension.Equals(".resx", StringComparison.OrdinalIgnoreCase) && !_inCodeGeneratedRegion) ||
-                File.Extension.Equals(".html", StringComparison.OrdinalIgnoreCase) ||
-                File.Extension.Equals(".cshtml", StringComparison.OrdinalIgnoreCase) ||
-                File.Extension.Equals(".htm", StringComparison.OrdinalIgnoreCase))
-            {
-                if (line.Contains("-->"))
-                {
-                    _inCommentBlock = false;
-                }
-            }
-
-            if (File.Extension.Equals(".aspx", StringComparison.OrdinalIgnoreCase))
-            {
-                if (line.Contains("--%>"))
-                {
-                    _inCommentBlock = false;
-                }
-            }
-
-            if (File.Extension.Equals(".py", StringComparison.OrdinalIgnoreCase))
-            {
-                if (line.Contains("'''") || line.Contains("\"\"\""))
-                    _inCommentBlock = false;
             }
         }
     }

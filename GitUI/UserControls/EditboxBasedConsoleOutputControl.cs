@@ -147,6 +147,17 @@ namespace GitUI.UserControls
             }
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            KillProcess();
+            if ((disposing) && (_timer != null))
+            {
+                _timer.Dispose();
+                _timer = null;
+            }
+            base.Dispose(disposing);
+        }
+
         private void AppendMessage([NotNull] string text)
         {
             if (text == null)
@@ -161,17 +172,6 @@ namespace GitUI.UserControls
                 _editbox.ScrollToCaret();
                 _editbox.Visible = true;
             }
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            KillProcess();
-            if ((disposing) && (_timer != null))
-            {
-                _timer.Dispose();
-                _timer = null;
-            }
-            base.Dispose(disposing);
         }
     }
 }

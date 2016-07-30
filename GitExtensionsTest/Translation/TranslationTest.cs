@@ -1,19 +1,17 @@
-﻿using NUnit.Framework;
-using TestClass = NUnit.Framework.TestFixtureAttribute;
-using TestMethod = NUnit.Framework.TestAttribute;
-using GitUI;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using GitUI;
 using ResourceManager;
 using ResourceManager.Xliff;
+using TestClass = NUnit.Framework.TestFixtureAttribute;
+using TestMethod = NUnit.Framework.TestAttribute;
 
 namespace GitExtensionsTest.TranslationTest
 {
     [TestClass]
     public class TranslationTest
     {
-
         [TestMethod]
         [STAThread]
         public void CreateInstanceOfClass()

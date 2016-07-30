@@ -16,13 +16,31 @@ namespace GitUIPluginInterfaces
             DefaultValue = aDefaultValue;
         }
 
-        public string Name { get; private set; }
         public string Caption { get; private set; }
         public string DefaultValue { get; set; }
+        public string Name { get; private set; }
+
+        public string this[ISettingsSource settings]
+        {
+            get
+            {
+                return settings.GetString(Name, null);
+            }
+
+            set
+            {
+                settings.SetString(Name, value);
+            }
+        }
 
         public ISettingControlBinding CreateControlBinding()
         {
             return new TextBoxBinding(this);
+        }
+
+        public string ValueOrDefault(ISettingsSource settings)
+        {
+            return this[settings] ?? DefaultValue;
         }
 
         private class TextBoxBinding : SettingControlBinding<PasswordSetting, TextBox>
@@ -55,24 +73,6 @@ namespace GitUIPluginInterfaces
             {
                 Setting[settings] = control.Text;
             }
-        }
-
-        public string this[ISettingsSource settings]
-        {
-            get
-            {
-                return settings.GetString(Name, null);
-            }
-
-            set
-            {
-                settings.SetString(Name, value);
-            }
-        }
-
-        public string ValueOrDefault(ISettingsSource settings)
-        {
-            return this[settings] ?? DefaultValue;
         }
     }
 }

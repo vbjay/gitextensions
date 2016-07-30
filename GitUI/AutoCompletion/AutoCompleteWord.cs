@@ -5,7 +5,6 @@ namespace GitUI.AutoCompletion
 {
     public class AutoCompleteWord : IEquatable<AutoCompleteWord>
     {
-        public string Word { get; private set; }
         private readonly string _camelHumps;
 
         public AutoCompleteWord(string word)
@@ -14,10 +13,7 @@ namespace GitUI.AutoCompletion
             _camelHumps = string.Join("", Word.Where(char.IsUpper));
         }
 
-        public bool Matches(string typedWord)
-        {
-            return Word.StartsWith(typedWord, StringComparison.OrdinalIgnoreCase) || (typedWord.All(char.IsUpper) && _camelHumps.StartsWith(typedWord));
-        }
+        public string Word { get; private set; }
 
         public bool Equals(AutoCompleteWord other)
         {
@@ -42,6 +38,11 @@ namespace GitUI.AutoCompletion
         public override int GetHashCode()
         {
             return (Word != null ? Word.GetHashCode() : 0);
+        }
+
+        public bool Matches(string typedWord)
+        {
+            return Word.StartsWith(typedWord, StringComparison.OrdinalIgnoreCase) || (typedWord.All(char.IsUpper) && _camelHumps.StartsWith(typedWord));
         }
     }
 }

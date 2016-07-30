@@ -13,14 +13,32 @@ namespace GitUI.Script
     {
         private static BindingList<ScriptInfo> Scripts { get; set; }
 
-        public static BindingList<ScriptInfo> GetScripts()
+        public static void DeserializeFromXml(string xml)
         {
-            if (Scripts == null)
+            //When there is nothing to deserialize, add default scripts
+            if (string.IsNullOrEmpty(xml))
             {
-                DeserializeFromXml(AppSettings.ownScripts);
+                Scripts = new BindingList<ScriptInfo>();
+                AddDefaultScripts();
+                return;
             }
 
-            return Scripts;
+            try
+            {
+                var serializer = new XmlSerializer(typeof(BindingList<ScriptInfo>));
+                using (var stringReader = new StringReader(xml))
+                {
+                    var xmlReader = new XmlTextReader(stringReader);
+                    Scripts = serializer.Deserialize(xmlReader) as BindingList<ScriptInfo>;
+                }
+            }
+            catch (Exception ex)
+            {
+                Scripts = new BindingList<ScriptInfo>();
+                DeserializeFromOldFormat(xml);
+
+                Trace.WriteLine(ex.Message);
+            }
         }
 
         public static ScriptInfo GetScript(string key)
@@ -30,6 +48,16 @@ namespace GitUI.Script
                     return script;
 
             return null;
+        }
+
+        public static BindingList<ScriptInfo> GetScripts()
+        {
+            if (Scripts == null)
+            {
+                DeserializeFromXml(AppSettings.ownScripts);
+            }
+
+            return Scripts;
         }
 
         public static void RunEventScripts(GitModuleForm form, ScriptEvent scriptEvent)
@@ -57,34 +85,6 @@ namespace GitUI.Script
             catch
             {
                 return null;
-            }
-        }
-
-        public static void DeserializeFromXml(string xml)
-        {
-            //When there is nothing to deserialize, add default scripts
-            if (string.IsNullOrEmpty(xml))
-            {
-                Scripts = new BindingList<ScriptInfo>();
-                AddDefaultScripts();
-                return;
-            }
-
-            try
-            {
-                var serializer = new XmlSerializer(typeof(BindingList<ScriptInfo>));
-                using (var stringReader = new StringReader(xml))
-                {
-                    var xmlReader = new XmlTextReader(stringReader);
-                    Scripts = serializer.Deserialize(xmlReader) as BindingList<ScriptInfo>;
-                }
-            }
-            catch (Exception ex)
-            {
-                Scripts = new BindingList<ScriptInfo>();
-                DeserializeFromOldFormat(xml);
-
-                Trace.WriteLine(ex.Message);
             }
         }
 

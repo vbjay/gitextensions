@@ -20,14 +20,32 @@ namespace GitUIPluginInterfaces
                 DefaultValue = values[0];
         }
 
-        public string Name { get; private set; }
         public string Caption { get; private set; }
         public string DefaultValue { get; set; }
+        public string Name { get; private set; }
         public List<string> Values { get; set; }
+
+        public string this[ISettingsSource settings]
+        {
+            get
+            {
+                return settings.GetString(Name, null);
+            }
+
+            set
+            {
+                settings.SetString(Name, value);
+            }
+        }
 
         public ISettingControlBinding CreateControlBinding()
         {
             return new ComboBoxBinding(this);
+        }
+
+        public string ValueOrDefault(ISettingsSource settings)
+        {
+            return this[settings] ?? DefaultValue;
         }
 
         private class ComboBoxBinding : SettingControlBinding<ChoiceSetting, ComboBox>
@@ -61,24 +79,6 @@ namespace GitUIPluginInterfaces
             public override void SaveSetting(ISettingsSource settings, ComboBox control)
             {
                 Setting[settings] = control.SelectedItem.ToString();
-            }
-        }
-
-        public string ValueOrDefault(ISettingsSource settings)
-        {
-            return this[settings] ?? DefaultValue;
-        }
-
-        public string this[ISettingsSource settings]
-        {
-            get
-            {
-                return settings.GetString(Name, null);
-            }
-
-            set
-            {
-                settings.SetString(Name, value);
             }
         }
     }

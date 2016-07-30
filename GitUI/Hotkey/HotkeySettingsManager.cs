@@ -32,145 +32,6 @@ namespace GitUI.Hotkey
 
         private static List<Keys> UsedKeys = new List<Keys>();
 
-        /// <summary>
-        /// Returns whether the hotkey is already assigned.
-        /// </summary>
-        /// <param name="keyData"></param>
-        /// <returns></returns>
-        public static bool IsUniqueKey(Keys keyData)
-        {
-            return UsedKeys.Contains(keyData);
-        }
-
-        public static HotkeyCommand[] LoadHotkeys(string name)
-        {
-            //var settings = LoadSettings().FirstOrDefault(s => s.Name == name);
-            HotkeySettings[] allSettings;
-            HotkeySettings settings = new HotkeySettings();
-            HotkeySettings scriptkeys = new HotkeySettings();
-            allSettings = LoadSettings();
-
-            GetUsedHotkeys(allSettings);
-
-            foreach (HotkeySettings hs in allSettings)
-            {
-                if (hs.Name == name)
-                    settings = hs;
-                if (hs.Name == "Scripts")
-                    scriptkeys = hs;
-            }
-
-            //HotkeyCommand[] scriptkeys = LoadSettings().FirstOrDefault(s => s.Name == name);
-
-            if (settings != null)
-            {
-                //append general hotkeys to every form
-                //HotkeyCommand[] scriptkeys = LoadScriptHotkeys();
-                HotkeyCommand[] allkeys = new HotkeyCommand[settings.Commands.Length + scriptkeys.Commands.Length];
-                settings.Commands.CopyTo(allkeys, 0);
-                scriptkeys.Commands.CopyTo(allkeys, settings.Commands.Length);
-
-                return allkeys;
-            }
-
-            //return settings != null ? settings.Commands : null;
-            return null;
-        }
-
-        public static HotkeySettings[] LoadSettings()
-        {
-            // Get the default settings
-            var defaultSettings = CreateDefaultSettings();
-            var loadedSettings = LoadSerializedSettings();
-
-            // If the default settings and the loaded settings do not match, then get the default settings, as we don't trust the loaded ones
-            if (DidDefaultSettingsChange(defaultSettings, loadedSettings))
-                return defaultSettings;
-            else
-                return loadedSettings;
-        }
-
-        private static void GetUsedHotkeys(HotkeySettings[] settings)
-        {
-            UsedKeys.Clear();
-            foreach (HotkeySettings hs in settings)
-            {
-                for (int i = 0; i < hs.Commands.Length; i++)
-                {
-                    HotkeyCommand hotkeyCommand = hs.Commands[i];
-
-                    if (hotkeyCommand != null && !UsedKeys.Contains(hotkeyCommand.KeyData))
-                        UsedKeys.Add(hotkeyCommand.KeyData);
-                }
-            }
-            //MessageBox.Show(UsedKeys.Count.ToString());
-        }
-
-        /// <summary>Serializes and saves the supplied settings</summary>
-        public static void SaveSettings(HotkeySettings[] settings)
-        {
-            try
-            {
-                GetUsedHotkeys(settings);
-
-                StringBuilder strBuilder = new StringBuilder();
-                using (StringWriter writer = new StringWriter(strBuilder))
-                {
-                    Serializer.Serialize(writer, settings);
-                    Properties.Settings.Default.Hotkeys = strBuilder.ToString();
-                    Properties.Settings.Default.Save();
-                }
-            }
-            catch { }
-        }
-
-        internal static bool DidDefaultSettingsChange(HotkeySettings[] defaultSettings, HotkeySettings[] loadedSettings)
-        {
-            if (defaultSettings == null || loadedSettings == null)
-                return true;
-
-            if (defaultSettings.Length != loadedSettings.Length)
-                return true;
-
-            var defaultCmds = defaultSettings.SelectMany(s => s.Commands).ToArray();
-            var loadedCmds = loadedSettings.SelectMany(s => s.Commands).ToArray();
-
-            // see if total commands count has changed
-            if (defaultCmds.Length != loadedCmds.Length)
-                return true;
-
-            // detect if total commands count did not change but a command was moved from one set to another
-            for (int i = 0; i < defaultSettings.Length; i++)
-            {
-                var defaultSetting = defaultSettings[i];
-                var loadedSetting = loadedSettings[i];
-
-                if (defaultSetting.Commands.Length != loadedSetting.Commands.Length)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static HotkeySettings[] LoadSerializedSettings()
-        {
-            HotkeySettings[] settings = null;
-
-            try
-            {
-                if (!string.IsNullOrEmpty(Properties.Settings.Default.Hotkeys))
-                    using (StringReader reader = new StringReader(Properties.Settings.Default.Hotkeys))
-                    {
-                        settings = Serializer.Deserialize(reader) as HotkeySettings[];
-                    }
-            }
-            catch { }
-
-            return settings;
-        }
-
         /// <summary>Asks the IHotkeyables to create their default hotkey settings</summary>
         public static HotkeySettings[] CreateDefaultSettings()
         {
@@ -250,6 +111,51 @@ namespace GitUI.Hotkey
               };
         }
 
+        /// <summary>
+        /// Returns whether the hotkey is already assigned.
+        /// </summary>
+        /// <param name="keyData"></param>
+        /// <returns></returns>
+        public static bool IsUniqueKey(Keys keyData)
+        {
+            return UsedKeys.Contains(keyData);
+        }
+
+        public static HotkeyCommand[] LoadHotkeys(string name)
+        {
+            //var settings = LoadSettings().FirstOrDefault(s => s.Name == name);
+            HotkeySettings[] allSettings;
+            HotkeySettings settings = new HotkeySettings();
+            HotkeySettings scriptkeys = new HotkeySettings();
+            allSettings = LoadSettings();
+
+            GetUsedHotkeys(allSettings);
+
+            foreach (HotkeySettings hs in allSettings)
+            {
+                if (hs.Name == name)
+                    settings = hs;
+                if (hs.Name == "Scripts")
+                    scriptkeys = hs;
+            }
+
+            //HotkeyCommand[] scriptkeys = LoadSettings().FirstOrDefault(s => s.Name == name);
+
+            if (settings != null)
+            {
+                //append general hotkeys to every form
+                //HotkeyCommand[] scriptkeys = LoadScriptHotkeys();
+                HotkeyCommand[] allkeys = new HotkeyCommand[settings.Commands.Length + scriptkeys.Commands.Length];
+                settings.Commands.CopyTo(allkeys, 0);
+                scriptkeys.Commands.CopyTo(allkeys, settings.Commands.Length);
+
+                return allkeys;
+            }
+
+            //return settings != null ? settings.Commands : null;
+            return null;
+        }
+
         public static HotkeyCommand[] LoadScriptHotkeys()
         {
             var curScripts = GitUI.Script.ScriptManager.GetScripts();
@@ -271,6 +177,100 @@ namespace GitUI.Hotkey
                 }
             }
             return scriptKeys;
+        }
+
+        public static HotkeySettings[] LoadSettings()
+        {
+            // Get the default settings
+            var defaultSettings = CreateDefaultSettings();
+            var loadedSettings = LoadSerializedSettings();
+
+            // If the default settings and the loaded settings do not match, then get the default settings, as we don't trust the loaded ones
+            if (DidDefaultSettingsChange(defaultSettings, loadedSettings))
+                return defaultSettings;
+            else
+                return loadedSettings;
+        }
+
+        /// <summary>Serializes and saves the supplied settings</summary>
+        public static void SaveSettings(HotkeySettings[] settings)
+        {
+            try
+            {
+                GetUsedHotkeys(settings);
+
+                StringBuilder strBuilder = new StringBuilder();
+                using (StringWriter writer = new StringWriter(strBuilder))
+                {
+                    Serializer.Serialize(writer, settings);
+                    Properties.Settings.Default.Hotkeys = strBuilder.ToString();
+                    Properties.Settings.Default.Save();
+                }
+            }
+            catch { }
+        }
+
+        internal static bool DidDefaultSettingsChange(HotkeySettings[] defaultSettings, HotkeySettings[] loadedSettings)
+        {
+            if (defaultSettings == null || loadedSettings == null)
+                return true;
+
+            if (defaultSettings.Length != loadedSettings.Length)
+                return true;
+
+            var defaultCmds = defaultSettings.SelectMany(s => s.Commands).ToArray();
+            var loadedCmds = loadedSettings.SelectMany(s => s.Commands).ToArray();
+
+            // see if total commands count has changed
+            if (defaultCmds.Length != loadedCmds.Length)
+                return true;
+
+            // detect if total commands count did not change but a command was moved from one set to another
+            for (int i = 0; i < defaultSettings.Length; i++)
+            {
+                var defaultSetting = defaultSettings[i];
+                var loadedSetting = loadedSettings[i];
+
+                if (defaultSetting.Commands.Length != loadedSetting.Commands.Length)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void GetUsedHotkeys(HotkeySettings[] settings)
+        {
+            UsedKeys.Clear();
+            foreach (HotkeySettings hs in settings)
+            {
+                for (int i = 0; i < hs.Commands.Length; i++)
+                {
+                    HotkeyCommand hotkeyCommand = hs.Commands[i];
+
+                    if (hotkeyCommand != null && !UsedKeys.Contains(hotkeyCommand.KeyData))
+                        UsedKeys.Add(hotkeyCommand.KeyData);
+                }
+            }
+            //MessageBox.Show(UsedKeys.Count.ToString());
+        }
+
+        private static HotkeySettings[] LoadSerializedSettings()
+        {
+            HotkeySettings[] settings = null;
+
+            try
+            {
+                if (!string.IsNullOrEmpty(Properties.Settings.Default.Hotkeys))
+                    using (StringReader reader = new StringReader(Properties.Settings.Default.Hotkeys))
+                    {
+                        settings = Serializer.Deserialize(reader) as HotkeySettings[];
+                    }
+            }
+            catch { }
+
+            return settings;
         }
     }
 }

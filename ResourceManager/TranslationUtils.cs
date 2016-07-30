@@ -5,11 +5,6 @@ namespace ResourceManager
 {
     public static class TranslationUtils
     {
-        public static IEnumerable<Tuple<string, object>> GetObjFields(object obj, string objName)
-        {
-            return Xliff.TranslationUtl.GetObjFields(obj, objName);
-        }
-
         public static void AddTranslationItem(string category, object obj, string property, ITranslation translation)
         {
             Xliff.TranslationUtl.AddTranslationItem(category, obj, property, translation);
@@ -26,9 +21,15 @@ namespace ResourceManager
             Xliff.TranslationUtl.AddTranslationItemsFromList(category, translation, items);
         }
 
-        public static void TranslateProperty(string category, object obj, string property, ITranslation translation)
+        public static IEnumerable<Tuple<string, object>> GetObjFields(object obj, string objName)
         {
-            Xliff.TranslationUtl.TranslateProperty(category, obj, property, translation);
+            return Xliff.TranslationUtl.GetObjFields(obj, objName);
+        }
+
+        public static void TranslateItemsFromFields(string category, object obj, ITranslation translation)
+        {
+            if (!String.IsNullOrEmpty(category))
+                Xliff.TranslationUtl.TranslateItemsFromFields(category, obj, translation);
         }
 
         public static void TranslateItemsFromList(string category, ITranslation translation, IEnumerable<Tuple<string, object>> items)
@@ -36,10 +37,9 @@ namespace ResourceManager
             Xliff.TranslationUtl.TranslateItemsFromList(category, translation, items);
         }
 
-        public static void TranslateItemsFromFields(string category, object obj, ITranslation translation)
+        public static void TranslateProperty(string category, object obj, string property, ITranslation translation)
         {
-            if (!String.IsNullOrEmpty(category))
-                Xliff.TranslationUtl.TranslateItemsFromFields(category, obj, translation);
+            Xliff.TranslationUtl.TranslateProperty(category, obj, property, translation);
         }
     }
 }

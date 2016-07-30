@@ -7,6 +7,11 @@ namespace GitPlugin.Commands
 {
     public sealed class FindFile : ItemCommandBase
     {
+        protected override CommandTarget SupportedTargets
+        {
+            get { return CommandTarget.SolutionExplorerFileItem; }
+        }
+
         public override void OnCommand(DTE2 application, OutputWindowPane pane)
         {
             ThreadPool.QueueUserWorkItem(
@@ -17,11 +22,6 @@ namespace GitPlugin.Commands
                                 return;
                             application.ExecuteCommand("File.OpenFile", file);
                         });
-        }
-
-        protected override CommandTarget SupportedTargets
-        {
-            get { return CommandTarget.SolutionExplorerFileItem; }
         }
 
         protected override void OnExecute(SelectedItem item, string fileName, OutputWindowPane pane)

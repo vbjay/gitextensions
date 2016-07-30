@@ -15,6 +15,27 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             LinksGrid.AutoGenerateColumns = false;
         }
 
+        private GitExtLinkDef SelectedCategory
+        {
+            get
+            {
+                return _NO_TRANSLATE_Categories.SelectedItem as GitExtLinkDef;
+            }
+        }
+
+        public static SettingsPageReference GetPageReference()
+        {
+            return new SettingsPageReferenceByType(typeof(RevisionLinksSettingsPage));
+        }
+
+        protected override void PageToSettings()
+        {
+            if (parser != null)
+            {
+                parser.SaveToSettings();
+            }
+        }
+
         protected override void SettingsToPage()
         {
             parser = new GitExtLinksParser(CurrentSettings);
@@ -26,40 +47,48 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             CategoryChanged();
         }
 
-        protected override void PageToSettings()
-        {
-            if (parser != null)
-            {
-                parser.SaveToSettings();
-            }
-        }
-
-        public static SettingsPageReference GetPageReference()
-        {
-            return new SettingsPageReferenceByType(typeof(RevisionLinksSettingsPage));
-        }
-
         private void _NO_TRANSLATE_Categories_SelectedIndexChanged(object sender, EventArgs e)
         {
             CategoryChanged();
         }
 
-        private void ReloadCategories()
+        private void _NO_TRANSLATE_Name_Leave(object sender, EventArgs e)
         {
-            _NO_TRANSLATE_Categories.DataSource = null;
-            if (parser != null)
+            if (SelectedCategory != null)
             {
-                _NO_TRANSLATE_Categories.DisplayMember = "Name";
-                _NO_TRANSLATE_Categories.DataSource = parser.EffectiveLinkDefs;
+                var selected = SelectedCategory;
+                selected.Name = _NO_TRANSLATE_Name.Text;
+                ReloadCategories();
+                _NO_TRANSLATE_Categories.SelectedItem = selected;
             }
         }
 
-        private GitExtLinkDef SelectedCategory
+        private void _NO_TRANSLATE_NestedPatternEdit_Leave(object sender, EventArgs e)
         {
-            get
+            if (SelectedCategory != null)
             {
-                return _NO_TRANSLATE_Categories.SelectedItem as GitExtLinkDef;
+                SelectedCategory.NestedSearchPattern = _NO_TRANSLATE_NestedPatternEdit.Text.Trim();
             }
+        }
+
+        private void _NO_TRANSLATE_SearchPatternEdit_Leave(object sender, EventArgs e)
+        {
+            if (SelectedCategory != null)
+            {
+                SelectedCategory.SearchPattern = _NO_TRANSLATE_SearchPatternEdit.Text.Trim();
+            }
+        }
+
+        private void Add_Click(object sender, EventArgs e)
+        {
+            GitExtLinkDef newCategory = new GitExtLinkDef();
+            newCategory.Name = "<new>";
+            newCategory.SearchInParts.Add(GitExtLinkDef.RevisionPart.Message);
+            newCategory.Enabled = true;
+            parser.AddLinkDef(newCategory);
+            ReloadCategories();
+            _NO_TRANSLATE_Categories.SelectedItem = newCategory;
+            CategoryChanged();
         }
 
         private void CategoryChanged()
@@ -90,83 +119,11 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             }
         }
 
-        private void Add_Click(object sender, EventArgs e)
-        {
-            GitExtLinkDef newCategory = new GitExtLinkDef();
-            newCategory.Name = "<new>";
-            newCategory.SearchInParts.Add(GitExtLinkDef.RevisionPart.Message);
-            newCategory.Enabled = true;
-            parser.AddLinkDef(newCategory);
-            ReloadCategories();
-            _NO_TRANSLATE_Categories.SelectedItem = newCategory;
-            CategoryChanged();
-        }
-
-        private void Remove_Click(object sender, EventArgs e)
-        {
-            if (SelectedCategory == null)
-                return;
-
-            int idx = _NO_TRANSLATE_Categories.SelectedIndex;
-
-            parser.RemoveLinkDef(SelectedCategory);
-            ReloadCategories();
-
-            if (idx >= 0)
-            {
-                _NO_TRANSLATE_Categories.SelectedIndex = Math.Min(idx, _NO_TRANSLATE_Categories.Items.Count - 1);
-            }
-
-            CategoryChanged();
-        }
-
-        private void _NO_TRANSLATE_Name_Leave(object sender, EventArgs e)
-        {
-            if (SelectedCategory != null)
-            {
-                var selected = SelectedCategory;
-                selected.Name = _NO_TRANSLATE_Name.Text;
-                ReloadCategories();
-                _NO_TRANSLATE_Categories.SelectedItem = selected;
-            }
-        }
-
         private void EnabledChx_CheckedChanged(object sender, EventArgs e)
         {
             if (SelectedCategory != null)
             {
                 SelectedCategory.Enabled = EnabledChx.Checked;
-            }
-        }
-
-        private void MessageChx_CheckedChanged(object sender, EventArgs e)
-        {
-            if (SelectedCategory != null)
-            {
-                if (MessageChx.Checked)
-                {
-                    SelectedCategory.SearchInParts.Add(GitExtLinkDef.RevisionPart.Message);
-                }
-                else
-                {
-                    SelectedCategory.SearchInParts.Remove(GitExtLinkDef.RevisionPart.Message);
-                }
-            }
-        }
-
-        private void _NO_TRANSLATE_SearchPatternEdit_Leave(object sender, EventArgs e)
-        {
-            if (SelectedCategory != null)
-            {
-                SelectedCategory.SearchPattern = _NO_TRANSLATE_SearchPatternEdit.Text.Trim();
-            }
-        }
-
-        private void _NO_TRANSLATE_NestedPatternEdit_Leave(object sender, EventArgs e)
-        {
-            if (SelectedCategory != null)
-            {
-                SelectedCategory.NestedSearchPattern = _NO_TRANSLATE_NestedPatternEdit.Text.Trim();
             }
         }
 
@@ -185,6 +142,31 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             }
         }
 
+        private void MessageChx_CheckedChanged(object sender, EventArgs e)
+        {
+            if (SelectedCategory != null)
+            {
+                if (MessageChx.Checked)
+                {
+                    SelectedCategory.SearchInParts.Add(GitExtLinkDef.RevisionPart.Message);
+                }
+                else
+                {
+                    SelectedCategory.SearchInParts.Remove(GitExtLinkDef.RevisionPart.Message);
+                }
+            }
+        }
+
+        private void ReloadCategories()
+        {
+            _NO_TRANSLATE_Categories.DataSource = null;
+            if (parser != null)
+            {
+                _NO_TRANSLATE_Categories.DisplayMember = "Name";
+                _NO_TRANSLATE_Categories.DataSource = parser.EffectiveLinkDefs;
+            }
+        }
+
         private void RemoteBranchChx_CheckedChanged(object sender, EventArgs e)
         {
             if (SelectedCategory != null)
@@ -198,6 +180,24 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
                     SelectedCategory.SearchInParts.Remove(GitExtLinkDef.RevisionPart.RemoteBranches);
                 }
             }
+        }
+
+        private void Remove_Click(object sender, EventArgs e)
+        {
+            if (SelectedCategory == null)
+                return;
+
+            int idx = _NO_TRANSLATE_Categories.SelectedIndex;
+
+            parser.RemoveLinkDef(SelectedCategory);
+            ReloadCategories();
+
+            if (idx >= 0)
+            {
+                _NO_TRANSLATE_Categories.SelectedIndex = Math.Min(idx, _NO_TRANSLATE_Categories.Items.Count - 1);
+            }
+
+            CategoryChanged();
         }
     }
 }

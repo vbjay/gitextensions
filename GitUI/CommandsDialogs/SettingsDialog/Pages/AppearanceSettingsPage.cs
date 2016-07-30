@@ -18,8 +18,8 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
         private readonly TranslationString _noDictFilesFound =
             new TranslationString("No dictionary files found in: {0}");
 
-        private Font _diffFont;
         private Font _applicationFont;
+        private Font _diffFont;
         private Font commitFont;
 
         public AppearanceSettingsPage()
@@ -34,78 +34,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
         protected override string GetCommaSeparatedKeywordList()
         {
             return "graph,visual studio,author,image,font,lang,language,spell,spelling";
-        }
-
-        private int GetTruncatePathMethodIndex(string text)
-        {
-            switch (text.ToLowerInvariant())
-            {
-                case "compact":
-                    return 1;
-
-                case "trimstart":
-                    return 2;
-
-                case "fileNameOnly":
-                    return 3;
-
-                default:
-                    return 0;
-            }
-        }
-
-        private string GetTruncatePathMethodString(int index)
-        {
-            switch (index)
-            {
-                case 1:
-                    return "compact";
-
-                case 2:
-                    return "trimstart";
-
-                case 3:
-                    return "fileNameOnly";
-
-                default:
-                    return "none";
-            }
-        }
-
-        protected override void SettingsToPage()
-        {
-            chkEnableAutoScale.Checked = AppSettings.EnableAutoScale;
-
-            chkShowCurrentBranchInVisualStudio.Checked = AppSettings.ShowCurrentBranchInVisualStudio;
-            _NO_TRANSLATE_DaysToCacheImages.Value = AppSettings.AuthorImageCacheDays;
-            if (AppSettings.AuthorImageSize <= 120)
-                AuthorImageSize.SelectedIndex = 0;
-            else if (AppSettings.AuthorImageSize <= 200)
-                AuthorImageSize.SelectedIndex = 1;
-            else if (AppSettings.AuthorImageSize <= 280)
-                AuthorImageSize.SelectedIndex = 2;
-            else
-                AuthorImageSize.SelectedIndex = 3;
-            ShowAuthorGravatar.Checked = AppSettings.ShowAuthorGravatar;
-            NoImageService.Text = AppSettings.GravatarFallbackService;
-
-            Language.Items.Clear();
-            Language.Items.Add("English");
-            Language.Items.AddRange(Translator.GetAllTranslations());
-            Language.Text = AppSettings.Translation;
-
-            truncatePathMethod.SelectedIndex = GetTruncatePathMethodIndex(AppSettings.TruncatePathMethod);
-
-            if (AppSettings.Dictionary.Equals("none", StringComparison.InvariantCultureIgnoreCase))
-                Dictionary.SelectedIndex = 0;
-            else
-                Dictionary.Text = AppSettings.Dictionary;
-
-            chkShowRelativeDate.Checked = AppSettings.RelativeDate;
-
-            SetCurrentApplicationFont(AppSettings.Font);
-            SetCurrentDiffFont(AppSettings.DiffFont);
-            SetCurrentCommitFont(AppSettings.CommitFont);
         }
 
         protected override void PageToSettings()
@@ -156,6 +84,69 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             AppSettings.CommitFont = commitFont;
         }
 
+        protected override void SettingsToPage()
+        {
+            chkEnableAutoScale.Checked = AppSettings.EnableAutoScale;
+
+            chkShowCurrentBranchInVisualStudio.Checked = AppSettings.ShowCurrentBranchInVisualStudio;
+            _NO_TRANSLATE_DaysToCacheImages.Value = AppSettings.AuthorImageCacheDays;
+            if (AppSettings.AuthorImageSize <= 120)
+                AuthorImageSize.SelectedIndex = 0;
+            else if (AppSettings.AuthorImageSize <= 200)
+                AuthorImageSize.SelectedIndex = 1;
+            else if (AppSettings.AuthorImageSize <= 280)
+                AuthorImageSize.SelectedIndex = 2;
+            else
+                AuthorImageSize.SelectedIndex = 3;
+            ShowAuthorGravatar.Checked = AppSettings.ShowAuthorGravatar;
+            NoImageService.Text = AppSettings.GravatarFallbackService;
+
+            Language.Items.Clear();
+            Language.Items.Add("English");
+            Language.Items.AddRange(Translator.GetAllTranslations());
+            Language.Text = AppSettings.Translation;
+
+            truncatePathMethod.SelectedIndex = GetTruncatePathMethodIndex(AppSettings.TruncatePathMethod);
+
+            if (AppSettings.Dictionary.Equals("none", StringComparison.InvariantCultureIgnoreCase))
+                Dictionary.SelectedIndex = 0;
+            else
+                Dictionary.Text = AppSettings.Dictionary;
+
+            chkShowRelativeDate.Checked = AppSettings.RelativeDate;
+
+            SetCurrentApplicationFont(AppSettings.Font);
+            SetCurrentDiffFont(AppSettings.DiffFont);
+            SetCurrentCommitFont(AppSettings.CommitFont);
+        }
+
+        private void applicationFontChangeButton_Click(object sender, EventArgs e)
+        {
+            applicationDialog.Font = _applicationFont;
+            DialogResult result = applicationDialog.ShowDialog(this);
+
+            if (result == DialogResult.OK || result == DialogResult.Yes)
+            {
+                SetCurrentApplicationFont(applicationDialog.Font);
+            }
+        }
+
+        private void ClearImageCache_Click(object sender, EventArgs e)
+        {
+            GravatarService.ClearImageCache();
+        }
+
+        private void commitFontChangeButton_Click(object sender, EventArgs e)
+        {
+            commitFontDialog.Font = commitFont;
+            DialogResult result = commitFontDialog.ShowDialog(this);
+
+            if (result == DialogResult.OK || result == DialogResult.Yes)
+            {
+                SetCurrentCommitFont(commitFontDialog.Font);
+            }
+        }
+
         private void Dictionary_DropDown(object sender, EventArgs e)
         {
             try
@@ -187,32 +178,50 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             }
         }
 
-        private void applicationFontChangeButton_Click(object sender, EventArgs e)
+        private void downloadDictionary_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            applicationDialog.Font = _applicationFont;
-            DialogResult result = applicationDialog.ShowDialog(this);
+            Process.Start(@"https://github.com/gitextensions/gitextensions/wiki/Spelling");
+        }
 
-            if (result == DialogResult.OK || result == DialogResult.Yes)
+        private int GetTruncatePathMethodIndex(string text)
+        {
+            switch (text.ToLowerInvariant())
             {
-                SetCurrentApplicationFont(applicationDialog.Font);
+                case "compact":
+                    return 1;
+
+                case "trimstart":
+                    return 2;
+
+                case "fileNameOnly":
+                    return 3;
+
+                default:
+                    return 0;
             }
         }
 
-        private void commitFontChangeButton_Click(object sender, EventArgs e)
+        private string GetTruncatePathMethodString(int index)
         {
-            commitFontDialog.Font = commitFont;
-            DialogResult result = commitFontDialog.ShowDialog(this);
-
-            if (result == DialogResult.OK || result == DialogResult.Yes)
+            switch (index)
             {
-                SetCurrentCommitFont(commitFontDialog.Font);
+                case 1:
+                    return "compact";
+
+                case 2:
+                    return "trimstart";
+
+                case 3:
+                    return "fileNameOnly";
+
+                default:
+                    return "none";
             }
         }
 
-        private void SetCurrentDiffFont(Font newFont)
+        private void helpTranslate_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            this._diffFont = newFont;
-            SetFontButtonText(newFont, diffFontChangeButton);
+            Process.Start(Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "TranslationApp.exe"));
         }
 
         private void SetCurrentApplicationFont(Font newFont)
@@ -227,24 +236,15 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             SetFontButtonText(newFont, commitFontChangeButton);
         }
 
+        private void SetCurrentDiffFont(Font newFont)
+        {
+            this._diffFont = newFont;
+            SetFontButtonText(newFont, diffFontChangeButton);
+        }
+
         private void SetFontButtonText(Font font, Button button)
         {
             button.Text = string.Format("{0}, {1}", font.FontFamily.Name, (int)(font.Size + 0.5f));
-        }
-
-        private void ClearImageCache_Click(object sender, EventArgs e)
-        {
-            GravatarService.ClearImageCache();
-        }
-
-        private void helpTranslate_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            Process.Start(Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "TranslationApp.exe"));
-        }
-
-        private void downloadDictionary_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            Process.Start(@"https://github.com/gitextensions/gitextensions/wiki/Spelling");
         }
     }
 }

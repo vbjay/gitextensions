@@ -15,12 +15,12 @@ namespace GitUI
             Patches.CellPainting += Patches_CellPainting;
         }
 
-        private static void Patches_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+        public void Initialize()
         {
-        }
-
-        private static void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
+            if (Module.InTheMiddleOfInteractiveRebase())
+                Patches.DataSource = Module.GetInteractiveRebasePatchFiles();
+            else
+                Patches.DataSource = Module.GetRebasePatchFiles();
         }
 
         protected override void OnRuntimeLoad(EventArgs e)
@@ -28,12 +28,12 @@ namespace GitUI
             Initialize();
         }
 
-        public void Initialize()
+        private static void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (Module.InTheMiddleOfInteractiveRebase())
-                Patches.DataSource = Module.GetInteractiveRebasePatchFiles();
-            else
-                Patches.DataSource = Module.GetRebasePatchFiles();
+        }
+
+        private static void Patches_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+        {
         }
 
         private void Patches_DoubleClick(object sender, EventArgs e)

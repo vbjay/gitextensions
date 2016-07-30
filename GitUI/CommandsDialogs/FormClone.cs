@@ -14,15 +14,23 @@ namespace GitUI.CommandsDialogs
 {
     public partial class FormClone : GitModuleForm
     {
-        private readonly TranslationString _infoNewRepositoryLocation =
-            new TranslationString("The repository will be cloned to a new directory located here:" + Environment.NewLine +
-                                  "{0}");
+        private readonly TranslationString _branchDefaultRemoteHead = new TranslationString("(default: remote HEAD)" /* Has a colon, so won't alias with any valid branch name */);
+
+        private readonly AsyncLoader _branchListLoader = new AsyncLoader();
+
+        private readonly TranslationString _branchNone = new TranslationString("(none: don't checkout after clone)" /* Has a colon, so won't alias with any valid branch name */);
+
+        private readonly IList<string> _defaultBranchItems;
 
         private readonly TranslationString _infoDirectoryExists =
             new TranslationString("(Directory already exists)");
 
         private readonly TranslationString _infoDirectoryNew =
             new TranslationString("(New directory)");
+
+        private readonly TranslationString _infoNewRepositoryLocation =
+                                                            new TranslationString("The repository will be cloned to a new directory located here:" + Environment.NewLine +
+                                  "{0}");
 
         private readonly TranslationString _questionOpenRepo =
             new TranslationString("The repository has been cloned successfully." + Environment.NewLine +
@@ -31,22 +39,12 @@ namespace GitUI.CommandsDialogs
         private readonly TranslationString _questionOpenRepoCaption =
             new TranslationString("Open");
 
-        private readonly TranslationString _branchDefaultRemoteHead = new TranslationString("(default: remote HEAD)" /* Has a colon, so won't alias with any valid branch name */);
-        private readonly TranslationString _branchNone = new TranslationString("(none: don't checkout after clone)" /* Has a colon, so won't alias with any valid branch name */);
-
-        private bool openedFromProtocolHandler;
         private readonly string url;
         private EventHandler<GitModuleEventArgs> GitModuleChanged;
-        private readonly IList<string> _defaultBranchItems;
-
-        // for translation only
-        private FormClone()
-            : this(null, null, false, null)
-        {
-        }
+        private bool openedFromProtocolHandler;
 
         public FormClone(GitUICommands aCommands, string url, bool openedFromProtocolHandler, EventHandler<GitModuleEventArgs> GitModuleChanged)
-            : base(aCommands)
+                    : base(aCommands)
         {
             this.GitModuleChanged = GitModuleChanged;
             InitializeComponent();
@@ -55,6 +53,30 @@ namespace GitUI.CommandsDialogs
             this.url = url;
             _defaultBranchItems = new[] { _branchDefaultRemoteHead.Text, _branchNone.Text };
             _NO_TRANSLATE_Branches.DataSource = _defaultBranchItems;
+        }
+
+        // for translation only
+        private FormClone()
+            : this(null, null, false, null)
+        {
+        }
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _branchListLoader.Cancel();
+
+                _branchListLoader.Dispose();
+
+                if (components != null)
+                    components.Dispose();
+            }
+            base.Dispose(disposing);
         }
 
         protected override void OnRuntimeLoad(EventArgs e)
@@ -129,6 +151,82 @@ namespace GitUI.CommandsDialogs
             FromTextUpdate(null, null);
         }
 
+        private bool AskIfNewRepositoryShouldBeOpened(string dirTo)
+        {
+            return MessageBox.Show(this, string.Format(_questionOpenRepo.Text, dirTo), _questionOpenRepoCaption.Text,
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+        }
+
+        private void Branches_DropDown(object sender, EventArgs e)
+        {
+            LoadBranches();
+        }
+
+        private void FillFromDropDown()
+        {
+            System.ComponentModel.BindingList<Repository> repos = Repositories.RemoteRepositoryHistory.Repositories;
+            if (_NO_TRANSLATE_From.Items.Count != repos.Count)
+            {
+                _NO_TRANSLATE_To.Items.Clear();
+                foreach (Repository repo in repos)
+                    _NO_TRANSLATE_From.Items.Add(repo.Path);
+            }
+        }
+
+        private void FormCloneLoad(object sender, EventArgs e)
+        {
+            if (!GitCommandHelpers.Plink())
+                LoadSSHKey.Visible = false;
+        }
+
+        private void FromBrowseClick(object sender, EventArgs e)
+        {
+            using (var dialog = new FolderBrowserDialog { SelectedPath = _NO_TRANSLATE_From.Text })
+            {
+                if (dialog.ShowDialog(this) == DialogResult.OK)
+                    _NO_TRANSLATE_From.Text = dialog.SelectedPath;
+            }
+
+            FromTextUpdate(sender, e);
+        }
+
+        private void FromSelectedIndexChanged(object sender, EventArgs e)
+        {
+            FromTextUpdate(sender, e);
+        }
+
+        private void FromTextUpdate(object sender, EventArgs e)
+        {
+            string path = PathUtil.GetRepositoryName(_NO_TRANSLATE_From.Text);
+
+            if (path != "")
+            {
+                _NO_TRANSLATE_NewDirectory.Text = path;
+            }
+
+            _NO_TRANSLATE_Branches.DataSource = _defaultBranchItems;
+            _NO_TRANSLATE_Branches.Select(0, 0);   // Kill full selection on the default branch text
+
+            ToTextUpdate(sender, e);
+        }
+
+        private void LoadBranches()
+        {
+            string from = _NO_TRANSLATE_From.Text;
+            Cursor = Cursors.AppStarting;
+            _branchListLoader.Load(() => Module.GetRemoteRefs(from, false, true), UpdateBranches);
+        }
+
+        private void LoadSshKeyClick(object sender, EventArgs e)
+        {
+            BrowseForPrivateKey.BrowseAndLoad(this);
+        }
+
+        private void NewDirectoryTextChanged(object sender, EventArgs e)
+        {
+            ToTextUpdate(sender, e);
+        }
+
         private void OkClick(object sender, EventArgs e)
         {
             try
@@ -195,23 +293,6 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-        private bool AskIfNewRepositoryShouldBeOpened(string dirTo)
-        {
-            return MessageBox.Show(this, string.Format(_questionOpenRepo.Text, dirTo), _questionOpenRepoCaption.Text,
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
-        }
-
-        private void FromBrowseClick(object sender, EventArgs e)
-        {
-            using (var dialog = new FolderBrowserDialog { SelectedPath = _NO_TRANSLATE_From.Text })
-            {
-                if (dialog.ShowDialog(this) == DialogResult.OK)
-                    _NO_TRANSLATE_From.Text = dialog.SelectedPath;
-            }
-
-            FromTextUpdate(sender, e);
-        }
-
         private void ToBrowseClick(object sender, EventArgs e)
         {
             using (var dialog = new FolderBrowserDialog { SelectedPath = _NO_TRANSLATE_To.Text })
@@ -221,17 +302,6 @@ namespace GitUI.CommandsDialogs
             }
 
             ToTextUpdate(sender, e);
-        }
-
-        private void FillFromDropDown()
-        {
-            System.ComponentModel.BindingList<Repository> repos = Repositories.RemoteRepositoryHistory.Repositories;
-            if (_NO_TRANSLATE_From.Items.Count != repos.Count)
-            {
-                _NO_TRANSLATE_To.Items.Clear();
-                foreach (Repository repo in repos)
-                    _NO_TRANSLATE_From.Items.Add(repo.Path);
-            }
         }
 
         private void ToDropDown(object sender, EventArgs e)
@@ -245,34 +315,8 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-        private void LoadSshKeyClick(object sender, EventArgs e)
+        private void ToSelectedIndexChanged(object sender, EventArgs e)
         {
-            BrowseForPrivateKey.BrowseAndLoad(this);
-        }
-
-        private void FormCloneLoad(object sender, EventArgs e)
-        {
-            if (!GitCommandHelpers.Plink())
-                LoadSSHKey.Visible = false;
-        }
-
-        private void FromSelectedIndexChanged(object sender, EventArgs e)
-        {
-            FromTextUpdate(sender, e);
-        }
-
-        private void FromTextUpdate(object sender, EventArgs e)
-        {
-            string path = PathUtil.GetRepositoryName(_NO_TRANSLATE_From.Text);
-
-            if (path != "")
-            {
-                _NO_TRANSLATE_NewDirectory.Text = path;
-            }
-
-            _NO_TRANSLATE_Branches.DataSource = _defaultBranchItems;
-            _NO_TRANSLATE_Branches.Select(0, 0);   // Kill full selection on the default branch text
-
             ToTextUpdate(sender, e);
         }
 
@@ -319,18 +363,6 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-        private void NewDirectoryTextChanged(object sender, EventArgs e)
-        {
-            ToTextUpdate(sender, e);
-        }
-
-        private void ToSelectedIndexChanged(object sender, EventArgs e)
-        {
-            ToTextUpdate(sender, e);
-        }
-
-        private readonly AsyncLoader _branchListLoader = new AsyncLoader();
-
         private void UpdateBranches(RemoteActionResult<IList<GitRef>> branchList)
         {
             Cursor = Cursors.Default;
@@ -362,36 +394,6 @@ namespace GitUI.CommandsDialogs
                     _NO_TRANSLATE_Branches.Text = text;
                 }
             }
-        }
-
-        private void LoadBranches()
-        {
-            string from = _NO_TRANSLATE_From.Text;
-            Cursor = Cursors.AppStarting;
-            _branchListLoader.Load(() => Module.GetRemoteRefs(from, false, true), UpdateBranches);
-        }
-
-        private void Branches_DropDown(object sender, EventArgs e)
-        {
-            LoadBranches();
-        }
-
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _branchListLoader.Cancel();
-
-                _branchListLoader.Dispose();
-
-                if (components != null)
-                    components.Dispose();
-            }
-            base.Dispose(disposing);
         }
     }
 }

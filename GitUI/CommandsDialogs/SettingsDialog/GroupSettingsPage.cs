@@ -9,37 +9,13 @@ namespace GitUI.CommandsDialogs.SettingsDialog
     /// </summary>
     public abstract class GroupSettingsPage : Translate, ISettingsPage
     {
-        public string Title { get; private set; }
-
         protected GroupSettingsPage(string aTitle)
         {
             Title = aTitle;
             Translator.Translate(this, GitCommands.AppSettings.CurrentTranslation);
         }
 
-        public string GetTitle()
-        {
-            return Title;
-        }
-
         public Control GuiControl { get { return null; } }
-
-        public void OnPageShown()
-        {
-        }
-
-        public void LoadSettings()
-        {
-        }
-
-        public void SaveSettings()
-        {
-        }
-
-        public IEnumerable<string> GetSearchKeywords()
-        {
-            return new string[] { };
-        }
 
         public bool IsInstantSavePage
         {
@@ -49,6 +25,30 @@ namespace GitUI.CommandsDialogs.SettingsDialog
         public SettingsPageReference PageReference
         {
             get { return new SettingsPageReferenceByType(GetType()); }
+        }
+
+        public string Title { get; private set; }
+
+        public IEnumerable<string> GetSearchKeywords()
+        {
+            return new string[] { };
+        }
+
+        public string GetTitle()
+        {
+            return Title;
+        }
+
+        public void LoadSettings()
+        {
+        }
+
+        public void OnPageShown()
+        {
+        }
+
+        public void SaveSettings()
+        {
         }
     }
 }

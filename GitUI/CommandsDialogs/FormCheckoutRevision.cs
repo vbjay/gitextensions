@@ -14,6 +14,13 @@ namespace GitUI.CommandsDialogs
         private readonly TranslationString _noRevisionSelectedMsgBoxCaption =
             new TranslationString("Checkout");
 
+        public FormCheckoutRevision(GitUICommands aCommands)
+                    : base(true, aCommands)
+        {
+            InitializeComponent();
+            Translate();
+        }
+
         /// <summary>
         /// For VS designer
         /// </summary>
@@ -22,20 +29,13 @@ namespace GitUI.CommandsDialogs
         {
         }
 
-        public FormCheckoutRevision(GitUICommands aCommands)
-            : base(true, aCommands)
+        public void SetRevision(string commitHash)
         {
-            InitializeComponent();
-            Translate();
+            commitPickerSmallControl1.SetSelectedCommitHash(commitHash);
         }
 
         private void FormCheckoutLoad(object sender, EventArgs e)
         {
-        }
-
-        public void SetRevision(string commitHash)
-        {
-            commitPickerSmallControl1.SetSelectedCommitHash(commitHash);
         }
 
         private void OkClick(object sender, EventArgs e)

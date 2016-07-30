@@ -13,6 +13,14 @@ namespace GitCommands.Settings
         {
         }
 
+        public static GitExtSettingsCache Create(string aSettingsFilePath, bool allowCache = true)
+        {
+            if (allowCache)
+                return FromCache(aSettingsFilePath);
+            else
+                return new GitExtSettingsCache(aSettingsFilePath, false);
+        }
+
         public static GitExtSettingsCache FromCache(string aSettingsFilePath)
         {
             Lazy<GitExtSettingsCache> createSettingsCache = new Lazy<GitExtSettingsCache>(() =>
@@ -23,31 +31,17 @@ namespace GitCommands.Settings
             return FileSettingsCache.FromCache(aSettingsFilePath, createSettingsCache);
         }
 
-        public static GitExtSettingsCache Create(string aSettingsFilePath, bool allowCache = true)
-        {
-            if (allowCache)
-                return FromCache(aSettingsFilePath);
-            else
-                return new GitExtSettingsCache(aSettingsFilePath, false);
-        }
-
         protected override void ClearImpl()
         {
             base.ClearImpl();
             EncodedNameMap.Clear();
         }
 
-        protected override void WriteSettings(string fileName)
+        protected override string GetValueImpl(string key)
         {
-            using (System.Xml.XmlTextWriter xtw = new System.Xml.XmlTextWriter(fileName, Encoding.UTF8))
-            {
-                xtw.Formatting = Formatting.Indented;
-                xtw.WriteStartDocument();
-                xtw.WriteStartElement("dictionary");
-
-                EncodedNameMap.WriteXml(xtw);
-                xtw.WriteEndElement();
-            }
+            string value = null;
+            EncodedNameMap.TryGetValue(key, out value);
+            return value;
         }
 
         protected override void ReadSettings(string fileName)
@@ -76,11 +70,17 @@ namespace GitCommands.Settings
             }
         }
 
-        protected override string GetValueImpl(string key)
+        protected override void WriteSettings(string fileName)
         {
-            string value = null;
-            EncodedNameMap.TryGetValue(key, out value);
-            return value;
+            using (System.Xml.XmlTextWriter xtw = new System.Xml.XmlTextWriter(fileName, Encoding.UTF8))
+            {
+                xtw.Formatting = Formatting.Indented;
+                xtw.WriteStartDocument();
+                xtw.WriteStartElement("dictionary");
+
+                EncodedNameMap.WriteXml(xtw);
+                xtw.WriteEndElement();
+            }
         }
     }
 }

@@ -7,12 +7,12 @@ namespace GitUI.Script
     {
         private string _UserInput = "";
 
-        public string UserInput { get { return _UserInput; } }
-
         public SimplePrompt()
         {
             InitializeComponent();
         }
+
+        public string UserInput { get { return _UserInput; } }
 
         private void btn_OK_Click(object sender, EventArgs e)
         {

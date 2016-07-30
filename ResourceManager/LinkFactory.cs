@@ -6,18 +6,6 @@ namespace ResourceManager
 {
     public class LinkFactory
     {
-        public static string CreateLink(string caption, string uri)
-        {
-            return "<a href=" + WebUtility.HtmlEncode(uri).Quote() + ">" + WebUtility.HtmlEncode(caption) + "</a>";
-        }
-
-        public static string CreateTagLink(string tag)
-        {
-            if (tag != "…")
-                return "<a href='gitext://gototag/" + tag + "'>" + WebUtility.HtmlEncode(tag) + "</a>";
-            return WebUtility.HtmlEncode(tag);
-        }
-
         public static string CreateBranchLink(string noPrefixBranch)
         {
             if (noPrefixBranch != "…")
@@ -33,6 +21,18 @@ namespace ResourceManager
                 return "<a href='gitext://gotocommit/" + guid + "'>" + Strings.GetCurrentIndex() + "</a>";
             else
                 return "<a href='gitext://gotocommit/" + guid + "'>" + guid.Substring(0, 10) + "</a>";
+        }
+
+        public static string CreateLink(string caption, string uri)
+        {
+            return "<a href=" + WebUtility.HtmlEncode(uri).Quote() + ">" + WebUtility.HtmlEncode(caption) + "</a>";
+        }
+
+        public static string CreateTagLink(string tag)
+        {
+            if (tag != "…")
+                return "<a href='gitext://gototag/" + tag + "'>" + WebUtility.HtmlEncode(tag) + "</a>";
+            return WebUtility.HtmlEncode(tag);
         }
     }
 }

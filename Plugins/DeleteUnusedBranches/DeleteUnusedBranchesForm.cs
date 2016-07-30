@@ -13,25 +13,24 @@ namespace DeleteUnusedBranches
 {
     public sealed partial class DeleteUnusedBranchesForm : GitExtensionsFormBase
     {
-        private readonly TranslationString _deleteCaption = new TranslationString("Delete");
-        private readonly TranslationString _selectBranchesToDelete = new TranslationString("Select branches to delete using checkboxes in '{0}' column.");
         private readonly TranslationString _areYouSureToDelete = new TranslationString("Are you sure to delete {0} selected branches?");
+        private readonly SortableBranchesList _branches = new SortableBranchesList();
+        private readonly TranslationString _branchesSelected = new TranslationString("{0}/{1} branches selected.");
+        private readonly TranslationString _cancel = new TranslationString("Cancel");
+        private readonly TranslationString _chooseBrancesToDelete = new TranslationString("Choose branches to delete. Only branches that are fully merged in '{0}' will be deleted.");
         private readonly TranslationString _dangerousAction = new TranslationString("DANGEROUS ACTION!\nBranches will be deleted on the remote '{0}'. This can not be undone.\nAre you sure you want to continue?");
+        private readonly TranslationString _deleteCaption = new TranslationString("Delete");
         private readonly TranslationString _deletingBranches = new TranslationString("Deleting branches...");
         private readonly TranslationString _deletingUnmergedBranches = new TranslationString("Deleting unmerged branches will result in dangling commits. Use with caution!");
-        private readonly TranslationString _chooseBrancesToDelete = new TranslationString("Choose branches to delete. Only branches that are fully merged in '{0}' will be deleted.");
-        private readonly TranslationString _pressToSearch = new TranslationString("Press '{0}' to search for branches to delete.");
-        private readonly TranslationString _cancel = new TranslationString("Cancel");
-        private readonly TranslationString _searchBranches = new TranslationString("Search branches");
+        private readonly IGitModule _gitCommands;
+        private readonly IGitPlugin _gitPlugin;
+        private readonly IGitUICommands _gitUiCommands;
         private readonly TranslationString _loading = new TranslationString("Loading...");
-        private readonly TranslationString _branchesSelected = new TranslationString("{0}/{1} branches selected.");
-
-        private readonly SortableBranchesList _branches = new SortableBranchesList();
+        private readonly TranslationString _pressToSearch = new TranslationString("Press '{0}' to search for branches to delete.");
+        private readonly TranslationString _searchBranches = new TranslationString("Search branches");
+        private readonly TranslationString _selectBranchesToDelete = new TranslationString("Select branches to delete using checkboxes in '{0}' column.");
         private int _days;
         private string _referenceBranch;
-        private readonly IGitModule _gitCommands;
-        private readonly IGitUICommands _gitUiCommands;
-        private readonly IGitPlugin _gitPlugin;
         private CancellationTokenSource _refreshCancellation;
 
         public DeleteUnusedBranchesForm()
@@ -52,6 +51,24 @@ namespace DeleteUnusedBranches
             _gitPlugin = gitPlugin;
             imgLoading.Image = IsMonoRuntime() ? Resources.loadingpanel_static : Resources.loadingpanel;
             RefreshObsoleteBranches();
+        }
+
+        private bool IsRefreshing
+        {
+            get
+            {
+                return _refreshCancellation != null;
+            }
+            set
+            {
+                if (value == IsRefreshing)
+                    return;
+
+                _refreshCancellation = value ? new CancellationTokenSource() : null;
+                RefreshBtn.Text = value ? _cancel.Text : _searchBranches.Text;
+                imgLoading.Visible = value;
+                lblStatus.Text = value ? _loading.Text : GetDefaultStatusText();
+            }
         }
 
         protected override void OnLoad(EventArgs e)
@@ -102,6 +119,36 @@ namespace DeleteUnusedBranches
 
             return branches.Where(branchName => (!context.IncludeRemotes || branchName.StartsWith(context.RemoteRepositoryName + "/")) &&
                                    (regex == null || regex.IsMatch(branchName) == regexMustMatch)).ToArray();
+        }
+
+        private static bool IsMonoRuntime()
+        {
+            return Type.GetType("Mono.Runtime") != null;
+        }
+
+        private void BranchesGrid_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // track only “Deleted” column
+            if (e.ColumnIndex != 0)
+                return;
+
+            BranchesGrid.CommitEdit(DataGridViewDataErrorContexts.Commit);
+            lblStatus.Text = GetDefaultStatusText();
+        }
+
+        private void buttonSettings_Click(object sender, EventArgs e)
+        {
+            Hide();
+            Close();
+            _gitUiCommands.StartSettingsDialog(_gitPlugin);
+        }
+
+        private void ClearResults()
+        {
+            instructionLabel.Text = string.Format(_chooseBrancesToDelete.Text, _referenceBranch);
+            lblStatus.Text = string.Format(_pressToSearch.Text, RefreshBtn.Text);
+            _branches.Clear();
+            _branches.ResetBindings();
         }
 
         private void Delete_Click(object sender, EventArgs e)
@@ -161,36 +208,13 @@ namespace DeleteUnusedBranches
             }, TaskScheduler.FromCurrentSynchronizationContext());
         }
 
-        private void buttonSettings_Click(object sender, EventArgs e)
+        private string GetDefaultStatusText()
         {
-            Hide();
-            Close();
-            _gitUiCommands.StartSettingsDialog(_gitPlugin);
+            return string.Format(_branchesSelected.Text, _branches.Count(b => b.Delete), _branches.Count);
         }
 
         private void IncludeRemoteBranches_CheckedChanged(object sender, EventArgs e)
         {
-            ClearResults();
-        }
-
-        private void useRegexFilter_CheckedChanged(object sender, EventArgs e)
-        {
-            ClearResults();
-        }
-
-        private void remote_TextChanged(object sender, EventArgs e)
-        {
-            ClearResults();
-        }
-
-        private void regexFilter_TextChanged(object sender, EventArgs e)
-        {
-            ClearResults();
-        }
-
-        private void mergedIntoBranch_TextChanged(object sender, EventArgs e)
-        {
-            _referenceBranch = mergedIntoBranch.Text;
             ClearResults();
         }
 
@@ -202,33 +226,21 @@ namespace DeleteUnusedBranches
                 MessageBox.Show(this, _deletingUnmergedBranches.Text, _deleteCaption.Text, MessageBoxButtons.OK);
         }
 
+        private void mergedIntoBranch_TextChanged(object sender, EventArgs e)
+        {
+            _referenceBranch = mergedIntoBranch.Text;
+            ClearResults();
+        }
+
         private void olderThanDays_ValueChanged(object sender, EventArgs e)
         {
             _days = (int)olderThanDays.Value;
             ClearResults();
         }
 
-        private void ClearResults()
-        {
-            instructionLabel.Text = string.Format(_chooseBrancesToDelete.Text, _referenceBranch);
-            lblStatus.Text = string.Format(_pressToSearch.Text, RefreshBtn.Text);
-            _branches.Clear();
-            _branches.ResetBindings();
-        }
-
         private void Refresh_Click(object sender, EventArgs e)
         {
             RefreshObsoleteBranches();
-        }
-
-        private void BranchesGrid_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-            // track only “Deleted” column
-            if (e.ColumnIndex != 0)
-                return;
-
-            BranchesGrid.CommitEdit(DataGridViewDataErrorContexts.Commit);
-            lblStatus.Text = GetDefaultStatusText();
         }
 
         private void RefreshObsoleteBranches()
@@ -261,46 +273,33 @@ namespace DeleteUnusedBranches
                 }, TaskScheduler.FromCurrentSynchronizationContext());
         }
 
-        private bool IsRefreshing
+        private void regexFilter_TextChanged(object sender, EventArgs e)
         {
-            get
-            {
-                return _refreshCancellation != null;
-            }
-            set
-            {
-                if (value == IsRefreshing)
-                    return;
-
-                _refreshCancellation = value ? new CancellationTokenSource() : null;
-                RefreshBtn.Text = value ? _cancel.Text : _searchBranches.Text;
-                imgLoading.Visible = value;
-                lblStatus.Text = value ? _loading.Text : GetDefaultStatusText();
-            }
+            ClearResults();
         }
 
-        private string GetDefaultStatusText()
+        private void remote_TextChanged(object sender, EventArgs e)
         {
-            return string.Format(_branchesSelected.Text, _branches.Count(b => b.Delete), _branches.Count);
+            ClearResults();
         }
 
-        private static bool IsMonoRuntime()
+        private void useRegexFilter_CheckedChanged(object sender, EventArgs e)
         {
-            return Type.GetType("Mono.Runtime") != null;
+            ClearResults();
         }
 
         private struct RefreshContext
         {
+            private readonly CancellationToken _cancellationToken;
             private readonly IGitModule _commands;
             private readonly bool _includeRemotes;
             private readonly bool _includeUnmerged;
+            private readonly TimeSpan _obsolescenceDuration;
             private readonly string _referenceBranch;
-            private readonly string _remoteRepositoryName;
+            private readonly bool _regexDoesNotMatch;
             private readonly string _regexFilter;
             private readonly bool _regexIgnoreCase;
-            private readonly bool _regexDoesNotMatch;
-            private readonly TimeSpan _obsolescenceDuration;
-            private readonly CancellationToken _cancellationToken;
+            private readonly string _remoteRepositoryName;
 
             public RefreshContext(IGitModule commands, bool includeRemotes, bool includeUnmerged, string referenceBranch,
                 string remoteRepositoryName, string regexFilter, bool regexIgnoreCase, bool regexDoesNotMatch,
@@ -318,6 +317,11 @@ namespace DeleteUnusedBranches
                 this._cancellationToken = cancellationToken;
             }
 
+            public CancellationToken CancellationToken
+            {
+                get { return _cancellationToken; }
+            }
+
             public IGitModule Commands
             {
                 get { return _commands; }
@@ -333,14 +337,19 @@ namespace DeleteUnusedBranches
                 get { return _includeUnmerged; }
             }
 
+            public TimeSpan ObsolescenceDuration
+            {
+                get { return _obsolescenceDuration; }
+            }
+
             public string ReferenceBranch
             {
                 get { return _referenceBranch; }
             }
 
-            public string RemoteRepositoryName
+            public bool RegexDoesNotMatch
             {
-                get { return _remoteRepositoryName; }
+                get { return _regexDoesNotMatch; }
             }
 
             public string RegexFilter
@@ -353,19 +362,9 @@ namespace DeleteUnusedBranches
                 get { return _regexIgnoreCase; }
             }
 
-            public bool RegexDoesNotMatch
+            public string RemoteRepositoryName
             {
-                get { return _regexDoesNotMatch; }
-            }
-
-            public TimeSpan ObsolescenceDuration
-            {
-                get { return _obsolescenceDuration; }
-            }
-
-            public CancellationToken CancellationToken
-            {
-                get { return _cancellationToken; }
+                get { return _remoteRepositoryName; }
             }
         }
     }

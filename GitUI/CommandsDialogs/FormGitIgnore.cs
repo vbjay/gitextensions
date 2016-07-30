@@ -10,17 +10,17 @@ namespace GitUI.CommandsDialogs
 {
     public sealed partial class FormGitIgnore : GitModuleForm
     {
-        private readonly TranslationString _gitignoreOnlyInWorkingDirSupported =
-            new TranslationString(".gitignore is only supported when there is a working directory.");
-
-        private readonly TranslationString _gitignoreOnlyInWorkingDirSupportedCaption =
-            new TranslationString("No working directory");
-
         private readonly TranslationString _cannotAccessGitignore =
             new TranslationString("Failed to save .gitignore." + Environment.NewLine + "Check if file is accessible.");
 
         private readonly TranslationString _cannotAccessGitignoreCaption =
             new TranslationString("Failed to save .gitignore");
+
+        private readonly TranslationString _gitignoreOnlyInWorkingDirSupported =
+                            new TranslationString(".gitignore is only supported when there is a working directory.");
+
+        private readonly TranslationString _gitignoreOnlyInWorkingDirSupportedCaption =
+            new TranslationString("No working directory");
 
         private readonly TranslationString _saveFileQuestion =
             new TranslationString("Save changes to .gitignore?");
@@ -31,8 +31,6 @@ namespace GitUI.CommandsDialogs
         private string _originalGitIgnoreFileContent = string.Empty;
 
         #region default patterns
-
-        private static readonly string DefaultIgnorePatternsFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GitExtensions/DefaultIgnorePatterns.txt");
 
         private static readonly string[] DefaultIgnorePatterns = new[]
         {
@@ -66,6 +64,8 @@ namespace GitUI.CommandsDialogs
             "[Tt]est[Rr]esult*"
         };
 
+        private static readonly string DefaultIgnorePatternsFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GitExtensions/DefaultIgnorePatterns.txt");
+
         #endregion default patterns
 
         public FormGitIgnore(GitUICommands aCommands)
@@ -80,6 +80,77 @@ namespace GitUI.CommandsDialogs
             base.OnRuntimeLoad(e);
             LoadGitIgnore();
             _NO_TRANSLATE_GitIgnoreEdit.TextLoaded += GitIgnoreFileLoaded;
+        }
+
+        private void AddDefaultClick(object sender, EventArgs e)
+        {
+            var defaultIgnorePatterns = (File.Exists(DefaultIgnorePatternsFile)) ? File.ReadAllLines(DefaultIgnorePatternsFile) : DefaultIgnorePatterns;
+
+            var currentFileContent = _NO_TRANSLATE_GitIgnoreEdit.GetText();
+            var patternsToAdd = defaultIgnorePatterns
+                .Except(currentFileContent.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries))
+                .ToArray();
+            if (patternsToAdd.Length == 0)
+                return;
+            // workaround to prevent GitIgnoreFileLoaded event handling (it causes wrong _originalGitIgnoreFileContent update)
+            // TODO: implement in FileViewer separate events for loading text from file and for setting text directly via ViewText
+            _NO_TRANSLATE_GitIgnoreEdit.TextLoaded -= GitIgnoreFileLoaded;
+            _NO_TRANSLATE_GitIgnoreEdit.ViewText(".gitignore",
+                currentFileContent + Environment.NewLine +
+                string.Join(Environment.NewLine, patternsToAdd) + Environment.NewLine + string.Empty);
+            _NO_TRANSLATE_GitIgnoreEdit.TextLoaded += GitIgnoreFileLoaded;
+        }
+
+        private void AddPattern_Click(object sender, EventArgs e)
+        {
+            SaveGitIgnore();
+            UICommands.StartAddToGitIgnoreDialog(this, "*.dll");
+            LoadGitIgnore();
+        }
+
+        private void FormGitIgnoreFormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (HasUnsavedChanges())
+            {
+                switch (MessageBox.Show(this, _saveFileQuestion.Text, _saveFileQuestionCaption.Text,
+                                    MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question))
+                {
+                    case DialogResult.Yes:
+                        if (!SaveGitIgnore())
+                        {
+                            e.Cancel = true;
+                            return;
+                        }
+                        break;
+
+                    case DialogResult.Cancel:
+                        e.Cancel = true;
+                        return;
+                }
+            }
+        }
+
+        private void FormGitIgnoreLoad(object sender, EventArgs e)
+        {
+            if (!Module.IsBareRepository())
+                return;
+            MessageBox.Show(this, _gitignoreOnlyInWorkingDirSupported.Text, _gitignoreOnlyInWorkingDirSupportedCaption.Text);
+            Close();
+        }
+
+        private void GitIgnoreFileLoaded(object sender, EventArgs e)
+        {
+            _originalGitIgnoreFileContent = _NO_TRANSLATE_GitIgnoreEdit.GetText();
+        }
+
+        private bool HasUnsavedChanges()
+        {
+            return _originalGitIgnoreFileContent != _NO_TRANSLATE_GitIgnoreEdit.GetText();
+        }
+
+        private void lnkGitIgnorePatterns_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Process.Start(@"https://github.com/github/gitignore");
         }
 
         private void LoadGitIgnore()
@@ -126,77 +197,6 @@ namespace GitUI.CommandsDialogs
                     _cannotAccessGitignoreCaption.Text);
                 return false;
             }
-        }
-
-        private void FormGitIgnoreFormClosing(object sender, FormClosingEventArgs e)
-        {
-            if (HasUnsavedChanges())
-            {
-                switch (MessageBox.Show(this, _saveFileQuestion.Text, _saveFileQuestionCaption.Text,
-                                    MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question))
-                {
-                    case DialogResult.Yes:
-                        if (!SaveGitIgnore())
-                        {
-                            e.Cancel = true;
-                            return;
-                        }
-                        break;
-
-                    case DialogResult.Cancel:
-                        e.Cancel = true;
-                        return;
-                }
-            }
-        }
-
-        private void FormGitIgnoreLoad(object sender, EventArgs e)
-        {
-            if (!Module.IsBareRepository())
-                return;
-            MessageBox.Show(this, _gitignoreOnlyInWorkingDirSupported.Text, _gitignoreOnlyInWorkingDirSupportedCaption.Text);
-            Close();
-        }
-
-        private void AddDefaultClick(object sender, EventArgs e)
-        {
-            var defaultIgnorePatterns = (File.Exists(DefaultIgnorePatternsFile)) ? File.ReadAllLines(DefaultIgnorePatternsFile) : DefaultIgnorePatterns;
-
-            var currentFileContent = _NO_TRANSLATE_GitIgnoreEdit.GetText();
-            var patternsToAdd = defaultIgnorePatterns
-                .Except(currentFileContent.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries))
-                .ToArray();
-            if (patternsToAdd.Length == 0)
-                return;
-            // workaround to prevent GitIgnoreFileLoaded event handling (it causes wrong _originalGitIgnoreFileContent update)
-            // TODO: implement in FileViewer separate events for loading text from file and for setting text directly via ViewText
-            _NO_TRANSLATE_GitIgnoreEdit.TextLoaded -= GitIgnoreFileLoaded;
-            _NO_TRANSLATE_GitIgnoreEdit.ViewText(".gitignore",
-                currentFileContent + Environment.NewLine +
-                string.Join(Environment.NewLine, patternsToAdd) + Environment.NewLine + string.Empty);
-            _NO_TRANSLATE_GitIgnoreEdit.TextLoaded += GitIgnoreFileLoaded;
-        }
-
-        private void AddPattern_Click(object sender, EventArgs e)
-        {
-            SaveGitIgnore();
-            UICommands.StartAddToGitIgnoreDialog(this, "*.dll");
-            LoadGitIgnore();
-        }
-
-        private bool HasUnsavedChanges()
-        {
-            return _originalGitIgnoreFileContent != _NO_TRANSLATE_GitIgnoreEdit.GetText();
-        }
-
-        private void GitIgnoreFileLoaded(object sender, EventArgs e)
-        {
-            _originalGitIgnoreFileContent = _NO_TRANSLATE_GitIgnoreEdit.GetText();
-        }
-
-        private void lnkGitIgnorePatterns_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            Process.Start(@"https://github.com/github/gitignore");
         }
     }
 }

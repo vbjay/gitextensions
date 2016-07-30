@@ -13,6 +13,15 @@ namespace Stash
             _info = info;
         }
 
+        protected override string ApiUrl
+        {
+            get
+            {
+                return string.Format("rest/api/1.0/projects/{0}/repos/{1}/pull-requests/{2}/approve",
+                                     _info.ProjectKey, _info.TargetRepo, _info.Id);
+            }
+        }
+
         protected override object RequestBody
         {
             get { return ""; }
@@ -21,15 +30,6 @@ namespace Stash
         protected override Method RequestMethod
         {
             get { return Method.POST; }
-        }
-
-        protected override string ApiUrl
-        {
-            get
-            {
-                return string.Format("rest/api/1.0/projects/{0}/repos/{1}/pull-requests/{2}/approve",
-                                     _info.ProjectKey, _info.TargetRepo, _info.Id);
-            }
         }
 
         protected override JObject ParseResponse(JObject json)

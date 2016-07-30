@@ -15,6 +15,11 @@ namespace GitUI.HelperDialogs
 
         public IBuildServerCredentials BuildServerCredentials { get; set; }
 
+        private void authenticationMethodChanged(object sender, EventArgs e)
+        {
+            UpdateUI();
+        }
+
         private void buttonOK_Click(object sender, EventArgs e)
         {
             if (BuildServerCredentials == null)
@@ -37,11 +42,6 @@ namespace GitUI.HelperDialogs
                 textBoxPassword.Text = BuildServerCredentials.Password;
             }
 
-            UpdateUI();
-        }
-
-        private void authenticationMethodChanged(object sender, EventArgs e)
-        {
             UpdateUI();
         }
 

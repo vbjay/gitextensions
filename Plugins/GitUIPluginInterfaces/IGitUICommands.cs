@@ -21,6 +21,8 @@ namespace GitUIPluginInterfaces
 
         event GitUIEventHandler PostBrowse;
 
+        event GitUIEventHandler PostBrowseInitialize;
+
         event GitUIPostActionEventHandler PostCheckoutBranch;
 
         event GitUIPostActionEventHandler PostCheckoutRevision;
@@ -61,9 +63,11 @@ namespace GitUIPluginInterfaces
 
         event GitUIPostActionEventHandler PostRebase;
 
-        event GitUIPostActionEventHandler PostRename;
+        event GitUIEventHandler PostRegisterPlugin;
 
         event GitUIPostActionEventHandler PostRemotes;
+
+        event GitUIPostActionEventHandler PostRename;
 
         event GitUIEventHandler PostRepositoryChanged;
 
@@ -73,7 +77,11 @@ namespace GitUIPluginInterfaces
 
         event GitUIPostActionEventHandler PostSettings;
 
+        event GitUIPostActionEventHandler PostSparseWorkingCopy;
+
         event GitUIPostActionEventHandler PostStash;
+
+        event GitUIPostActionEventHandler PostSubmodulesEdit;
 
         event GitUIPostActionEventHandler PostSvnClone;
 
@@ -83,8 +91,6 @@ namespace GitUIPluginInterfaces
 
         event GitUIPostActionEventHandler PostSvnRebase;
 
-        event GitUIPostActionEventHandler PostSubmodulesEdit;
-
         event GitUIPostActionEventHandler PostSyncSubmodules;
 
         event GitUIPostActionEventHandler PostUpdateSubmodules;
@@ -92,12 +98,6 @@ namespace GitUIPluginInterfaces
         event GitUIPostActionEventHandler PostVerifyDatabase;
 
         event GitUIPostActionEventHandler PostViewPatch;
-
-        event GitUIPostActionEventHandler PostSparseWorkingCopy;
-
-        event GitUIEventHandler PostBrowseInitialize;
-
-        event GitUIEventHandler PostRegisterPlugin;
 
         event GitUIEventHandler PreAddFiles;
 
@@ -108,6 +108,8 @@ namespace GitUIPluginInterfaces
         event GitUIEventHandler PreBlame;
 
         event GitUIEventHandler PreBrowse;
+
+        event GitUIEventHandler PreBrowseInitialize;
 
         event GitUIEventHandler PreCheckoutBranch;
 
@@ -149,9 +151,9 @@ namespace GitUIPluginInterfaces
 
         event GitUIEventHandler PreRebase;
 
-        event GitUIEventHandler PreRename;
-
         event GitUIEventHandler PreRemotes;
+
+        event GitUIEventHandler PreRename;
 
         event GitUIEventHandler PreResolveConflicts;
 
@@ -159,7 +161,11 @@ namespace GitUIPluginInterfaces
 
         event GitUIEventHandler PreSettings;
 
+        event GitUIEventHandler PreSparseWorkingCopy;
+
         event GitUIEventHandler PreStash;
+
+        event GitUIEventHandler PreSubmodulesEdit;
 
         event GitUIEventHandler PreSvnClone;
 
@@ -169,8 +175,6 @@ namespace GitUIPluginInterfaces
 
         event GitUIEventHandler PreSvnRebase;
 
-        event GitUIEventHandler PreSubmodulesEdit;
-
         event GitUIEventHandler PreSyncSubmodules;
 
         event GitUIEventHandler PreUpdateSubmodules;
@@ -179,41 +183,32 @@ namespace GitUIPluginInterfaces
 
         event GitUIEventHandler PreViewPatch;
 
-        event GitUIEventHandler PreBrowseInitialize;
-
-        event GitUIEventHandler PreSparseWorkingCopy;
-
-        IGitModule GitModule { get; }
-
-        string GitCommand(string arguments);
-
-        string CommandLineCommand(string cmd, string arguments);
-
-        IGitRemoteCommand CreateRemoteCommand();
-
-        void CacheAvatar(string email);
-
-        Icon FormIcon { get; }
         IBrowseRepo BrowseRepo { get; }
+        Icon FormIcon { get; }
+        IGitModule GitModule { get; }
 
         /// <summary>
         /// RepoChangedNotifier.Notify() should be called after each action that changess repo state
         /// </summary>
         ILockableNotifier RepoChangedNotifier { get; }
 
-        bool StartCommandLineProcessDialog(object ownerForm, string command, string arguments);
+        void CacheAvatar(string email);
 
-        bool StartCommandLineProcessDialog(string command, string arguments);
+        string CommandLineCommand(string cmd, string arguments);
 
-        bool StartBatchFileProcessDialog(object ownerForm, string batchFile);
+        IGitRemoteCommand CreateRemoteCommand();
 
-        bool StartBatchFileProcessDialog(string batchFile);
+        string GitCommand(string arguments);
 
         bool StartAddFilesDialog();
 
         bool StartApplyPatchDialog();
 
         bool StartArchiveDialog();
+
+        bool StartBatchFileProcessDialog(object ownerForm, string batchFile);
+
+        bool StartBatchFileProcessDialog(string batchFile);
 
         bool StartBrowseDialog();
 
@@ -226,6 +221,10 @@ namespace GitUIPluginInterfaces
         bool StartCloneDialog();
 
         bool StartCloneDialog(string url);
+
+        bool StartCommandLineProcessDialog(object ownerForm, string command, string arguments);
+
+        bool StartCommandLineProcessDialog(string command, string arguments);
 
         bool StartCommitDialog();
 
@@ -271,7 +270,11 @@ namespace GitUIPluginInterfaces
 
         bool StartSettingsDialog(IGitPlugin gitPlugin);
 
+        bool StartSparseWorkingCopyDialog();
+
         bool StartStashDialog();
+
+        bool StartSubmodulesDialog();
 
         bool StartSvnCloneDialog();
 
@@ -281,8 +284,6 @@ namespace GitUIPluginInterfaces
 
         bool StartSvnRebaseDialog();
 
-        bool StartSubmodulesDialog();
-
         bool StartSyncSubmodulesDialog();
 
         bool StartUpdateSubmodulesDialog();
@@ -290,7 +291,5 @@ namespace GitUIPluginInterfaces
         bool StartVerifyDatabaseDialog();
 
         bool StartViewPatchDialog();
-
-        bool StartSparseWorkingCopyDialog();
     }
 }

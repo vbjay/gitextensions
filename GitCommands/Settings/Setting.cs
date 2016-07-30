@@ -2,9 +2,9 @@
 {
     public abstract class Setting<T>
     {
-        public readonly SettingsPath SettingsSource;
         public readonly T DefaultValue;
         public readonly string Name;
+        public readonly SettingsPath SettingsSource;
 
         public Setting(string aName, SettingsPath aSettingsSource, T aDefaultValue)
         {
@@ -13,8 +13,6 @@
             DefaultValue = aDefaultValue;
         }
 
-        public abstract T Value { get; set; }
-
         public string FullPath
         {
             get
@@ -22,5 +20,7 @@
                 return SettingsSource.PathFor(Name);
             }
         }
+
+        public abstract T Value { get; set; }
     }
 }

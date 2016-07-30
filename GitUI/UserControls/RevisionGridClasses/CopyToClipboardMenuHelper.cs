@@ -7,6 +7,21 @@ namespace GitUI.UserControls.RevisionGridClasses
     internal class CopyToClipboardMenuHelper
     {
         /// <summary>
+        /// adds or updates text in parentheses (...)
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="postfix"></param>
+        public static void AddOrUpdateTextPostfix(ToolStripItem target, string postfix)
+        {
+            if (target.Text.EndsWith(")"))
+            {
+                target.Text = target.Text.Substring(0, target.Text.IndexOf("     ("));
+            }
+
+            target.Text += string.Format("     ({0})", postfix);
+        }
+
+        /// <summary>
         /// ...
         /// sets also the visibility of captionItem
         /// ...
@@ -44,24 +59,18 @@ namespace GitUI.UserControls.RevisionGridClasses
             captionItem.Visible = gitNameList.Any();
         }
 
-        private static void CopyToClipBoard(object sender, EventArgs e)
-        {
-            Clipboard.SetText(sender.ToString());
-        }
-
         /// <summary>
-        /// adds or updates text in parentheses (...)
+        /// Substring but OK if shorter
         /// </summary>
-        /// <param name="target"></param>
-        /// <param name="postfix"></param>
-        public static void AddOrUpdateTextPostfix(ToolStripItem target, string postfix)
+        /// <param name="str"></param>
+        /// <param name="characterCount"></param>
+        /// <returns></returns>
+        public static string StrLimit(string str, int characterCount)
         {
-            if (target.Text.EndsWith(")"))
-            {
-                target.Text = target.Text.Substring(0, target.Text.IndexOf("     ("));
-            }
-
-            target.Text += string.Format("     ({0})", postfix);
+            if (str.Length <= characterCount)
+                return str;
+            else
+                return str.Substring(0, characterCount).TrimEnd(' ');
         }
 
         /// <summary>
@@ -78,18 +87,9 @@ namespace GitUI.UserControls.RevisionGridClasses
                 return str.Substring(0, characterCount - 3) + "...";
         }
 
-        /// <summary>
-        /// Substring but OK if shorter
-        /// </summary>
-        /// <param name="str"></param>
-        /// <param name="characterCount"></param>
-        /// <returns></returns>
-        public static string StrLimit(string str, int characterCount)
+        private static void CopyToClipBoard(object sender, EventArgs e)
         {
-            if (str.Length <= characterCount)
-                return str;
-            else
-                return str.Substring(0, characterCount).TrimEnd(' ');
+            Clipboard.SetText(sender.ToString());
         }
     }
 }

@@ -18,49 +18,6 @@ namespace GitUI.SpellChecker
             // intentionally left blank
         }
 
-        internal static int GetTextWidthAtCharIndex(TextBoxBase textBoxBase, int index, int length)
-        {
-            var richTextBox = textBoxBase as RichTextBox;
-
-            //TODO!
-            if (richTextBox == null || !EnvUtils.RunningOnWindows())
-            {
-                return textBoxBase.Font.Height;
-            }
-
-            NativeMethods.CHARRANGE charRange;
-            charRange.cpMin = index;
-            charRange.cpMax = index + length;
-
-            NativeMethods.RECT rect;
-            rect.Top = 0;
-            rect.Bottom = (int)AnInch;
-            rect.Left = 0;
-            rect.Right = (int)(richTextBox.ClientSize.Width * AnInch);
-
-            NativeMethods.RECT rectPage;
-            rectPage.Top = 0;
-            rectPage.Bottom = (int)AnInch;
-            rectPage.Left = 0;
-            rectPage.Right = (int)(richTextBox.ClientSize.Width * AnInch);
-
-            var canvas = Graphics.FromHwnd(richTextBox.Handle);
-            var canvasHdc = canvas.GetHdc();
-
-            var formatRange = GetFormatRange(charRange, canvasHdc, rect, rectPage);
-
-            NativeMethods.SendMessage(
-                richTextBox.Handle,
-                NativeMethods.EM_FORMATRANGE,
-                IntPtr.Zero,
-                ref formatRange);
-
-            canvas.ReleaseHdc(canvasHdc);
-            canvas.Dispose();
-
-            return (int)((formatRange.rc.Right - formatRange.rc.Left) / AnInch);
-        }
-
         internal static int GetBaselineOffsetAtCharIndex(TextBoxBase tb, int index)
         {
             var rtb = tb as RichTextBox;
@@ -106,16 +63,47 @@ namespace GitUI.SpellChecker
             return (int)((formatRange.rc.Bottom - formatRange.rc.Top) / AnInch);
         }
 
-        private static NativeMethods.FORMATRANGE GetFormatRange(NativeMethods.CHARRANGE charRange, IntPtr canvasHdc,
-                                                                NativeMethods.RECT rect, NativeMethods.RECT rectPage)
+        internal static int GetTextWidthAtCharIndex(TextBoxBase textBoxBase, int index, int length)
         {
-            NativeMethods.FORMATRANGE formatRange;
-            formatRange.chrg = charRange;
-            formatRange.hdc = canvasHdc;
-            formatRange.hdcTarget = canvasHdc;
-            formatRange.rc = rect;
-            formatRange.rcPage = rectPage;
-            return formatRange;
+            var richTextBox = textBoxBase as RichTextBox;
+
+            //TODO!
+            if (richTextBox == null || !EnvUtils.RunningOnWindows())
+            {
+                return textBoxBase.Font.Height;
+            }
+
+            NativeMethods.CHARRANGE charRange;
+            charRange.cpMin = index;
+            charRange.cpMax = index + length;
+
+            NativeMethods.RECT rect;
+            rect.Top = 0;
+            rect.Bottom = (int)AnInch;
+            rect.Left = 0;
+            rect.Right = (int)(richTextBox.ClientSize.Width * AnInch);
+
+            NativeMethods.RECT rectPage;
+            rectPage.Top = 0;
+            rectPage.Bottom = (int)AnInch;
+            rectPage.Left = 0;
+            rectPage.Right = (int)(richTextBox.ClientSize.Width * AnInch);
+
+            var canvas = Graphics.FromHwnd(richTextBox.Handle);
+            var canvasHdc = canvas.GetHdc();
+
+            var formatRange = GetFormatRange(charRange, canvasHdc, rect, rectPage);
+
+            NativeMethods.SendMessage(
+                richTextBox.Handle,
+                NativeMethods.EM_FORMATRANGE,
+                IntPtr.Zero,
+                ref formatRange);
+
+            canvas.ReleaseHdc(canvasHdc);
+            canvas.Dispose();
+
+            return (int)((formatRange.rc.Right - formatRange.rc.Left) / AnInch);
         }
 
         /// <summary>
@@ -183,6 +171,33 @@ namespace GitUI.SpellChecker
             }
         }
 
+        private static int GetFirstVisibleLine(TextBoxBase txt)
+        {
+            return
+                NativeMethods.SendMessageInt(
+                    txt.Handle,
+                    NativeMethods.EM_GETFIRSTVISIBLELINE,
+                    IntPtr.Zero,
+                    IntPtr.Zero).ToInt32();
+        }
+
+        private static NativeMethods.FORMATRANGE GetFormatRange(NativeMethods.CHARRANGE charRange, IntPtr canvasHdc,
+                                                                                        NativeMethods.RECT rect, NativeMethods.RECT rectPage)
+        {
+            NativeMethods.FORMATRANGE formatRange;
+            formatRange.chrg = charRange;
+            formatRange.hdc = canvasHdc;
+            formatRange.hdcTarget = canvasHdc;
+            formatRange.rc = rect;
+            formatRange.rcPage = rectPage;
+            return formatRange;
+        }
+
+        private static int GetLineIndex(TextBoxBase txt, int line)
+        {
+            return NativeMethods.SendMessageInt(txt.Handle, 0xbb, new IntPtr(line), IntPtr.Zero).ToInt32();
+        }
+
         /// <summary>
         ///   Returns the position of the specified character
         /// </summary>
@@ -203,21 +218,6 @@ namespace GitUI.SpellChecker
                         IntPtr.Zero).ToInt32();
                 return new Point(xy);
             }
-        }
-
-        private static int GetFirstVisibleLine(TextBoxBase txt)
-        {
-            return
-                NativeMethods.SendMessageInt(
-                    txt.Handle,
-                    NativeMethods.EM_GETFIRSTVISIBLELINE,
-                    IntPtr.Zero,
-                    IntPtr.Zero).ToInt32();
-        }
-
-        private static int GetLineIndex(TextBoxBase txt, int line)
-        {
-            return NativeMethods.SendMessageInt(txt.Handle, 0xbb, new IntPtr(line), IntPtr.Zero).ToInt32();
         }
     }
 }

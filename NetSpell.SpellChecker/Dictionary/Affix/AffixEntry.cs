@@ -5,9 +5,9 @@ namespace NetSpell.SpellChecker.Dictionary.Affix
     /// </summary>
     public class AffixEntry
     {
-        private int _ConditionCount;
         private string _AddCharacters = "";
         private int[] _Condition = new int[1200];
+        private int _ConditionCount;
         private string _StripCharacters = "";
 
         /// <summary>
@@ -29,21 +29,21 @@ namespace NetSpell.SpellChecker.Dictionary.Affix
         }
 
         /// <summary>
-        ///     The characters to remove before adding characters
-        /// </summary>
-        public string StripCharacters
-        {
-            get { return _StripCharacters; }
-            set { _StripCharacters = value; }
-        }
-
-        /// <summary>
         ///     The number of conditions that must be met
         /// </summary>
         public int ConditionCount
         {
             get { return _ConditionCount; }
             set { _ConditionCount = value; }
+        }
+
+        /// <summary>
+        ///     The characters to remove before adding characters
+        /// </summary>
+        public string StripCharacters
+        {
+            get { return _StripCharacters; }
+            set { _StripCharacters = value; }
         }
     }
 }

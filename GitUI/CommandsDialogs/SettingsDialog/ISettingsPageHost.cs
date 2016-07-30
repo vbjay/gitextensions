@@ -2,19 +2,19 @@
 {
     public interface ISettingsPageHost
     {
-        void GotoPage(SettingsPageReference settingsPageReference);
+        CheckSettingsLogic CheckSettingsLogic { get; }
 
-        /// <summary>
-        /// needed by ChecklistSettingsPage (TODO: needed here?)
-        /// </summary>
-        void SaveAll();
+        void GotoPage(SettingsPageReference settingsPageReference);
 
         /// <summary>
         /// needed by ChecklistSettingsPage (TODO: needed here?)
         /// </summary>
         void LoadAll();
 
-        CheckSettingsLogic CheckSettingsLogic { get; }
+        /// <summary>
+        /// needed by ChecklistSettingsPage (TODO: needed here?)
+        /// </summary>
+        void SaveAll();
     }
 
     public class SettingsPageHostMock : ISettingsPageHost
@@ -26,11 +26,9 @@
             _CheckSettingsLogic = aCheckSettingsLogic;
         }
 
-        public void GotoPage(SettingsPageReference settingsPageReference)
-        {
-        }
+        public CheckSettingsLogic CheckSettingsLogic { get { return _CheckSettingsLogic; } }
 
-        public void SaveAll()
+        public void GotoPage(SettingsPageReference settingsPageReference)
         {
         }
 
@@ -38,6 +36,8 @@
         {
         }
 
-        public CheckSettingsLogic CheckSettingsLogic { get { return _CheckSettingsLogic; } }
+        public void SaveAll()
+        {
+        }
     }
 }

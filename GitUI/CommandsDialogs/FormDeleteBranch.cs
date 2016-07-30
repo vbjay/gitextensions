@@ -10,6 +10,10 @@ namespace GitUI.CommandsDialogs
 {
     public sealed partial class FormDeleteBranch : GitModuleForm
     {
+        private readonly TranslationString _cannotDeleteCurrentBranchMessage =
+            new TranslationString("Cannot delete the branch “{0}” which you are currently on.");
+
+        private readonly string _defaultBranch;
         private readonly TranslationString _deleteBranchCaption = new TranslationString("Delete branches");
 
         private readonly TranslationString _deleteBranchQuestion = new TranslationString(
@@ -18,12 +22,8 @@ namespace GitUI.CommandsDialogs
         private readonly TranslationString _deleteUnmergedBranchForcingSuggestion =
             new TranslationString("You cannot delete unmerged branch until you set “force delete” mode.");
 
-        private readonly TranslationString _cannotDeleteCurrentBranchMessage =
-            new TranslationString("Cannot delete the branch “{0}” which you are currently on.");
-
-        private readonly string _defaultBranch;
-        private string _currentBranch;
         private readonly HashSet<string> mergedBranches = new HashSet<string>();
+        private string _currentBranch;
 
         public FormDeleteBranch(GitUICommands aCommands, string defaultBranch)
             : base(aCommands)

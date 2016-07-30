@@ -11,19 +11,7 @@ namespace GitUI.CommandsDialogs.CommitDialog
     {
         private string _name;
 
-        public string Name
-        {
-            get { return _name; }
-            set { _name = value; }
-        }
-
         private string _text;
-
-        public string Text
-        {
-            get { return _text; }
-            set { _text = value; }
-        }
 
         public CommitTemplateItem(string name, string text)
         {
@@ -43,16 +31,16 @@ namespace GitUI.CommandsDialogs.CommitDialog
             Text = (string)info.GetValue("Text", typeof(string));
         }
 
-        public void GetObjectData(SerializationInfo info, StreamingContext ctxt)
+        public string Name
         {
-            info.AddValue("Name", Name);
-            info.AddValue("Text", Text);
+            get { return _name; }
+            set { _name = value; }
         }
 
-        public static void SaveToSettings(CommitTemplateItem[] items)
+        public string Text
         {
-            string strVal = SerializeCommitTemplates(items);
-            GitCommands.AppSettings.CommitTemplates = strVal ?? string.Empty;
+            get { return _text; }
+            set { _text = value; }
         }
 
         public static CommitTemplateItem[] LoadFromSettings()
@@ -66,9 +54,16 @@ namespace GitUI.CommandsDialogs.CommitDialog
             return templates;
         }
 
-        private static string SerializeCommitTemplates(CommitTemplateItem[] items)
+        public static void SaveToSettings(CommitTemplateItem[] items)
         {
-            return JsonSerializer.Serialize(items);
+            string strVal = SerializeCommitTemplates(items);
+            GitCommands.AppSettings.CommitTemplates = strVal ?? string.Empty;
+        }
+
+        public void GetObjectData(SerializationInfo info, StreamingContext ctxt)
+        {
+            info.AddValue("Name", Name);
+            info.AddValue("Text", Text);
         }
 
         private static CommitTemplateItem[] DeserializeCommitTemplates(string serializedString, out bool shouldBeUpdated)
@@ -109,12 +104,17 @@ namespace GitUI.CommandsDialogs.CommitDialog
 
             return commitTemplateItem;
         }
+
+        private static string SerializeCommitTemplates(CommitTemplateItem[] items)
+        {
+            return JsonSerializer.Serialize(items);
+        }
     }
 
     public sealed class MoveNamespaceDeserializationBinder : SerializationBinder
     {
-        private const string OldNamespace = "GitUI";
         private const string NewNamespace = "GitUI.CommandsDialogs.CommitDialog";
+        private const string OldNamespace = "GitUI";
 
         public override Type BindToType(string assemblyName, string typeName)
         {

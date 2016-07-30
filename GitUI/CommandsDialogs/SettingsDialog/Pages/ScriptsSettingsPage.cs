@@ -107,10 +107,12 @@ Current Branch:
             }
         }
 
-        protected override void SettingsToPage()
+        public Bitmap ResizeBitmap(Bitmap b, int nWidth, int nHeight)
         {
-            scriptEvent.DataSource = Enum.GetValues(typeof(ScriptEvent));
-            LoadScripts();
+            Bitmap result = new Bitmap(nWidth, nHeight);
+            using (Graphics g = Graphics.FromImage((Image)result))
+                g.DrawImage(b, 0, 0, nWidth, nHeight);
+            return result;
         }
 
         protected override void PageToSettings()
@@ -118,14 +120,41 @@ Current Branch:
             SaveScripts();
         }
 
-        private void SaveScripts()
+        protected override void SettingsToPage()
         {
-            AppSettings.ownScripts = ScriptManager.SerializeIntoXml();
+            scriptEvent.DataSource = Enum.GetValues(typeof(ScriptEvent));
+            LoadScripts();
         }
 
-        private void LoadScripts()
+        private void addScriptButton_Click(object sender, EventArgs e)
         {
-            ScriptList.DataSource = ScriptManager.GetScripts();
+            ScriptList.ClearSelection();
+            ScriptManager.GetScripts().AddNew();
+            ScriptList.Rows[ScriptList.RowCount - 1].Selected = true;
+            ScriptList_SelectionChanged(null, null); //needed for linux
+        }
+
+        private void browseScriptButton_Click(object sender, EventArgs e)
+        {
+            using (var ofd = new OpenFileDialog
+            {
+                InitialDirectory = "c:\\",
+                Filter = "Executable files (*.exe)|*.exe|All files (*.*)|*.*",
+                RestoreDirectory = true
+            })
+            {
+                if (ofd.ShowDialog(this) == DialogResult.OK)
+                    commandTextBox.Text = ofd.FileName;
+            }
+        }
+
+        private void buttonShowArgumentsHelp_Click(object sender, EventArgs e)
+        {
+            var helpDisplayDialog = new SimpleHelpDisplayDialog();
+            helpDisplayDialog.DialogTitle = _scriptSettingsPageHelpDisplayArgumentsHelp.Text;
+            helpDisplayDialog.ContentText = @_scriptSettingsPageHelpDisplayContent.Text.Replace("\n", Environment.NewLine);
+
+            helpDisplayDialog.ShowDialog();
         }
 
         private void ClearScriptDetails()
@@ -134,6 +163,41 @@ Current Branch:
             commandTextBox.Clear();
             argumentsTextBox.Clear();
             inMenuCheckBox.Checked = false;
+        }
+
+        private void LoadScripts()
+        {
+            ScriptList.DataSource = ScriptManager.GetScripts();
+        }
+
+        private void moveDownButton_Click(object sender, EventArgs e)
+        {
+            if (ScriptList.SelectedRows.Count > 0)
+            {
+                ScriptInfo scriptInfo = ScriptList.SelectedRows[0].DataBoundItem as ScriptInfo;
+                int index = ScriptManager.GetScripts().IndexOf(scriptInfo);
+                ScriptManager.GetScripts().Remove(scriptInfo);
+                ScriptManager.GetScripts().Insert(Math.Min(index + 1, ScriptManager.GetScripts().Count), scriptInfo);
+
+                ScriptList.ClearSelection();
+                ScriptList.Rows[Math.Max(index + 1, 0)].Selected = true;
+                ScriptList.Focus();
+            }
+        }
+
+        private void moveUpButton_Click(object sender, EventArgs e)
+        {
+            if (ScriptList.SelectedRows.Count > 0)
+            {
+                ScriptInfo scriptInfo = ScriptList.SelectedRows[0].DataBoundItem as ScriptInfo;
+                int index = ScriptManager.GetScripts().IndexOf(scriptInfo);
+                ScriptManager.GetScripts().Remove(scriptInfo);
+                ScriptManager.GetScripts().Insert(Math.Max(index - 1, 0), scriptInfo);
+
+                ScriptList.ClearSelection();
+                ScriptList.Rows[Math.Max(index - 1, 0)].Selected = true;
+                ScriptList.Focus();
+            }
         }
 
         private void RefreshScriptDetails()
@@ -163,14 +227,6 @@ Current Branch:
             }
         }
 
-        private void addScriptButton_Click(object sender, EventArgs e)
-        {
-            ScriptList.ClearSelection();
-            ScriptManager.GetScripts().AddNew();
-            ScriptList.Rows[ScriptList.RowCount - 1].Selected = true;
-            ScriptList_SelectionChanged(null, null); //needed for linux
-        }
-
         private void removeScriptButton_Click(object sender, EventArgs e)
         {
             if (ScriptList.SelectedRows.Count > 0)
@@ -181,131 +237,14 @@ Current Branch:
             }
         }
 
-        private void ScriptInfoFromEdits()
-        {
-            if (ScriptList.SelectedRows.Count > 0)
-            {
-                ScriptInfo selectedScriptInfo = ScriptList.SelectedRows[0].DataBoundItem as ScriptInfo;
-                selectedScriptInfo.HotkeyCommandIdentifier = ScriptList.SelectedRows[0].Index + 9000;
-                selectedScriptInfo.Name = nameTextBox.Text;
-                selectedScriptInfo.Command = commandTextBox.Text;
-                selectedScriptInfo.Arguments = argumentsTextBox.Text;
-                selectedScriptInfo.AddToRevisionGridContextMenu = inMenuCheckBox.Checked;
-                selectedScriptInfo.Enabled = scriptEnabled.Checked;
-                selectedScriptInfo.RunInBackground = scriptRunInBackground.Checked;
-                selectedScriptInfo.AskConfirmation = scriptNeedsConfirmation.Checked;
-                selectedScriptInfo.OnEvent = (ScriptEvent)scriptEvent.SelectedItem;
-                selectedScriptInfo.Icon = IconName;
-            }
-        }
-
-        private void moveUpButton_Click(object sender, EventArgs e)
-        {
-            if (ScriptList.SelectedRows.Count > 0)
-            {
-                ScriptInfo scriptInfo = ScriptList.SelectedRows[0].DataBoundItem as ScriptInfo;
-                int index = ScriptManager.GetScripts().IndexOf(scriptInfo);
-                ScriptManager.GetScripts().Remove(scriptInfo);
-                ScriptManager.GetScripts().Insert(Math.Max(index - 1, 0), scriptInfo);
-
-                ScriptList.ClearSelection();
-                ScriptList.Rows[Math.Max(index - 1, 0)].Selected = true;
-                ScriptList.Focus();
-            }
-        }
-
-        private void moveDownButton_Click(object sender, EventArgs e)
-        {
-            if (ScriptList.SelectedRows.Count > 0)
-            {
-                ScriptInfo scriptInfo = ScriptList.SelectedRows[0].DataBoundItem as ScriptInfo;
-                int index = ScriptManager.GetScripts().IndexOf(scriptInfo);
-                ScriptManager.GetScripts().Remove(scriptInfo);
-                ScriptManager.GetScripts().Insert(Math.Min(index + 1, ScriptManager.GetScripts().Count), scriptInfo);
-
-                ScriptList.ClearSelection();
-                ScriptList.Rows[Math.Max(index + 1, 0)].Selected = true;
-                ScriptList.Focus();
-            }
-        }
-
-        private void browseScriptButton_Click(object sender, EventArgs e)
-        {
-            using (var ofd = new OpenFileDialog
-            {
-                InitialDirectory = "c:\\",
-                Filter = "Executable files (*.exe)|*.exe|All files (*.*)|*.*",
-                RestoreDirectory = true
-            })
-            {
-                if (ofd.ShowDialog(this) == DialogResult.OK)
-                    commandTextBox.Text = ofd.FileName;
-            }
-        }
-
-        private void ScriptList_SelectionChanged(object sender, EventArgs e)
-        {
-            if (ScriptList.SelectedRows.Count > 0)
-            {
-                RefreshScriptDetails();
-
-                removeScriptButton.Enabled = true;
-                moveDownButton.Enabled = moveUpButton.Enabled = false;
-                if (ScriptList.SelectedRows[0].Index > 0)
-                    moveUpButton.Enabled = true;
-                if (ScriptList.SelectedRows[0].Index < ScriptList.RowCount - 1)
-                    moveDownButton.Enabled = true;
-            }
-            else
-            {
-                removeScriptButton.Enabled = false;
-                moveUpButton.Enabled = false;
-                moveDownButton.Enabled = false;
-                ClearScriptDetails();
-            }
-        }
-
-        private void ScriptInfoEdit_Validating(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            ScriptInfoFromEdits();
-            ScriptList.Refresh();
-        }
-
-        private void ScriptList_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            ScriptList_SelectionChanged(null, null);//needed for linux
-        }
-
-        private void SplitButtonMenuItem_Click(object sender, EventArgs e)
-        {
-            //reset bold item to regular
-            var item = contextMenuStrip_SplitButton.Items.OfType<ToolStripMenuItem>().FirstOrDefault(s => s.Font.Bold);
-            if (item != null)
-                item.Font = new Font(contextMenuStrip_SplitButton.Font, FontStyle.Regular);
-
-            //make new item bold
-            ((ToolStripMenuItem)sender).Font = new Font(((ToolStripMenuItem)sender).Font, FontStyle.Bold);
-
-            //set new image on button
-            sbtn_icon.Image = ResizeForSplitButton((Bitmap)((ToolStripMenuItem)sender).Image);
-
-            IconName = ((ToolStripMenuItem)sender).Text;
-
-            //store variables
-            ScriptInfoEdit_Validating(sender, new System.ComponentModel.CancelEventArgs());
-        }
-
         private Bitmap ResizeForSplitButton(Bitmap b)
         {
             return ResizeBitmap(b, 12, 12);
         }
 
-        public Bitmap ResizeBitmap(Bitmap b, int nWidth, int nHeight)
+        private void SaveScripts()
         {
-            Bitmap result = new Bitmap(nWidth, nHeight);
-            using (Graphics g = Graphics.FromImage((Image)result))
-                g.DrawImage(b, 0, 0, nWidth, nHeight);
-            return result;
+            AppSettings.ownScripts = ScriptManager.SerializeIntoXml();
         }
 
         private void scriptEvent_SelectedIndexChanged(object sender, EventArgs e)
@@ -331,13 +270,74 @@ Current Branch:
             }
         }
 
-        private void buttonShowArgumentsHelp_Click(object sender, EventArgs e)
+        private void ScriptInfoEdit_Validating(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            var helpDisplayDialog = new SimpleHelpDisplayDialog();
-            helpDisplayDialog.DialogTitle = _scriptSettingsPageHelpDisplayArgumentsHelp.Text;
-            helpDisplayDialog.ContentText = @_scriptSettingsPageHelpDisplayContent.Text.Replace("\n", Environment.NewLine);
+            ScriptInfoFromEdits();
+            ScriptList.Refresh();
+        }
 
-            helpDisplayDialog.ShowDialog();
+        private void ScriptInfoFromEdits()
+        {
+            if (ScriptList.SelectedRows.Count > 0)
+            {
+                ScriptInfo selectedScriptInfo = ScriptList.SelectedRows[0].DataBoundItem as ScriptInfo;
+                selectedScriptInfo.HotkeyCommandIdentifier = ScriptList.SelectedRows[0].Index + 9000;
+                selectedScriptInfo.Name = nameTextBox.Text;
+                selectedScriptInfo.Command = commandTextBox.Text;
+                selectedScriptInfo.Arguments = argumentsTextBox.Text;
+                selectedScriptInfo.AddToRevisionGridContextMenu = inMenuCheckBox.Checked;
+                selectedScriptInfo.Enabled = scriptEnabled.Checked;
+                selectedScriptInfo.RunInBackground = scriptRunInBackground.Checked;
+                selectedScriptInfo.AskConfirmation = scriptNeedsConfirmation.Checked;
+                selectedScriptInfo.OnEvent = (ScriptEvent)scriptEvent.SelectedItem;
+                selectedScriptInfo.Icon = IconName;
+            }
+        }
+
+        private void ScriptList_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            ScriptList_SelectionChanged(null, null);//needed for linux
+        }
+
+        private void ScriptList_SelectionChanged(object sender, EventArgs e)
+        {
+            if (ScriptList.SelectedRows.Count > 0)
+            {
+                RefreshScriptDetails();
+
+                removeScriptButton.Enabled = true;
+                moveDownButton.Enabled = moveUpButton.Enabled = false;
+                if (ScriptList.SelectedRows[0].Index > 0)
+                    moveUpButton.Enabled = true;
+                if (ScriptList.SelectedRows[0].Index < ScriptList.RowCount - 1)
+                    moveDownButton.Enabled = true;
+            }
+            else
+            {
+                removeScriptButton.Enabled = false;
+                moveUpButton.Enabled = false;
+                moveDownButton.Enabled = false;
+                ClearScriptDetails();
+            }
+        }
+
+        private void SplitButtonMenuItem_Click(object sender, EventArgs e)
+        {
+            //reset bold item to regular
+            var item = contextMenuStrip_SplitButton.Items.OfType<ToolStripMenuItem>().FirstOrDefault(s => s.Font.Bold);
+            if (item != null)
+                item.Font = new Font(contextMenuStrip_SplitButton.Font, FontStyle.Regular);
+
+            //make new item bold
+            ((ToolStripMenuItem)sender).Font = new Font(((ToolStripMenuItem)sender).Font, FontStyle.Bold);
+
+            //set new image on button
+            sbtn_icon.Image = ResizeForSplitButton((Bitmap)((ToolStripMenuItem)sender).Image);
+
+            IconName = ((ToolStripMenuItem)sender).Text;
+
+            //store variables
+            ScriptInfoEdit_Validating(sender, new System.ComponentModel.CancelEventArgs());
         }
     }
 }

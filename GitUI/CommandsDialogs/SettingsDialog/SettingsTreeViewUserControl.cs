@@ -7,18 +7,20 @@ using GitCommands;
 
 namespace GitUI.CommandsDialogs.SettingsDialog
 {
+    public class SettingsPageSelectedEventArgs : EventArgs
+    {
+        public bool IsTriggeredByGoto { get; internal set; }
+        public ISettingsPage SettingsPage { get; internal set; }
+    }
+
     public sealed partial class SettingsTreeViewUserControl : UserControl
     {
-        private readonly Font _origTextBoxFont;
-        private bool _isSelectionChangeTriggeredByGoto;
-        private List<TreeNode> _nodesFoundByTextBox;
         private const string FindPrompt = "Type to find";
+        private readonly Font _origTextBoxFont;
         private readonly Dictionary<SettingsPageReference, TreeNode> _Pages2NodeMap = new Dictionary<SettingsPageReference, TreeNode>();
         private readonly IList<ISettingsPage> _SettingsPages = new List<ISettingsPage>();
-
-        public event EventHandler<SettingsPageSelectedEventArgs> SettingsPageSelected;
-
-        public IEnumerable<ISettingsPage> SettingsPages { get { return _SettingsPages; } }
+        private bool _isSelectionChangeTriggeredByGoto;
+        private List<TreeNode> _nodesFoundByTextBox;
 
         public SettingsTreeViewUserControl()
         {
@@ -29,6 +31,10 @@ namespace GitUI.CommandsDialogs.SettingsDialog
             _origTextBoxFont = textBoxFind.Font;
             SetFindPrompt(true);
         }
+
+        public event EventHandler<SettingsPageSelectedEventArgs> SettingsPageSelected;
+
+        public IEnumerable<ISettingsPage> SettingsPages { get { return _SettingsPages; } }
 
         /// <summary>
         /// </summary>
@@ -65,12 +71,29 @@ namespace GitUI.CommandsDialogs.SettingsDialog
             _SettingsPages.Add(page);
         }
 
-        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
+        public void GotoPage(SettingsPageReference settingsPageReference)
         {
-            if (!_isSelectionChangeTriggeredByGoto)
+            TreeNode node;
+            if (settingsPageReference == null)
+                node = treeView1.Nodes.Count > 0 ? treeView1.Nodes[0] : null;
+            else
+                _Pages2NodeMap.TryGetValue(settingsPageReference, out node);
+
+            if (node != null)
             {
-                FireSettingsPageSelectedEvent(e.Node);
+                _isSelectionChangeTriggeredByGoto = true;
+                treeView1.SelectedNode = node;
+                node.Expand();
+                FireSettingsPageSelectedEvent(treeView1.SelectedNode);
+                _isSelectionChangeTriggeredByGoto = false;
             }
+        }
+
+        /// <summary>Highlights a <see cref="TreeNode"/> or returns it to the default colors.</summary>
+        private static void HighlightNode(TreeNode treeNode, bool highlight)
+        {
+            treeNode.ForeColor = highlight ? Color.White : Color.Black;
+            treeNode.BackColor = highlight ? Color.SeaGreen : new Color();
         }
 
         private void FireSettingsPageSelectedEvent(TreeNode node)
@@ -88,6 +111,49 @@ namespace GitUI.CommandsDialogs.SettingsDialog
                     }
                 }
                 SettingsPageSelected(this, new SettingsPageSelectedEventArgs { SettingsPage = page, IsTriggeredByGoto = _isSelectionChangeTriggeredByGoto });
+            }
+        }
+
+        private void ResetAllNodeHighlighting()
+        {
+            treeView1.BeginUpdate();
+            ResetAllNodeHighlighting(treeView1.Nodes);
+            treeView1.HideSelection = false;
+            treeView1.EndUpdate();
+        }
+
+        private void ResetAllNodeHighlighting(TreeNodeCollection nodes)
+        {
+            labelNumFound.Text = "";
+
+            foreach (TreeNode node in nodes.Cast<TreeNode>())
+            {
+                HighlightNode(node, false);
+                ResetAllNodeHighlighting(node.Nodes);
+            }
+        }
+
+        private void textBoxFind_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                // TODO: how to avoid the windows sound when pressing ENTER?
+                e.Handled = true;
+
+                // each enter key press selects next highlighted node (cycle)
+                int indexOfSelectedNode = _nodesFoundByTextBox.IndexOf(treeView1.SelectedNode);
+                if (indexOfSelectedNode == -1 || indexOfSelectedNode + 1 == _nodesFoundByTextBox.Count)
+                {
+                    var firstFoundNode = _nodesFoundByTextBox.FirstOrDefault();
+                    if (firstFoundNode != null)
+                    {
+                        treeView1.SelectedNode = firstFoundNode;
+                    }
+                }
+                else
+                {
+                    treeView1.SelectedNode = _nodesFoundByTextBox[indexOfSelectedNode + 1];
+                }
             }
         }
 
@@ -141,29 +207,11 @@ namespace GitUI.CommandsDialogs.SettingsDialog
             }
         }
 
-        /// <summary>Highlights a <see cref="TreeNode"/> or returns it to the default colors.</summary>
-        private static void HighlightNode(TreeNode treeNode, bool highlight)
+        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            treeNode.ForeColor = highlight ? Color.White : Color.Black;
-            treeNode.BackColor = highlight ? Color.SeaGreen : new Color();
-        }
-
-        private void ResetAllNodeHighlighting()
-        {
-            treeView1.BeginUpdate();
-            ResetAllNodeHighlighting(treeView1.Nodes);
-            treeView1.HideSelection = false;
-            treeView1.EndUpdate();
-        }
-
-        private void ResetAllNodeHighlighting(TreeNodeCollection nodes)
-        {
-            labelNumFound.Text = "";
-
-            foreach (TreeNode node in nodes.Cast<TreeNode>())
+            if (!_isSelectionChangeTriggeredByGoto)
             {
-                HighlightNode(node, false);
-                ResetAllNodeHighlighting(node.Nodes);
+                FireSettingsPageSelectedEvent(e.Node);
             }
         }
 
@@ -206,53 +254,5 @@ namespace GitUI.CommandsDialogs.SettingsDialog
         }
 
         #endregion FindPrompt
-
-        public void GotoPage(SettingsPageReference settingsPageReference)
-        {
-            TreeNode node;
-            if (settingsPageReference == null)
-                node = treeView1.Nodes.Count > 0 ? treeView1.Nodes[0] : null;
-            else
-                _Pages2NodeMap.TryGetValue(settingsPageReference, out node);
-
-            if (node != null)
-            {
-                _isSelectionChangeTriggeredByGoto = true;
-                treeView1.SelectedNode = node;
-                node.Expand();
-                FireSettingsPageSelectedEvent(treeView1.SelectedNode);
-                _isSelectionChangeTriggeredByGoto = false;
-            }
-        }
-
-        private void textBoxFind_KeyUp(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter)
-            {
-                // TODO: how to avoid the windows sound when pressing ENTER?
-                e.Handled = true;
-
-                // each enter key press selects next highlighted node (cycle)
-                int indexOfSelectedNode = _nodesFoundByTextBox.IndexOf(treeView1.SelectedNode);
-                if (indexOfSelectedNode == -1 || indexOfSelectedNode + 1 == _nodesFoundByTextBox.Count)
-                {
-                    var firstFoundNode = _nodesFoundByTextBox.FirstOrDefault();
-                    if (firstFoundNode != null)
-                    {
-                        treeView1.SelectedNode = firstFoundNode;
-                    }
-                }
-                else
-                {
-                    treeView1.SelectedNode = _nodesFoundByTextBox[indexOfSelectedNode + 1];
-                }
-            }
-        }
-    }
-
-    public class SettingsPageSelectedEventArgs : EventArgs
-    {
-        public bool IsTriggeredByGoto { get; internal set; }
-        public ISettingsPage SettingsPage { get; internal set; }
     }
 }

@@ -7,17 +7,16 @@ namespace GitUI.CommandsDialogs.SettingsDialog
         protected ConfigFileSettingsSet ConfigFileSettingsSet { get { return CommonLogic.ConfigFileSettingsSet; } }
         protected ConfigFileSettings CurrentSettings { get; private set; }
 
-        protected override void Init(ISettingsPageHost aPageHost)
-        {
-            base.Init(aPageHost);
-
-            CurrentSettings = CommonLogic.ConfigFileSettingsSet.EffectiveSettings;
-        }
-
         public void SetEffectiveSettings()
         {
             if (ConfigFileSettingsSet != null)
                 SetCurrentSettings(ConfigFileSettingsSet.EffectiveSettings);
+        }
+
+        public override void SetGlobalSettings()
+        {
+            if (ConfigFileSettingsSet != null)
+                SetCurrentSettings(ConfigFileSettingsSet.GlobalSettings);
         }
 
         public void SetLocalSettings()
@@ -26,10 +25,11 @@ namespace GitUI.CommandsDialogs.SettingsDialog
                 SetCurrentSettings(ConfigFileSettingsSet.LocalSettings);
         }
 
-        public override void SetGlobalSettings()
+        protected override void Init(ISettingsPageHost aPageHost)
         {
-            if (ConfigFileSettingsSet != null)
-                SetCurrentSettings(ConfigFileSettingsSet.GlobalSettings);
+            base.Init(aPageHost);
+
+            CurrentSettings = CommonLogic.ConfigFileSettingsSet.EffectiveSettings;
         }
 
         private void SetCurrentSettings(ConfigFileSettings settings)

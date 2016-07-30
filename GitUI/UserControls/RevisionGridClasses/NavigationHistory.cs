@@ -5,26 +5,13 @@ namespace GitUI.UserControls.RevisionGridClasses
 {
     internal class NavigationHistory
     {
-        // history of selected items (browse history)
-        // head == currently selected item
-        private readonly Stack<string> prevItems = new Stack<string>();
-
         // backtracked items
         // head == item to show when navigating forward
         private readonly Stack<string> nextItems = new Stack<string>();
 
-        /// <summary>
-        /// Sets curr as current visible item and resets forward history
-        /// </summary>
-        /// <param name="curr"></param>
-        public void Push(string curr)
-        {
-            if ((prevItems.Count == 0) || !prevItems.Peek().Equals(curr))
-            {
-                prevItems.Push(curr);
-                nextItems.Clear();
-            }
-        }
+        // history of selected items (browse history)
+        // head == currently selected item
+        private readonly Stack<string> prevItems = new Stack<string>();
 
         /// <summary>
         /// Returns whether CanNavigateBackward is possible
@@ -35,6 +22,26 @@ namespace GitUI.UserControls.RevisionGridClasses
             {
                 return (prevItems.Count > 1);
             }
+        }
+
+        /// <summary>
+        /// Returns whether CanNavigateForward is possible
+        /// </summary>
+        public bool CanNavigateForward
+        {
+            get
+            {
+                return (nextItems.Count != 0);
+            }
+        }
+
+        /// <summary>
+        /// Clears both backward and forward history
+        /// </summary>
+        public void Clear()
+        {
+            prevItems.Clear();
+            nextItems.Clear();
         }
 
         /// <summary>
@@ -57,17 +64,6 @@ namespace GitUI.UserControls.RevisionGridClasses
         }
 
         /// <summary>
-        /// Returns whether CanNavigateForward is possible
-        /// </summary>
-        public bool CanNavigateForward
-        {
-            get
-            {
-                return (nextItems.Count != 0);
-            }
-        }
-
-        /// <summary>
         /// Navigatees forward in history, returns item which should be selected, null if no next item is available
         /// </summary>
         /// <exception cref="InvalidOperationException">When no forward history is available.</exception>
@@ -86,21 +82,25 @@ namespace GitUI.UserControls.RevisionGridClasses
         }
 
         /// <summary>
+        /// Sets curr as current visible item and resets forward history
+        /// </summary>
+        /// <param name="curr"></param>
+        public void Push(string curr)
+        {
+            if ((prevItems.Count == 0) || !prevItems.Peek().Equals(curr))
+            {
+                prevItems.Push(curr);
+                nextItems.Clear();
+            }
+        }
+
+        /// <summary>
         /// Clears history and sets current item
         /// </summary>
         public void Reset(string curr)
         {
             Clear();
             prevItems.Push(curr);
-        }
-
-        /// <summary>
-        /// Clears both backward and forward history
-        /// </summary>
-        public void Clear()
-        {
-            prevItems.Clear();
-            nextItems.Clear();
         }
     }
 }

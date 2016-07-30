@@ -11,9 +11,9 @@ namespace GitCommands
             Amend = amend;
         }
 
+        public bool Amend { get; set; }
         public string Message { get; set; }
         public string Result { get; set; }
-        public bool Amend { get; set; }
     }
 
     public class CommitHelper
@@ -25,12 +25,9 @@ namespace GitCommands
 
         public CommitDto Dto { get; set; }
 
-        public void Execute(GitModule module)
+        public static string GetCommitMessagePath(GitModule module)
         {
-            if (Dto.Amend)
-                Dto.Result = module.RunGitCmd("commit --amend -m \"" + Dto.Message + "\"");
-            else
-                Dto.Result = module.RunGitCmd("commit -m \"" + Dto.Message + "\"");
+            return Path.Combine(module.GetGitDirectory(), "COMMITMESSAGE");
         }
 
         public static void SetCommitMessage(GitModule module, string commitMessageText)
@@ -47,9 +44,12 @@ namespace GitCommands
             }
         }
 
-        public static string GetCommitMessagePath(GitModule module)
+        public void Execute(GitModule module)
         {
-            return Path.Combine(module.GetGitDirectory(), "COMMITMESSAGE");
+            if (Dto.Amend)
+                Dto.Result = module.RunGitCmd("commit --amend -m \"" + Dto.Message + "\"");
+            else
+                Dto.Result = module.RunGitCmd("commit -m \"" + Dto.Message + "\"");
         }
     }
 }

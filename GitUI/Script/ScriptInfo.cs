@@ -24,21 +24,11 @@
             Enabled = true;
         }
 
-        public bool Enabled { get; set; }
-
-        public string Name { get; set; }
-
-        public string Command { get; set; }
-
-        public string Arguments { get; set; }
-
         public bool AddToRevisionGridContextMenu { get; set; }
-
-        public ScriptEvent OnEvent { get; set; }
-
+        public string Arguments { get; set; }
         public bool AskConfirmation { get; set; }
-
-        public bool RunInBackground { get; set; }
+        public string Command { get; set; }
+        public bool Enabled { get; set; }
 
         public int HotkeyCommandIdentifier { get; set; }
 
@@ -50,6 +40,10 @@
             get { return _Icon; }
             set { _Icon = value; }
         }
+
+        public string Name { get; set; }
+        public ScriptEvent OnEvent { get; set; }
+        public bool RunInBackground { get; set; }
 
         /// <summary>
         /// Gets the associated bitmap.

@@ -6,16 +6,21 @@ namespace GitPlugin.Commands
 {
     public sealed class Commit : ItemCommandBase
     {
+        private static string _lastUpdatedCaption;
         private static DateTime lastBranchCheck;
         private static string lastFile;
         private static bool showCurrentBranch;
-        private static string _lastUpdatedCaption;
 
         public Commit()
         {
             if (lastFile == null)
                 lastFile = string.Empty;
             showCurrentBranch = GitCommands.GetShowCurrentBranchSetting();
+        }
+
+        protected override CommandTarget SupportedTargets
+        {
+            get { return CommandTarget.Any; }
         }
 
         public override bool IsEnabled(EnvDTE80.DTE2 application)
@@ -69,11 +74,6 @@ namespace GitPlugin.Commands
             }
 
             RunGitEx("commit", fileName);
-        }
-
-        protected override CommandTarget SupportedTargets
-        {
-            get { return CommandTarget.Any; }
         }
 
         private static string GetSelectedFile(EnvDTE80.DTE2 application)

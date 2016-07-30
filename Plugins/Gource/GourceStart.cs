@@ -24,32 +24,11 @@ namespace Gource
             Arguments.Text = GourceArguments;
         }
 
-        private GitUIBaseEventArgs GitUIArgs { get; set; }
-
-        public string PathToGource { get; set; }
-
-        public string GitWorkingDir { get; set; }
-
         public string AvatarsDir { get; set; }
-
+        public string GitWorkingDir { get; set; }
         public string GourceArguments { get; set; }
-
-        private void RunRealCmdDetatched(string cmd, string arguments)
-        {
-            try
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "\"" + cmd + "\"",
-                    Arguments = arguments,
-                    WorkingDirectory = WorkingDir.Text
-                });
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show(this, e.Message);
-            }
-        }
+        public string PathToGource { get; set; }
+        private GitUIBaseEventArgs GitUIArgs { get; set; }
 
         private void Button1Click(object sender, EventArgs e)
         {
@@ -69,6 +48,31 @@ namespace Gource
 
             RunRealCmdDetatched(GourcePath.Text, arguments);
             Close();
+        }
+
+        private void GourceBrowseClick(object sender, EventArgs e)
+        {
+            using (var fileDialog =
+                new OpenFileDialog
+                {
+                    Filter = "Gource (gource.exe)|gource.exe",
+                    FileName = GourcePath.Text
+                })
+            {
+                fileDialog.ShowDialog(this);
+
+                GourcePath.Text = fileDialog.FileName;
+            }
+        }
+
+        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Process.Start(@"https://github.com/acaudwell/Gource/");
+        }
+
+        private void linkLabel2_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Process.Start(@"https://github.com/acaudwell/Gource/blob/master/README");
         }
 
         private string LoadAvatars()
@@ -104,18 +108,20 @@ namespace Gource
             return gourceAvatarsDir;
         }
 
-        private void GourceBrowseClick(object sender, EventArgs e)
+        private void RunRealCmdDetatched(string cmd, string arguments)
         {
-            using (var fileDialog =
-                new OpenFileDialog
-                {
-                    Filter = "Gource (gource.exe)|gource.exe",
-                    FileName = GourcePath.Text
-                })
+            try
             {
-                fileDialog.ShowDialog(this);
-
-                GourcePath.Text = fileDialog.FileName;
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "\"" + cmd + "\"",
+                    Arguments = arguments,
+                    WorkingDirectory = WorkingDir.Text
+                });
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(this, e.Message);
             }
         }
 
@@ -126,16 +132,6 @@ namespace Gource
                 folderDialog.ShowDialog(this);
                 WorkingDir.Text = folderDialog.SelectedPath;
             }
-        }
-
-        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            Process.Start(@"https://github.com/acaudwell/Gource/");
-        }
-
-        private void linkLabel2_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            Process.Start(@"https://github.com/acaudwell/Gource/blob/master/README");
         }
     }
 }

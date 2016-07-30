@@ -14,6 +14,15 @@ namespace Stash
             _repoName = repoName;
         }
 
+        protected override string ApiUrl
+        {
+            get
+            {
+                return string.Format("/rest/api/latest/projects/{0}/repos/{1}",
+                                     _projectKey, _repoName);
+            }
+        }
+
         protected override object RequestBody
         {
             get { return null; }
@@ -22,15 +31,6 @@ namespace Stash
         protected override Method RequestMethod
         {
             get { return Method.GET; }
-        }
-
-        protected override string ApiUrl
-        {
-            get
-            {
-                return string.Format("/rest/api/latest/projects/{0}/repos/{1}",
-                                     _projectKey, _repoName);
-            }
         }
 
         protected override Repository ParseResponse(JObject json)

@@ -19,10 +19,6 @@ namespace GitCommands
             IsSubmodule = false;
         }
 
-        public string Name { get; set; }
-        public string OldName { get; set; }
-        public string TreeGuid { get; set; }
-
         public string ChangeString
         {
             get
@@ -39,19 +35,21 @@ namespace GitCommands
             }
         }
 
-        public bool IsTracked { get; set; }
-        public bool IsDeleted { get; set; }
+        public bool IsAssumeUnchanged { get; set; }
         public bool IsChanged { get; set; }
+        public bool IsConflict { get; set; }
+        public bool IsCopied { get; set; }
+        public bool IsDeleted { get; set; }
         public bool IsNew { get; set; }
         public bool IsRenamed { get; set; }
-        public bool IsCopied { get; set; }
-        public bool IsConflict { get; set; }
-        public bool IsAssumeUnchanged { get; set; }
         public bool IsStaged { get; set; }
         public bool IsSubmodule { get; set; }
+        public bool IsTracked { get; set; }
+        public string Name { get; set; }
+        public string OldName { get; set; }
         public string RenameCopyPercentage { get; set; }
-
         public Task<GitSubmoduleStatus> SubmoduleStatus { get; set; }
+        public string TreeGuid { get; set; }
 
         public int CompareTo(GitItemStatus other)
         {

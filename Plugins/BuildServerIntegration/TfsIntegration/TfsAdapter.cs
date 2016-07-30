@@ -40,11 +40,46 @@ namespace TfsIntegration
     internal class TfsAdapter : IBuildServerAdapter
     {
         private IBuildServerWatcher _buildServerWatcher;
+        private string _projectName;
+        private Regex _tfsBuildDefinitionNameFilter;
         private ITfsHelper _tfsHelper;
         private string _tfsServer;
         private string _tfsTeamCollectionName;
-        private string _projectName;
-        private Regex _tfsBuildDefinitionNameFilter;
+
+        /// <summary>
+        /// Gets a unique key which identifies this build server.
+        /// </summary>
+        public string UniqueKey
+        {
+            get { return _tfsServer + "/" + _tfsTeamCollectionName + "/" + _projectName; }
+        }
+
+        public void Dispose()
+        {
+            if (_tfsHelper != null)
+                _tfsHelper.Dispose();
+            GC.SuppressFinalize(this);
+        }
+
+        public IObservable<BuildInfo> GetBuilds(IScheduler scheduler, DateTime? sinceDate = null, bool? running = null)
+        {
+            if (_tfsHelper == null)
+                return Observable.Empty<BuildInfo>();
+
+            return Observable.Create<BuildInfo>((observer, cancellationToken) =>
+                Task<IDisposable>.Factory.StartNew(
+                    () => scheduler.Schedule(() => ObserveBuilds(sinceDate, running, observer, cancellationToken))));
+        }
+
+        public IObservable<BuildInfo> GetFinishedBuildsSince(IScheduler scheduler, DateTime? sinceDate = null)
+        {
+            return GetBuilds(scheduler, sinceDate, false);
+        }
+
+        public IObservable<BuildInfo> GetRunningBuilds(IScheduler scheduler)
+        {
+            return GetBuilds(scheduler, null, true);
+        }
 
         public void Initialize(IBuildServerWatcher buildServerWatcher, ISettingsSource config)
         {
@@ -78,6 +113,23 @@ namespace TfsIntegration
             }
         }
 
+        private static BuildInfo CreateBuildInfo(IBuild buildDetail)
+        {
+            string sha = buildDetail.Revision.Substring(buildDetail.Revision.LastIndexOf(":") + 1);
+
+            var buildInfo = new BuildInfo
+            {
+                Id = buildDetail.Label,
+                StartDate = buildDetail.StartDate,
+                Status = (BuildInfo.BuildStatus)buildDetail.Status,
+                Description = buildDetail.Label + " (" + buildDetail.Description + ")",
+                CommitHashList = new[] { sha },
+                Url = buildDetail.Url
+            };
+
+            return buildInfo;
+        }
+
         private ITfsHelper LoadAssemblyAndConnectToServer(string assembly)
         {
             try
@@ -101,34 +153,6 @@ namespace TfsIntegration
             return null;
         }
 
-        /// <summary>
-        /// Gets a unique key which identifies this build server.
-        /// </summary>
-        public string UniqueKey
-        {
-            get { return _tfsServer + "/" + _tfsTeamCollectionName + "/" + _projectName; }
-        }
-
-        public IObservable<BuildInfo> GetFinishedBuildsSince(IScheduler scheduler, DateTime? sinceDate = null)
-        {
-            return GetBuilds(scheduler, sinceDate, false);
-        }
-
-        public IObservable<BuildInfo> GetRunningBuilds(IScheduler scheduler)
-        {
-            return GetBuilds(scheduler, null, true);
-        }
-
-        public IObservable<BuildInfo> GetBuilds(IScheduler scheduler, DateTime? sinceDate = null, bool? running = null)
-        {
-            if (_tfsHelper == null)
-                return Observable.Empty<BuildInfo>();
-
-            return Observable.Create<BuildInfo>((observer, cancellationToken) =>
-                Task<IDisposable>.Factory.StartNew(
-                    () => scheduler.Schedule(() => ObserveBuilds(sinceDate, running, observer, cancellationToken))));
-        }
-
         private void ObserveBuilds(DateTime? sinceDate, bool? running, IObserver<BuildInfo> observer, CancellationToken cancellationToken)
         {
             try
@@ -145,30 +169,6 @@ namespace TfsIntegration
             {
                 observer.OnError(ex);
             }
-        }
-
-        private static BuildInfo CreateBuildInfo(IBuild buildDetail)
-        {
-            string sha = buildDetail.Revision.Substring(buildDetail.Revision.LastIndexOf(":") + 1);
-
-            var buildInfo = new BuildInfo
-            {
-                Id = buildDetail.Label,
-                StartDate = buildDetail.StartDate,
-                Status = (BuildInfo.BuildStatus)buildDetail.Status,
-                Description = buildDetail.Label + " (" + buildDetail.Description + ")",
-                CommitHashList = new[] { sha },
-                Url = buildDetail.Url
-            };
-
-            return buildInfo;
-        }
-
-        public void Dispose()
-        {
-            if (_tfsHelper != null)
-                _tfsHelper.Dispose();
-            GC.SuppressFinalize(this);
         }
     }
 }

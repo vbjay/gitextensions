@@ -17,13 +17,13 @@
         public const string RemoteUrl = "remote.{0}.url";
 
         /// <summary>
-        /// user.name
-        /// </summary>
-        public const string UserName = "user.name";
-
-        /// <summary>
         /// user.email
         /// </summary>
         public const string UserEmail = "user.email";
+
+        /// <summary>
+        /// user.name
+        /// </summary>
+        public const string UserName = "user.name";
     }
 }

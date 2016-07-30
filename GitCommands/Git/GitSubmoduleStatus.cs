@@ -7,18 +7,24 @@
             Status = SubmoduleStatus.Unknown;
         }
 
-        public string Name { get; set; }
-        public string OldName { get; set; }
-        public bool IsDirty { get; set; }
-        public string Commit { get; set; }
-        public string OldCommit { get; set; }
-        public SubmoduleStatus Status { get; set; }
         public int? AddedCommits { get; set; }
+        public string Commit { get; set; }
+        public bool IsDirty { get; set; }
+        public string Name { get; set; }
+        public string OldCommit { get; set; }
+        public string OldName { get; set; }
         public int? RemovedCommits { get; set; }
+        public SubmoduleStatus Status { get; set; }
 
-        public GitModule GetSubmodule(GitModule module)
+        public string AddedAndRemovedString()
         {
-            return module.GetSubmodule(Name);
+            if (RemovedCommits == null || AddedCommits == null ||
+                (RemovedCommits == 0 && AddedCommits == 0))
+                return "";
+            return " (" +
+                ((RemovedCommits == 0) ? "" : ("-" + RemovedCommits)) +
+                ((AddedCommits == 0) ? "" : ("+" + AddedCommits)) +
+                ")";
         }
 
         public void CheckSubmoduleStatus(GitModule submodule)
@@ -48,15 +54,9 @@
             return CommitData.GetCommitData(submodule, OldCommit, ref error);
         }
 
-        public string AddedAndRemovedString()
+        public GitModule GetSubmodule(GitModule module)
         {
-            if (RemovedCommits == null || AddedCommits == null ||
-                (RemovedCommits == 0 && AddedCommits == 0))
-                return "";
-            return " (" +
-                ((RemovedCommits == 0) ? "" : ("-" + RemovedCommits)) +
-                ((AddedCommits == 0) ? "" : ("+" + AddedCommits)) +
-                ")";
+            return module.GetSubmodule(Name);
         }
     }
 }

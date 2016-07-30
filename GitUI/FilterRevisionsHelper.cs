@@ -5,18 +5,16 @@ namespace GitUI
 {
     public class FilterRevisionsHelper : IDisposable
     {
-        private ToolStripTextBox _NO_TRANSLATE_toolStripTextBoxFilter;
-        private ToolStripDropDownButton _NO_TRANSLATE_toolStripDropDownButton1;
+        private Form _NO_TRANSLATE_form;
         private RevisionGrid _NO_TRANSLATE_RevisionGrid;
+        private ToolStripDropDownButton _NO_TRANSLATE_toolStripDropDownButton1;
         private ToolStripLabel _NO_TRANSLATE_toolStripLabel2;
-
-        private ToolStripMenuItem commitToolStripMenuItem1;
-        private ToolStripMenuItem committerToolStripMenuItem;
+        private ToolStripTextBox _NO_TRANSLATE_toolStripTextBoxFilter;
         private ToolStripMenuItem authorToolStripMenuItem;
+        private ToolStripMenuItem committerToolStripMenuItem;
+        private ToolStripMenuItem commitToolStripMenuItem1;
         private ToolStripMenuItem diffContainsToolStripMenuItem;
         private ToolStripMenuItem hashToolStripMenuItem;
-
-        private Form _NO_TRANSLATE_form;
 
         public FilterRevisionsHelper()
         {
@@ -81,10 +79,33 @@ namespace GitUI
             this._NO_TRANSLATE_toolStripTextBoxFilter.KeyPress += this.ToolStripTextBoxFilterKeyPress;
         }
 
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         public void SetFilter(string filter)
         {
             _NO_TRANSLATE_toolStripTextBoxFilter.Text = filter;
             ApplyFilter();
+        }
+
+        public void SetLimit(int limit)
+        {
+            _NO_TRANSLATE_RevisionGrid.SetLimit(limit);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                commitToolStripMenuItem1.Dispose();
+                committerToolStripMenuItem.Dispose();
+                authorToolStripMenuItem.Dispose();
+                diffContainsToolStripMenuItem.Dispose();
+                hashToolStripMenuItem.Dispose();
+            }
         }
 
         private void ApplyFilter()
@@ -129,22 +150,6 @@ namespace GitUI
             _NO_TRANSLATE_RevisionGrid.ForceRefreshRevisions();
         }
 
-        private void ToolStripTextBoxFilterLeave(object sender, EventArgs e)
-        {
-            ToolStripLabel2Click(sender, e);
-        }
-
-        private void ToolStripTextBoxFilterKeyPress(object sender, KeyPressEventArgs e)
-        {
-            if (e.KeyChar == (char)Keys.Enter)
-                ToolStripLabel2Click(null, null);
-        }
-
-        private void ToolStripLabel2Click(object sender, EventArgs e)
-        {
-            ApplyFilter();
-        }
-
         private void diffContainsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (diffContainsToolStripMenuItem.Checked)
@@ -158,27 +163,20 @@ namespace GitUI
                 commitToolStripMenuItem1.Checked = true;
         }
 
-        public void SetLimit(int limit)
+        private void ToolStripLabel2Click(object sender, EventArgs e)
         {
-            _NO_TRANSLATE_RevisionGrid.SetLimit(limit);
+            ApplyFilter();
         }
 
-        public void Dispose()
+        private void ToolStripTextBoxFilterKeyPress(object sender, KeyPressEventArgs e)
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            if (e.KeyChar == (char)Keys.Enter)
+                ToolStripLabel2Click(null, null);
         }
 
-        protected virtual void Dispose(bool disposing)
+        private void ToolStripTextBoxFilterLeave(object sender, EventArgs e)
         {
-            if (disposing)
-            {
-                commitToolStripMenuItem1.Dispose();
-                committerToolStripMenuItem.Dispose();
-                authorToolStripMenuItem.Dispose();
-                diffContainsToolStripMenuItem.Dispose();
-                hashToolStripMenuItem.Dispose();
-            }
+            ToolStripLabel2Click(sender, e);
         }
     }
 }

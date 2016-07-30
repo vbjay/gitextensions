@@ -6,12 +6,16 @@ namespace GitCommands
     public sealed class GitSubmoduleInfo : IGitSubmoduleInfo
     {
         private readonly GitModule _module;
-        public string LocalPath { get; set; }
 
         public GitSubmoduleInfo(GitModule module)
         {
             _module = module;
         }
+
+        public string Branch { get; set; }
+        public string CurrentCommitGuid { get; set; }
+        public bool Initialized { get; set; }
+        public string LocalPath { get; set; }
 
         public string Name
         {
@@ -22,12 +26,6 @@ namespace GitCommands
         {
             get { return _module.GetSubmoduleRemotePath(Name); }
         }
-
-        public string CurrentCommitGuid { get; set; }
-        public string Branch { get; set; }
-
-        public bool Initialized { get; set; }
-        public bool UpToDate { get; set; }
 
         public string Status
         {
@@ -40,6 +38,13 @@ namespace GitCommands
 
                 return "Up-to-date";
             }
+        }
+
+        public bool UpToDate { get; set; }
+
+        public static bool operator !=(GitSubmoduleInfo a, GitSubmoduleInfo b)
+        {
+            return !(a == b);
         }
 
         public static bool operator ==(GitSubmoduleInfo a, GitSubmoduleInfo b)
@@ -58,11 +63,6 @@ namespace GitCommands
 
             // Return true if the fields match:
             return a.LocalPath == b.LocalPath;
-        }
-
-        public static bool operator !=(GitSubmoduleInfo a, GitSubmoduleInfo b)
-        {
-            return !(a == b);
         }
 
         public override bool Equals(Object obj)

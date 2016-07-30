@@ -8,6 +8,13 @@ namespace GitUI.BuildServerIntegration
 {
     static internal class BuildInfoDrawingLogic
     {
+        public static void BuildStatusImageColumnCellFormatting(DataGridViewCellFormattingEventArgs e, DataGridView grid, GitRevision revision)
+        {
+            e.FormattingApplied = false;
+            var cell = grid.Rows[e.RowIndex].Cells[e.ColumnIndex];
+            cell.ToolTipText = GetBuildStatusMessageText(revision);
+        }
+
         public static void BuildStatusImageColumnCellPainting(DataGridViewCellPaintingEventArgs e, GitRevision revision, Brush foreBrush, Font rowFont)
         {
             if (revision.BuildStatus != null)
@@ -48,6 +55,11 @@ namespace GitUI.BuildServerIntegration
             }
         }
 
+        public static void BuildStatusMessageCellFormatting(DataGridViewCellFormattingEventArgs e, GitRevision revision)
+        {
+            e.Value = GetBuildStatusMessageText(revision);
+        }
+
         public static void BuildStatusMessageCellPainting(DataGridViewCellPaintingEventArgs e, GitRevision revision, Brush foreBrush, Font rowFont)
         {
             if (revision.BuildStatus != null)
@@ -80,18 +92,6 @@ namespace GitUI.BuildServerIntegration
                 var text = (string)e.FormattedValue;
                 e.Graphics.DrawString(text, rowFont, buildStatusForebrush, new PointF(e.CellBounds.Left, e.CellBounds.Top + 4));
             }
-        }
-
-        public static void BuildStatusImageColumnCellFormatting(DataGridViewCellFormattingEventArgs e, DataGridView grid, GitRevision revision)
-        {
-            e.FormattingApplied = false;
-            var cell = grid.Rows[e.RowIndex].Cells[e.ColumnIndex];
-            cell.ToolTipText = GetBuildStatusMessageText(revision);
-        }
-
-        public static void BuildStatusMessageCellFormatting(DataGridViewCellFormattingEventArgs e, GitRevision revision)
-        {
-            e.Value = GetBuildStatusMessageText(revision);
         }
 
         private static string GetBuildStatusMessageText(GitRevision revision)

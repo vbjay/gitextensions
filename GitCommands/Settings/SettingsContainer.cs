@@ -5,13 +5,22 @@ namespace GitCommands.Settings
 {
     public class SettingsContainer<L, C> : ISettingsSource where L : SettingsContainer<L, C> where C : SettingsCache
     {
-        public L LowerPriority { get; private set; }
-        public C SettingsCache { get; private set; }
-
         public SettingsContainer(L aLowerPriority, C aSettingsCache)
         {
             LowerPriority = aLowerPriority;
             SettingsCache = aSettingsCache;
+        }
+
+        public L LowerPriority { get; private set; }
+        public C SettingsCache { get; private set; }
+
+        public override T GetValue<T>(string name, T defaultValue, Func<string, T> decode)
+        {
+            T value;
+
+            TryGetValue(name, defaultValue, decode, out value);
+
+            return value;
         }
 
         public void LockedAction(Action action)
@@ -37,15 +46,6 @@ namespace GitCommands.Settings
             {
                 LowerPriority.Save();
             }
-        }
-
-        public override T GetValue<T>(string name, T defaultValue, Func<string, T> decode)
-        {
-            T value;
-
-            TryGetValue(name, defaultValue, decode, out value);
-
-            return value;
         }
 
         /// <summary>

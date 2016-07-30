@@ -6,15 +6,15 @@ namespace GitPlugin.Commands
 {
     public abstract class CommandBase
     {
-        abstract public void OnCommand(DTE2 application, OutputWindowPane pane);
+        public bool RunForSelection { get; set; }
 
         abstract public bool IsEnabled(DTE2 application);
+
+        abstract public void OnCommand(DTE2 application, OutputWindowPane pane);
 
         protected static void RunGitEx(string command, string filename)
         {
             GitCommands.RunGitEx(command, filename);
         }
-
-        public bool RunForSelection { get; set; }
     }
 }

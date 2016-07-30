@@ -17,6 +17,12 @@ namespace GitUI.CommandsDialogs.CommitDialog
             return String.Join(Environment.NewLine, newLines);
         }
 
+        public static string WrapSingleLine(string text, int lineLimit)
+        {
+            var lines = InternalWrapSingleLine(text, lineLimit);
+            return String.Join(Environment.NewLine, lines);
+        }
+
         private static IEnumerable<string> InternalWrapSingleLine(string line, int lineLimit)
         {
             var wrapper = new WrapperState(lineLimit);
@@ -34,19 +40,11 @@ namespace GitUI.CommandsDialogs.CommitDialog
             }
         }
 
-        public static string WrapSingleLine(string text, int lineLimit)
-        {
-            var lines = InternalWrapSingleLine(text, lineLimit);
-            return String.Join(Environment.NewLine, lines);
-        }
-
         private class WrapperState
         {
+            private readonly int lineLimit;
             private List<string> wordList = new List<string>();
             private int wordsLength;
-            private readonly int lineLimit;
-
-            public bool HasWords { get; set; }
 
             public WrapperState(int lineLimit)
             {
@@ -54,11 +52,13 @@ namespace GitUI.CommandsDialogs.CommitDialog
                 Reset();
             }
 
-            private void Reset()
+            public bool HasWords { get; set; }
+
+            public void AddWord(string word)
             {
-                wordList.Clear();
-                wordsLength = 0;
-                HasWords = false;
+                wordList.Add(word);
+                wordsLength += word.Length;
+                HasWords = true;
             }
 
             public bool CanAddWord(string word)
@@ -74,11 +74,11 @@ namespace GitUI.CommandsDialogs.CommitDialog
                 return line;
             }
 
-            public void AddWord(string word)
+            private void Reset()
             {
-                wordList.Add(word);
-                wordsLength += word.Length;
-                HasWords = true;
+                wordList.Clear();
+                wordsLength = 0;
+                HasWords = false;
             }
         }
     }

@@ -23,25 +23,21 @@ namespace GitCommands.Repository
             Repositories.AllowRemove = true;
         }
 
+        public RepositoryCategoryType CategoryType { get; set; }
+
+        public string Description { get; set; }
+
         public BindingList<Repository> Repositories
         {
             get { return _repositories ?? (_repositories = new BindingList<Repository>()); }
             set { _repositories = value; }
         }
 
-        public string Description { get; set; }
-
         public string RssFeedUrl { get; set; }
 
-        public RepositoryCategoryType CategoryType { get; set; }
-
-        public virtual void SetIcon()
+        public void AddRepository(Repository repo)
         {
-            foreach (var recentRepository in Repositories)
-            {
-                if (CategoryType == RepositoryCategoryType.RssFeed)
-                    recentRepository.RepositoryType = RepositoryType.RssFeed;
-            }
+            Repositories.Add(repo);
         }
 
         public void DownloadRssFeed()
@@ -89,6 +85,46 @@ namespace GitCommands.Repository
             }
         }
 
+        public void RemoveRepository(Repository repository)
+        {
+            Repositories.Remove(repository);
+        }
+
+        public virtual void SetIcon()
+        {
+            foreach (var recentRepository in Repositories)
+            {
+                if (CategoryType == RepositoryCategoryType.RssFeed)
+                    recentRepository.RepositoryType = RepositoryType.RssFeed;
+            }
+        }
+
+        private void HandleFeedTag(XmlNode rssDoc, int r)
+        {
+            // <feed> tag found
+            var nodeFeed = rssDoc.ChildNodes[r];
+
+            //loop through all entries
+            for (var i = 0; i < nodeFeed.ChildNodes.Count; i++)
+            {
+                var nodeItem = nodeFeed.ChildNodes[i];
+
+                if (nodeItem.Name != "entry")
+                    continue;
+                // Create a new row in the ListView containing information from inside the nodes
+                var repository = new Repository();
+                var title = nodeItem["title"];
+                if (title != null)
+                    repository.Title = title.InnerText.Trim();
+                //repository.Description = nodeItem["content"].InnerText.Trim();
+                var link = nodeItem["link"];
+                if (link != null)
+                    repository.Path = link.Attributes["href"].Value;
+                repository.RepositoryType = RepositoryType.RssFeed;
+                Repositories.Add(repository);
+            }
+        }
+
         private void HandleRssTag(XmlNode rssDoc, int r)
         {
             // <rss> tag found
@@ -131,42 +167,6 @@ namespace GitCommands.Repository
                     Repositories.Add(repository);
                 }
             }
-        }
-
-        private void HandleFeedTag(XmlNode rssDoc, int r)
-        {
-            // <feed> tag found
-            var nodeFeed = rssDoc.ChildNodes[r];
-
-            //loop through all entries
-            for (var i = 0; i < nodeFeed.ChildNodes.Count; i++)
-            {
-                var nodeItem = nodeFeed.ChildNodes[i];
-
-                if (nodeItem.Name != "entry")
-                    continue;
-                // Create a new row in the ListView containing information from inside the nodes
-                var repository = new Repository();
-                var title = nodeItem["title"];
-                if (title != null)
-                    repository.Title = title.InnerText.Trim();
-                //repository.Description = nodeItem["content"].InnerText.Trim();
-                var link = nodeItem["link"];
-                if (link != null)
-                    repository.Path = link.Attributes["href"].Value;
-                repository.RepositoryType = RepositoryType.RssFeed;
-                Repositories.Add(repository);
-            }
-        }
-
-        public void RemoveRepository(Repository repository)
-        {
-            Repositories.Remove(repository);
-        }
-
-        public void AddRepository(Repository repo)
-        {
-            Repositories.Add(repo);
         }
     }
 }

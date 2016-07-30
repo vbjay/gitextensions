@@ -33,20 +33,16 @@ namespace GitUI.Script
 {
     public class SplitButton : Button
     {
-        private PushButtonState _state;
-
         private const int SplitSectionWidth = 18;
-
         private static int BorderSize = SystemInformation.Border3DSize.Width * 2;
-        private bool skipNextOpen;
+        private PushButtonState _state;
         private Rectangle dropDownRectangle;
-        private bool showSplit;
-
+        private bool isMouseEntered;
         private bool isSplitMenuVisible;
-
-        private ContextMenuStrip m_SplitMenuStrip;
         private ContextMenu m_SplitMenu;
-
+        private ContextMenuStrip m_SplitMenuStrip;
+        private bool showSplit;
+        private bool skipNextOpen;
         private TextFormatFlags textFormatFlags = TextFormatFlags.Default;
 
         public SplitButton()
@@ -66,6 +62,22 @@ namespace GitUI.Script
             set
             {
                 SplitMenuStrip = value;
+            }
+        }
+
+        [DefaultValue(false)]
+        public bool ShowSplit
+        {
+            set
+            {
+                if (value != showSplit)
+                {
+                    showSplit = value;
+                    Invalidate();
+
+                    if (Parent != null)
+                        Parent.PerformLayout();
+                }
             }
         }
 
@@ -125,22 +137,6 @@ namespace GitUI.Script
         }
 
         [DefaultValue(false)]
-        public bool ShowSplit
-        {
-            set
-            {
-                if (value != showSplit)
-                {
-                    showSplit = value;
-                    Invalidate();
-
-                    if (Parent != null)
-                        Parent.PerformLayout();
-                }
-            }
-        }
-
-        [DefaultValue(false)]
         public bool WholeButtonDropdown { get; set; }
 
         private PushButtonState State
@@ -161,12 +157,36 @@ namespace GitUI.Script
 
         #endregion Properties
 
+        public override Size GetPreferredSize(Size proposedSize)
+        {
+            Size preferredSize = base.GetPreferredSize(proposedSize);
+
+            //autosize correctly for splitbuttons
+            if (showSplit)
+            {
+                if (AutoSize)
+                    return CalculateButtonAutoSize();
+
+                if (!string.IsNullOrEmpty(Text) && TextRenderer.MeasureText(Text, Font).Width + SplitSectionWidth > preferredSize.Width)
+                    return preferredSize + new Size(SplitSectionWidth + BorderSize * 2, 0);
+            }
+
+            return preferredSize;
+        }
+
         protected override bool IsInputKey(Keys keyData)
         {
             if (keyData.Equals(Keys.Down) && showSplit)
                 return true;
 
             return base.IsInputKey(keyData);
+        }
+
+        protected override void OnEnabledChanged(EventArgs e)
+        {
+            State = Enabled ? PushButtonState.Normal : PushButtonState.Disabled;
+
+            base.OnEnabledChanged(e);
         }
 
         protected override void OnGotFocus(EventArgs e)
@@ -220,13 +240,6 @@ namespace GitUI.Script
             base.OnKeyUp(kevent);
         }
 
-        protected override void OnEnabledChanged(EventArgs e)
-        {
-            State = Enabled ? PushButtonState.Normal : PushButtonState.Disabled;
-
-            base.OnEnabledChanged(e);
-        }
-
         protected override void OnLostFocus(EventArgs e)
         {
             if (!showSplit)
@@ -241,7 +254,28 @@ namespace GitUI.Script
             }
         }
 
-        private bool isMouseEntered;
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            if (!showSplit)
+            {
+                base.OnMouseDown(e);
+                return;
+            }
+
+            //handle ContextMenu re-clicking the drop-down region to close the menu
+            if (m_SplitMenu != null && e.Button == MouseButtons.Left && !isMouseEntered)
+                skipNextOpen = true;
+
+            if ((dropDownRectangle.Contains(e.Location) || this.WholeButtonDropdown) &&
+                !isSplitMenuVisible && e.Button == MouseButtons.Left)
+            {
+                ShowContextMenuStrip();
+            }
+            else
+            {
+                State = PushButtonState.Pressed;
+            }
+        }
 
         protected override void OnMouseEnter(EventArgs e)
         {
@@ -272,29 +306,6 @@ namespace GitUI.Script
             if (!State.Equals(PushButtonState.Pressed) && !State.Equals(PushButtonState.Disabled))
             {
                 State = Focused ? PushButtonState.Default : PushButtonState.Normal;
-            }
-        }
-
-        protected override void OnMouseDown(MouseEventArgs e)
-        {
-            if (!showSplit)
-            {
-                base.OnMouseDown(e);
-                return;
-            }
-
-            //handle ContextMenu re-clicking the drop-down region to close the menu
-            if (m_SplitMenu != null && e.Button == MouseButtons.Left && !isMouseEntered)
-                skipNextOpen = true;
-
-            if ((dropDownRectangle.Contains(e.Location) || this.WholeButtonDropdown) &&
-                !isSplitMenuVisible && e.Button == MouseButtons.Left)
-            {
-                ShowContextMenuStrip();
-            }
-            else
-            {
-                State = PushButtonState.Pressed;
             }
         }
 
@@ -394,69 +405,17 @@ namespace GitUI.Script
             }
         }
 
-        private void PaintTextandImage(Graphics g, Rectangle bounds)
+        protected override void WndProc(ref Message m)
         {
-            // Figure out where our text and image should go
-            Rectangle text_rectangle;
-            Rectangle image_rectangle;
-
-            CalculateButtonTextAndImageLayout(ref bounds, out text_rectangle, out image_rectangle);
-
-            //draw the image
-            if (Image != null)
+            //0x0212 == WM_EXITMENULOOP
+            if (m.Msg == 0x0212)
             {
-                if (Enabled)
-                    g.DrawImage(Image, image_rectangle.X, image_rectangle.Y, Image.Width, Image.Height);
-                else
-                    ControlPaint.DrawImageDisabled(g, Image, image_rectangle.X, image_rectangle.Y, BackColor);
+                //this message is only sent when a ContextMenu is closed (not a ContextMenuStrip)
+                isSplitMenuVisible = false;
+                SetButtonDrawState();
             }
 
-            // If we dont' use mnemonic, set formatFlag to NoPrefix as this will show ampersand.
-            if (!UseMnemonic)
-                textFormatFlags = textFormatFlags | TextFormatFlags.NoPrefix;
-            else if (!ShowKeyboardCues)
-                textFormatFlags = textFormatFlags | TextFormatFlags.HidePrefix;
-
-            //draw the text
-            if (!string.IsNullOrEmpty(Text))
-            {
-                if (Enabled)
-                    TextRenderer.DrawText(g, Text, Font, text_rectangle, ForeColor, textFormatFlags);
-                else
-                    ControlPaint.DrawStringDisabled(g, Text, Font, BackColor, text_rectangle, textFormatFlags);
-            }
-        }
-
-        private void PaintArrow(Graphics g, Rectangle dropDownRect)
-        {
-            Point middle = new Point(Convert.ToInt32(dropDownRect.Left + dropDownRect.Width / 2), Convert.ToInt32(dropDownRect.Top + dropDownRect.Height / 2));
-
-            //if the width is odd - favor pushing it over one pixel right.
-            middle.X += (dropDownRect.Width % 2);
-
-            Point[] arrow = new[] { new Point(middle.X - 2, middle.Y - 1), new Point(middle.X + 3, middle.Y - 1), new Point(middle.X, middle.Y + 2) };
-
-            if (Enabled)
-                g.FillPolygon(SystemBrushes.ControlText, arrow);
-            else
-                g.FillPolygon(SystemBrushes.ButtonShadow, arrow);
-        }
-
-        public override Size GetPreferredSize(Size proposedSize)
-        {
-            Size preferredSize = base.GetPreferredSize(proposedSize);
-
-            //autosize correctly for splitbuttons
-            if (showSplit)
-            {
-                if (AutoSize)
-                    return CalculateButtonAutoSize();
-
-                if (!string.IsNullOrEmpty(Text) && TextRenderer.MeasureText(Text, Font).Width + SplitSectionWidth > preferredSize.Width)
-                    return preferredSize + new Size(SplitSectionWidth + BorderSize * 2, 0);
-            }
-
-            return preferredSize;
+            base.WndProc(ref m);
         }
 
         private Size CalculateButtonAutoSize()
@@ -503,56 +462,125 @@ namespace GitUI.Script
             return ret_size;
         }
 
+        private void PaintArrow(Graphics g, Rectangle dropDownRect)
+        {
+            Point middle = new Point(Convert.ToInt32(dropDownRect.Left + dropDownRect.Width / 2), Convert.ToInt32(dropDownRect.Top + dropDownRect.Height / 2));
+
+            //if the width is odd - favor pushing it over one pixel right.
+            middle.X += (dropDownRect.Width % 2);
+
+            Point[] arrow = new[] { new Point(middle.X - 2, middle.Y - 1), new Point(middle.X + 3, middle.Y - 1), new Point(middle.X, middle.Y + 2) };
+
+            if (Enabled)
+                g.FillPolygon(SystemBrushes.ControlText, arrow);
+            else
+                g.FillPolygon(SystemBrushes.ButtonShadow, arrow);
+        }
+
+        private void PaintTextandImage(Graphics g, Rectangle bounds)
+        {
+            // Figure out where our text and image should go
+            Rectangle text_rectangle;
+            Rectangle image_rectangle;
+
+            CalculateButtonTextAndImageLayout(ref bounds, out text_rectangle, out image_rectangle);
+
+            //draw the image
+            if (Image != null)
+            {
+                if (Enabled)
+                    g.DrawImage(Image, image_rectangle.X, image_rectangle.Y, Image.Width, Image.Height);
+                else
+                    ControlPaint.DrawImageDisabled(g, Image, image_rectangle.X, image_rectangle.Y, BackColor);
+            }
+
+            // If we dont' use mnemonic, set formatFlag to NoPrefix as this will show ampersand.
+            if (!UseMnemonic)
+                textFormatFlags = textFormatFlags | TextFormatFlags.NoPrefix;
+            else if (!ShowKeyboardCues)
+                textFormatFlags = textFormatFlags | TextFormatFlags.HidePrefix;
+
+            //draw the text
+            if (!string.IsNullOrEmpty(Text))
+            {
+                if (Enabled)
+                    TextRenderer.DrawText(g, Text, Font, text_rectangle, ForeColor, textFormatFlags);
+                else
+                    ControlPaint.DrawStringDisabled(g, Text, Font, BackColor, text_rectangle, textFormatFlags);
+            }
+        }
+
         #region Button Layout Calculations
 
         //The following layout functions were taken from Mono's Windows.Forms
         //implementation, specifically "ThemeWin32Classic.cs",
         //then modified to fit the context of this splitButton
 
-        private void CalculateButtonTextAndImageLayout(ref Rectangle content_rect, out Rectangle textRectangle, out Rectangle imageRectangle)
+        internal static Rectangle AlignInRectangle(Rectangle outer, Size inner, System.Drawing.ContentAlignment align)
         {
-            Size text_size = TextRenderer.MeasureText(Text, Font, content_rect.Size, textFormatFlags);
-            Size image_size = Image == null ? Size.Empty : Image.Size;
+            int x = 0;
+            int y = 0;
 
-            textRectangle = Rectangle.Empty;
-            imageRectangle = Rectangle.Empty;
+            if (align == System.Drawing.ContentAlignment.BottomLeft || align == System.Drawing.ContentAlignment.MiddleLeft || align == System.Drawing.ContentAlignment.TopLeft)
+                x = outer.X;
+            else if (align == System.Drawing.ContentAlignment.BottomCenter || align == System.Drawing.ContentAlignment.MiddleCenter || align == System.Drawing.ContentAlignment.TopCenter)
+                x = Math.Max(outer.X + ((outer.Width - inner.Width) / 2), outer.Left);
+            else if (align == System.Drawing.ContentAlignment.BottomRight || align == System.Drawing.ContentAlignment.MiddleRight || align == System.Drawing.ContentAlignment.TopRight)
+                x = outer.Right - inner.Width;
+            if (align == System.Drawing.ContentAlignment.TopCenter || align == System.Drawing.ContentAlignment.TopLeft || align == System.Drawing.ContentAlignment.TopRight)
+                y = outer.Y;
+            else if (align == System.Drawing.ContentAlignment.MiddleCenter || align == System.Drawing.ContentAlignment.MiddleLeft || align == System.Drawing.ContentAlignment.MiddleRight)
+                y = outer.Y + (outer.Height - inner.Height) / 2;
+            else if (align == System.Drawing.ContentAlignment.BottomCenter || align == System.Drawing.ContentAlignment.BottomRight || align == System.Drawing.ContentAlignment.BottomLeft)
+                y = outer.Bottom - inner.Height;
 
-            switch (TextImageRelation)
+            return new Rectangle(x, y, Math.Min(inner.Width, outer.Width), Math.Min(inner.Height, outer.Height));
+        }
+
+        private static HorizontalAlignment GetHorizontalAlignment(System.Drawing.ContentAlignment align)
+        {
+            switch (align)
             {
-                case TextImageRelation.Overlay:
-                    // Overlay is easy, text always goes here
-                    textRectangle = OverlayObjectRect(ref content_rect, ref text_size, TextAlign); // Rectangle.Inflate(content_rect, -4, -4);
+                case System.Drawing.ContentAlignment.BottomLeft:
+                case System.Drawing.ContentAlignment.MiddleLeft:
+                case System.Drawing.ContentAlignment.TopLeft:
+                    return HorizontalAlignment.Left;
 
-                    //Offset on Windows 98 style when button is pressed
-                    if (_state == PushButtonState.Pressed && !Application.RenderWithVisualStyles)
-                        textRectangle.Offset(1, 1);
+                case System.Drawing.ContentAlignment.BottomCenter:
+                case System.Drawing.ContentAlignment.MiddleCenter:
+                case System.Drawing.ContentAlignment.TopCenter:
+                    return HorizontalAlignment.Center;
 
-                    // Image is dependent on ImageAlign
-                    if (Image != null)
-                        imageRectangle = OverlayObjectRect(ref content_rect, ref image_size, ImageAlign);
-
-                    break;
-
-                case TextImageRelation.ImageAboveText:
-                    content_rect.Inflate(-4, -4);
-                    LayoutTextAboveOrBelowImage(content_rect, false, text_size, image_size, out textRectangle, out imageRectangle);
-                    break;
-
-                case TextImageRelation.TextAboveImage:
-                    content_rect.Inflate(-4, -4);
-                    LayoutTextAboveOrBelowImage(content_rect, true, text_size, image_size, out textRectangle, out imageRectangle);
-                    break;
-
-                case TextImageRelation.ImageBeforeText:
-                    content_rect.Inflate(-4, -4);
-                    LayoutTextBeforeOrAfterImage(content_rect, false, text_size, image_size, out textRectangle, out imageRectangle);
-                    break;
-
-                case TextImageRelation.TextBeforeImage:
-                    content_rect.Inflate(-4, -4);
-                    LayoutTextBeforeOrAfterImage(content_rect, true, text_size, image_size, out textRectangle, out imageRectangle);
-                    break;
+                case System.Drawing.ContentAlignment.BottomRight:
+                case System.Drawing.ContentAlignment.MiddleRight:
+                case System.Drawing.ContentAlignment.TopRight:
+                    return HorizontalAlignment.Right;
             }
+
+            return HorizontalAlignment.Left;
+        }
+
+        private static VerticalAlignment GetVerticalAlignment(System.Drawing.ContentAlignment align)
+        {
+            switch (align)
+            {
+                case System.Drawing.ContentAlignment.TopLeft:
+                case System.Drawing.ContentAlignment.TopCenter:
+                case System.Drawing.ContentAlignment.TopRight:
+                    return VerticalAlignment.Top;
+
+                case System.Drawing.ContentAlignment.MiddleLeft:
+                case System.Drawing.ContentAlignment.MiddleCenter:
+                case System.Drawing.ContentAlignment.MiddleRight:
+                    return VerticalAlignment.Center;
+
+                case System.Drawing.ContentAlignment.BottomLeft:
+                case System.Drawing.ContentAlignment.BottomCenter:
+                case System.Drawing.ContentAlignment.BottomRight:
+                    return VerticalAlignment.Bottom;
+            }
+
+            return VerticalAlignment.Top;
         }
 
         private static Rectangle OverlayObjectRect(ref Rectangle container, ref Size sizeOfObject, System.Drawing.ContentAlignment alignment)
@@ -615,52 +643,50 @@ namespace GitUI.Script
             return new Rectangle(x, y, sizeOfObject.Width, sizeOfObject.Height);
         }
 
-        private void LayoutTextBeforeOrAfterImage(Rectangle totalArea, bool textFirst, Size textSize, Size imageSize, out Rectangle textRect, out Rectangle imageRect)
+        private void CalculateButtonTextAndImageLayout(ref Rectangle content_rect, out Rectangle textRectangle, out Rectangle imageRectangle)
         {
-            int element_spacing = 0;	// Spacing between the Text and the Image
-            int total_width = textSize.Width + element_spacing + imageSize.Width;
+            Size text_size = TextRenderer.MeasureText(Text, Font, content_rect.Size, textFormatFlags);
+            Size image_size = Image == null ? Size.Empty : Image.Size;
 
-            if (!textFirst)
-                element_spacing += 2;
+            textRectangle = Rectangle.Empty;
+            imageRectangle = Rectangle.Empty;
 
-            // If the text is too big, chop it down to the size we have available to it
-            if (total_width > totalArea.Width)
+            switch (TextImageRelation)
             {
-                textSize.Width = totalArea.Width - element_spacing - imageSize.Width;
-                total_width = totalArea.Width;
+                case TextImageRelation.Overlay:
+                    // Overlay is easy, text always goes here
+                    textRectangle = OverlayObjectRect(ref content_rect, ref text_size, TextAlign); // Rectangle.Inflate(content_rect, -4, -4);
+
+                    //Offset on Windows 98 style when button is pressed
+                    if (_state == PushButtonState.Pressed && !Application.RenderWithVisualStyles)
+                        textRectangle.Offset(1, 1);
+
+                    // Image is dependent on ImageAlign
+                    if (Image != null)
+                        imageRectangle = OverlayObjectRect(ref content_rect, ref image_size, ImageAlign);
+
+                    break;
+
+                case TextImageRelation.ImageAboveText:
+                    content_rect.Inflate(-4, -4);
+                    LayoutTextAboveOrBelowImage(content_rect, false, text_size, image_size, out textRectangle, out imageRectangle);
+                    break;
+
+                case TextImageRelation.TextAboveImage:
+                    content_rect.Inflate(-4, -4);
+                    LayoutTextAboveOrBelowImage(content_rect, true, text_size, image_size, out textRectangle, out imageRectangle);
+                    break;
+
+                case TextImageRelation.ImageBeforeText:
+                    content_rect.Inflate(-4, -4);
+                    LayoutTextBeforeOrAfterImage(content_rect, false, text_size, image_size, out textRectangle, out imageRectangle);
+                    break;
+
+                case TextImageRelation.TextBeforeImage:
+                    content_rect.Inflate(-4, -4);
+                    LayoutTextBeforeOrAfterImage(content_rect, true, text_size, image_size, out textRectangle, out imageRectangle);
+                    break;
             }
-
-            int excess_width = totalArea.Width - total_width;
-            int offset = 0;
-
-            Rectangle final_text_rect;
-            Rectangle final_image_rect;
-
-            HorizontalAlignment h_text = GetHorizontalAlignment(TextAlign);
-            HorizontalAlignment h_image = GetHorizontalAlignment(ImageAlign);
-
-            if (h_image == HorizontalAlignment.Left)
-                offset = 0;
-            else if (h_image == HorizontalAlignment.Right && h_text == HorizontalAlignment.Right)
-                offset = excess_width;
-            else if (h_image == HorizontalAlignment.Center && (h_text == HorizontalAlignment.Left || h_text == HorizontalAlignment.Center))
-                offset += excess_width / 3;
-            else
-                offset += 2 * (excess_width / 3);
-
-            if (textFirst)
-            {
-                final_text_rect = new Rectangle(totalArea.Left + offset, AlignInRectangle(totalArea, textSize, TextAlign).Top, textSize.Width, textSize.Height);
-                final_image_rect = new Rectangle(final_text_rect.Right + element_spacing, AlignInRectangle(totalArea, imageSize, ImageAlign).Top, imageSize.Width, imageSize.Height);
-            }
-            else
-            {
-                final_image_rect = new Rectangle(totalArea.Left + offset, AlignInRectangle(totalArea, imageSize, ImageAlign).Top, imageSize.Width, imageSize.Height);
-                final_text_rect = new Rectangle(final_image_rect.Right + element_spacing, AlignInRectangle(totalArea, textSize, TextAlign).Top, textSize.Width, textSize.Height);
-            }
-
-            textRect = final_text_rect;
-            imageRect = final_image_rect;
         }
 
         private void LayoutTextAboveOrBelowImage(Rectangle totalArea, bool textFirst, Size textSize, Size imageSize, out Rectangle textRect, out Rectangle imageRect)
@@ -717,74 +743,75 @@ namespace GitUI.Script
             imageRect = final_image_rect;
         }
 
-        private static HorizontalAlignment GetHorizontalAlignment(System.Drawing.ContentAlignment align)
+        private void LayoutTextBeforeOrAfterImage(Rectangle totalArea, bool textFirst, Size textSize, Size imageSize, out Rectangle textRect, out Rectangle imageRect)
         {
-            switch (align)
+            int element_spacing = 0;	// Spacing between the Text and the Image
+            int total_width = textSize.Width + element_spacing + imageSize.Width;
+
+            if (!textFirst)
+                element_spacing += 2;
+
+            // If the text is too big, chop it down to the size we have available to it
+            if (total_width > totalArea.Width)
             {
-                case System.Drawing.ContentAlignment.BottomLeft:
-                case System.Drawing.ContentAlignment.MiddleLeft:
-                case System.Drawing.ContentAlignment.TopLeft:
-                    return HorizontalAlignment.Left;
-
-                case System.Drawing.ContentAlignment.BottomCenter:
-                case System.Drawing.ContentAlignment.MiddleCenter:
-                case System.Drawing.ContentAlignment.TopCenter:
-                    return HorizontalAlignment.Center;
-
-                case System.Drawing.ContentAlignment.BottomRight:
-                case System.Drawing.ContentAlignment.MiddleRight:
-                case System.Drawing.ContentAlignment.TopRight:
-                    return HorizontalAlignment.Right;
+                textSize.Width = totalArea.Width - element_spacing - imageSize.Width;
+                total_width = totalArea.Width;
             }
 
-            return HorizontalAlignment.Left;
-        }
+            int excess_width = totalArea.Width - total_width;
+            int offset = 0;
 
-        private static VerticalAlignment GetVerticalAlignment(System.Drawing.ContentAlignment align)
-        {
-            switch (align)
+            Rectangle final_text_rect;
+            Rectangle final_image_rect;
+
+            HorizontalAlignment h_text = GetHorizontalAlignment(TextAlign);
+            HorizontalAlignment h_image = GetHorizontalAlignment(ImageAlign);
+
+            if (h_image == HorizontalAlignment.Left)
+                offset = 0;
+            else if (h_image == HorizontalAlignment.Right && h_text == HorizontalAlignment.Right)
+                offset = excess_width;
+            else if (h_image == HorizontalAlignment.Center && (h_text == HorizontalAlignment.Left || h_text == HorizontalAlignment.Center))
+                offset += excess_width / 3;
+            else
+                offset += 2 * (excess_width / 3);
+
+            if (textFirst)
             {
-                case System.Drawing.ContentAlignment.TopLeft:
-                case System.Drawing.ContentAlignment.TopCenter:
-                case System.Drawing.ContentAlignment.TopRight:
-                    return VerticalAlignment.Top;
-
-                case System.Drawing.ContentAlignment.MiddleLeft:
-                case System.Drawing.ContentAlignment.MiddleCenter:
-                case System.Drawing.ContentAlignment.MiddleRight:
-                    return VerticalAlignment.Center;
-
-                case System.Drawing.ContentAlignment.BottomLeft:
-                case System.Drawing.ContentAlignment.BottomCenter:
-                case System.Drawing.ContentAlignment.BottomRight:
-                    return VerticalAlignment.Bottom;
+                final_text_rect = new Rectangle(totalArea.Left + offset, AlignInRectangle(totalArea, textSize, TextAlign).Top, textSize.Width, textSize.Height);
+                final_image_rect = new Rectangle(final_text_rect.Right + element_spacing, AlignInRectangle(totalArea, imageSize, ImageAlign).Top, imageSize.Width, imageSize.Height);
+            }
+            else
+            {
+                final_image_rect = new Rectangle(totalArea.Left + offset, AlignInRectangle(totalArea, imageSize, ImageAlign).Top, imageSize.Width, imageSize.Height);
+                final_text_rect = new Rectangle(final_image_rect.Right + element_spacing, AlignInRectangle(totalArea, textSize, TextAlign).Top, textSize.Width, textSize.Height);
             }
 
-            return VerticalAlignment.Top;
-        }
-
-        internal static Rectangle AlignInRectangle(Rectangle outer, Size inner, System.Drawing.ContentAlignment align)
-        {
-            int x = 0;
-            int y = 0;
-
-            if (align == System.Drawing.ContentAlignment.BottomLeft || align == System.Drawing.ContentAlignment.MiddleLeft || align == System.Drawing.ContentAlignment.TopLeft)
-                x = outer.X;
-            else if (align == System.Drawing.ContentAlignment.BottomCenter || align == System.Drawing.ContentAlignment.MiddleCenter || align == System.Drawing.ContentAlignment.TopCenter)
-                x = Math.Max(outer.X + ((outer.Width - inner.Width) / 2), outer.Left);
-            else if (align == System.Drawing.ContentAlignment.BottomRight || align == System.Drawing.ContentAlignment.MiddleRight || align == System.Drawing.ContentAlignment.TopRight)
-                x = outer.Right - inner.Width;
-            if (align == System.Drawing.ContentAlignment.TopCenter || align == System.Drawing.ContentAlignment.TopLeft || align == System.Drawing.ContentAlignment.TopRight)
-                y = outer.Y;
-            else if (align == System.Drawing.ContentAlignment.MiddleCenter || align == System.Drawing.ContentAlignment.MiddleLeft || align == System.Drawing.ContentAlignment.MiddleRight)
-                y = outer.Y + (outer.Height - inner.Height) / 2;
-            else if (align == System.Drawing.ContentAlignment.BottomCenter || align == System.Drawing.ContentAlignment.BottomRight || align == System.Drawing.ContentAlignment.BottomLeft)
-                y = outer.Bottom - inner.Height;
-
-            return new Rectangle(x, y, Math.Min(inner.Width, outer.Width), Math.Min(inner.Height, outer.Height));
+            textRect = final_text_rect;
+            imageRect = final_image_rect;
         }
 
         #endregion Button Layout Calculations
+
+        private void SetButtonDrawState()
+        {
+            if (Bounds.Contains(Parent.PointToClient(Cursor.Position)))
+            {
+                State = PushButtonState.Hot;
+            }
+            else if (Focused)
+            {
+                State = PushButtonState.Default;
+            }
+            else if (!Enabled)
+            {
+                State = PushButtonState.Disabled;
+            }
+            else
+            {
+                State = PushButtonState.Normal;
+            }
+        }
 
         private void ShowContextMenuStrip()
         {
@@ -808,7 +835,7 @@ namespace GitUI.Script
             }
         }
 
-        private void SplitMenuStrip_Opening(object sender, CancelEventArgs e)
+        private void SplitMenu_Popup(object sender, EventArgs e)
         {
             isSplitMenuVisible = true;
         }
@@ -825,42 +852,9 @@ namespace GitUI.Script
             }
         }
 
-        private void SplitMenu_Popup(object sender, EventArgs e)
+        private void SplitMenuStrip_Opening(object sender, CancelEventArgs e)
         {
             isSplitMenuVisible = true;
-        }
-
-        protected override void WndProc(ref Message m)
-        {
-            //0x0212 == WM_EXITMENULOOP
-            if (m.Msg == 0x0212)
-            {
-                //this message is only sent when a ContextMenu is closed (not a ContextMenuStrip)
-                isSplitMenuVisible = false;
-                SetButtonDrawState();
-            }
-
-            base.WndProc(ref m);
-        }
-
-        private void SetButtonDrawState()
-        {
-            if (Bounds.Contains(Parent.PointToClient(Cursor.Position)))
-            {
-                State = PushButtonState.Hot;
-            }
-            else if (Focused)
-            {
-                State = PushButtonState.Default;
-            }
-            else if (!Enabled)
-            {
-                State = PushButtonState.Disabled;
-            }
-            else
-            {
-                State = PushButtonState.Normal;
-            }
         }
     }
 }

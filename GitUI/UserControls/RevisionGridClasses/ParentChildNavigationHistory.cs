@@ -5,20 +5,23 @@ namespace GitUI.UserControls.RevisionGridClasses
 {
     internal class ParentChildNavigationHistory
     {
-        private enum NavigationDirection
-        {
-            Parent,
-            Child
-        }
+        private readonly Stack<string> _childHistory = new Stack<string>();
+
+        private readonly Stack<string> _parentHistory = new Stack<string>();
 
         private readonly Action<string> _setSelectedRevision;
+
         private NavigationDirection? _direction;
-        private readonly Stack<string> _childHistory = new Stack<string>();
-        private readonly Stack<string> _parentHistory = new Stack<string>();
 
         public ParentChildNavigationHistory(Action<string> setSelectedRevision)
         {
             _setSelectedRevision = setSelectedRevision;
+        }
+
+        private enum NavigationDirection
+        {
+            Parent,
+            Child
         }
 
         public bool HasPreviousChild
@@ -31,16 +34,10 @@ namespace GitUI.UserControls.RevisionGridClasses
             get { return _parentHistory.Count > 0; }
         }
 
-        public void NavigateToPreviousParent(string current)
+        public void Clear()
         {
-            var parent = _parentHistory.Pop();
-            Navigate(current, parent, NavigationDirection.Parent);
-        }
-
-        public void NavigateToPreviousChild(string current)
-        {
-            var child = _childHistory.Pop();
-            Navigate(current, child, NavigationDirection.Child);
+            _childHistory.Clear();
+            _parentHistory.Clear();
         }
 
         public void NavigateToChild(string current, string child)
@@ -53,6 +50,24 @@ namespace GitUI.UserControls.RevisionGridClasses
             Navigate(current, parent, NavigationDirection.Parent);
         }
 
+        public void NavigateToPreviousChild(string current)
+        {
+            var child = _childHistory.Pop();
+            Navigate(current, child, NavigationDirection.Child);
+        }
+
+        public void NavigateToPreviousParent(string current)
+        {
+            var parent = _parentHistory.Pop();
+            Navigate(current, parent, NavigationDirection.Parent);
+        }
+
+        public void RevisionsSelectionChanged()
+        {
+            if (_direction == null)
+                Clear();
+        }
+
         private void Navigate(string current, string to, NavigationDirection direction)
         {
             _direction = direction;
@@ -62,18 +77,6 @@ namespace GitUI.UserControls.RevisionGridClasses
                 _childHistory.Push(current);
             _setSelectedRevision(to);
             _direction = null;
-        }
-
-        public void Clear()
-        {
-            _childHistory.Clear();
-            _parentHistory.Clear();
-        }
-
-        public void RevisionsSelectionChanged()
-        {
-            if (_direction == null)
-                Clear();
         }
     }
 }

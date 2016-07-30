@@ -4,11 +4,23 @@ using System.Threading.Tasks;
 
 namespace GitCommands
 {
+    public class AsyncErrorEventArgs : EventArgs
+    {
+        public AsyncErrorEventArgs(Exception exception)
+        {
+            Exception = exception;
+            Handled = true;
+        }
+
+        public Exception Exception { get; private set; }
+
+        public bool Handled { get; set; }
+    }
+
     public class AsyncLoader : IDisposable
     {
         private readonly TaskScheduler _taskScheduler;
         private CancellationTokenSource _cancelledTokenSource;
-        public int Delay { get; set; }
 
         public AsyncLoader()
             : this(TaskScheduler.FromCurrentSynchronizationContext())
@@ -22,6 +34,8 @@ namespace GitCommands
         }
 
         public event EventHandler<AsyncErrorEventArgs> LoadingError = delegate { };
+
+        public int Delay { get; set; }
 
         /// <summary>
         /// Does something on threadpool, executes continuation on current sync context thread, executes onError if the async request fails.
@@ -48,6 +62,18 @@ namespace GitCommands
         {
             AsyncLoader loader = new AsyncLoader();
             return loader.Load(doMe, continueWith);
+        }
+
+        public void Cancel()
+        {
+            if (_cancelledTokenSource != null)
+                _cancelledTokenSource.Cancel();
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         public Task Load(Action loadContent, Action onLoaded)
@@ -147,10 +173,11 @@ namespace GitCommands
             }, CancellationToken.None, TaskContinuationOptions.NotOnCanceled, _taskScheduler);
         }
 
-        public void Cancel()
+        protected virtual void Dispose(bool disposing)
         {
-            if (_cancelledTokenSource != null)
-                _cancelledTokenSource.Cancel();
+            if (disposing)
+                if (_cancelledTokenSource != null)
+                    _cancelledTokenSource.Dispose();
         }
 
         private bool OnLoadingError(Exception exception)
@@ -159,31 +186,5 @@ namespace GitCommands
             LoadingError(this, args);
             return args.Handled;
         }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-                if (_cancelledTokenSource != null)
-                    _cancelledTokenSource.Dispose();
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-    }
-
-    public class AsyncErrorEventArgs : EventArgs
-    {
-        public AsyncErrorEventArgs(Exception exception)
-        {
-            Exception = exception;
-            Handled = true;
-        }
-
-        public Exception Exception { get; private set; }
-
-        public bool Handled { get; set; }
     }
 }

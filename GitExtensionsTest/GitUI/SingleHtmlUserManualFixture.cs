@@ -1,7 +1,7 @@
 ﻿using System;
+using FluentAssertions;
 using GitUI.UserManual;
 using NUnit.Framework;
-using FluentAssertions;
 
 namespace GitExtensionsTest.GitUI
 {
@@ -14,7 +14,7 @@ namespace GitExtensionsTest.GitUI
         {
             var sut = new SingleHtmlUserManual(anchor);
 
-            var expected = SingleHtmlUserManual.Location + "/index.html".Combine("#", anchor); 
+            var expected = SingleHtmlUserManual.Location + "/index.html".Combine("#", anchor);
 
             sut.GetUrl().Should().Be(expected);
         }

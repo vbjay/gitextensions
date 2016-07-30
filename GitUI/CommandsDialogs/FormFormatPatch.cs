@@ -14,23 +14,20 @@ namespace GitUI.CommandsDialogs
     {
         private readonly TranslationString _currentBranchText = new TranslationString("Current branch:");
 
-        private readonly TranslationString _noOutputPathEnteredText =
-            new TranslationString("You need to enter an output path.");
-
         private readonly TranslationString _noEmailEnteredText =
             new TranslationString("You need to enter an email address.");
+
+        private readonly TranslationString _noGitMailConfigured =
+            new TranslationString("There is no email address configured in the settings dialog.");
+
+        private readonly TranslationString _noOutputPathEnteredText =
+                            new TranslationString("You need to enter an output path.");
 
         private readonly TranslationString _noSubjectEnteredText =
             new TranslationString("You need to enter a mail subject.");
 
-        private readonly TranslationString _wrongSmtpSettingsText =
-            new TranslationString("You need to enter a valid smtp in the settings dialog.");
-
-        private readonly TranslationString _twoRevisionsNeededText =
-            new TranslationString("You need to select two revisions");
-
-        private readonly TranslationString _twoRevisionsNeededCaption =
-            new TranslationString("Patch error");
+        private readonly TranslationString _patchResultCaption =
+            new TranslationString("Patch result");
 
         private readonly TranslationString _sendMailResult =
             new TranslationString("Send to:");
@@ -38,16 +35,14 @@ namespace GitUI.CommandsDialogs
         private readonly TranslationString _sendMailResultFailed =
             new TranslationString("Failed to send mail.");
 
-        private readonly TranslationString _patchResultCaption =
-            new TranslationString("Patch result");
+        private readonly TranslationString _twoRevisionsNeededCaption =
+            new TranslationString("Patch error");
 
-        private readonly TranslationString _noGitMailConfigured =
-            new TranslationString("There is no email address configured in the settings dialog.");
+        private readonly TranslationString _twoRevisionsNeededText =
+            new TranslationString("You need to select two revisions");
 
-        private FormFormatPatch()
-            : this(null)
-        {
-        }
+        private readonly TranslationString _wrongSmtpSettingsText =
+                                                    new TranslationString("You need to enter a valid smtp in the settings dialog.");
 
         public FormFormatPatch(GitUICommands aCommands)
             : base(aCommands)
@@ -58,6 +53,11 @@ namespace GitUI.CommandsDialogs
                 MailFrom.Text = Module.GetEffectiveSetting(SettingKeyString.UserEmail);
         }
 
+        private FormFormatPatch()
+                    : this(null)
+        {
+        }
+
         private void Browse_Click(object sender, EventArgs e)
         {
             using (var dialog = new FolderBrowserDialog())
@@ -65,23 +65,6 @@ namespace GitUI.CommandsDialogs
                 if (dialog.ShowDialog(this) == DialogResult.OK)
                     OutputPath.Text = dialog.SelectedPath;
             }
-        }
-
-        private void FormFormatPath_Load(object sender, EventArgs e)
-        {
-            OutputPath.Text = AppSettings.LastFormatPatchDir;
-            string selectedHead = Module.GetSelectedBranch();
-            SelectedBranch.Text = _currentBranchText.Text + " " + selectedHead;
-
-            SaveToDir_CheckedChanged(null, null);
-            OutputPath.TextChanged += OutputPath_TextChanged;
-            RevisionGrid.Load();
-        }
-
-        private void OutputPath_TextChanged(object sender, EventArgs e)
-        {
-            if (Directory.Exists(OutputPath.Text))
-                AppSettings.LastFormatPatchDir = OutputPath.Text;
         }
 
         private void FormatPatch_Click(object sender, EventArgs e)
@@ -187,6 +170,32 @@ namespace GitUI.CommandsDialogs
             Close();
         }
 
+        private void FormFormatPath_Load(object sender, EventArgs e)
+        {
+            OutputPath.Text = AppSettings.LastFormatPatchDir;
+            string selectedHead = Module.GetSelectedBranch();
+            SelectedBranch.Text = _currentBranchText.Text + " " + selectedHead;
+
+            SaveToDir_CheckedChanged(null, null);
+            OutputPath.TextChanged += OutputPath_TextChanged;
+            RevisionGrid.Load();
+        }
+
+        private void OutputPath_TextChanged(object sender, EventArgs e)
+        {
+            if (Directory.Exists(OutputPath.Text))
+                AppSettings.LastFormatPatchDir = OutputPath.Text;
+        }
+
+        private void SaveToDir_CheckedChanged(object sender, EventArgs e)
+        {
+            OutputPath.Enabled = SaveToDir.Checked;
+            MailFrom.Enabled = !SaveToDir.Checked;
+            MailTo.Enabled = !SaveToDir.Checked;
+            MailSubject.Enabled = !SaveToDir.Checked;
+            MailBody.Enabled = !SaveToDir.Checked;
+        }
+
         private bool SendMail(string dir)
         {
             try
@@ -228,15 +237,6 @@ namespace GitUI.CommandsDialogs
                 return false;
             }
             return true;
-        }
-
-        private void SaveToDir_CheckedChanged(object sender, EventArgs e)
-        {
-            OutputPath.Enabled = SaveToDir.Checked;
-            MailFrom.Enabled = !SaveToDir.Checked;
-            MailTo.Enabled = !SaveToDir.Checked;
-            MailSubject.Enabled = !SaveToDir.Checked;
-            MailBody.Enabled = !SaveToDir.Checked;
         }
     }
 }

@@ -22,17 +22,11 @@ namespace GitUI.BuildServerIntegration
 {
     public class BuildServerWatcher : IBuildServerWatcher, IDisposable
     {
+        private readonly object buildServerCredentialsLock = new object();
         private readonly RevisionGrid revisionGrid;
         private readonly DvcsGraph revisions;
-        private GitModule Module { get { return revisionGrid.Module; } }
-
-        public int BuildStatusImageColumnIndex { get; private set; }
-        public int BuildStatusMessageColumnIndex { get; private set; }
-
-        private IDisposable buildStatusCancellationToken;
         private IBuildServerAdapter buildServerAdapter;
-
-        private readonly object buildServerCredentialsLock = new object();
+        private IDisposable buildStatusCancellationToken;
 
         public BuildServerWatcher(RevisionGrid revisionGrid, DvcsGraph revisions)
         {
@@ -42,51 +36,9 @@ namespace GitUI.BuildServerIntegration
             BuildStatusMessageColumnIndex = -1;
         }
 
-        public void LaunchBuildServerInfoFetchOperation()
-        {
-            CancelBuildStatusFetchOperation();
-
-            DisposeBuildServerAdapter();
-
-            // Extract the project name from the last part of the directory path. It is assumed that it matches the project name in the CI build server.
-            GetBuildServerAdapter().ContinueWith((Task<IBuildServerAdapter> task) =>
-            {
-                buildServerAdapter = task.Result;
-
-                UpdateUI();
-
-                if (buildServerAdapter == null)
-                    return;
-
-                var scheduler = NewThreadScheduler.Default;
-                var fullDayObservable = buildServerAdapter.GetFinishedBuildsSince(scheduler, DateTime.Today - TimeSpan.FromDays(3));
-                var fullObservable = buildServerAdapter.GetFinishedBuildsSince(scheduler);
-                var fromNowObservable = buildServerAdapter.GetFinishedBuildsSince(scheduler, DateTime.Now);
-                var runningBuildsObservable = buildServerAdapter.GetRunningBuilds(scheduler);
-
-                var cancellationToken = new CompositeDisposable
-                {
-                    fullDayObservable.OnErrorResumeNext(fullObservable)
-                                     .OnErrorResumeNext(Observable.Empty<BuildInfo>()
-                                                                  .DelaySubscription(TimeSpan.FromMinutes(1))
-                                                                  .OnErrorResumeNext(fromNowObservable)
-                                                                  .Retry()
-                                                                  .Repeat())
-                                     .ObserveOn(SynchronizationContext.Current)
-                                     .Subscribe(OnBuildInfoUpdate),
-
-                    runningBuildsObservable.OnErrorResumeNext(Observable.Empty<BuildInfo>()
-                                                                        .DelaySubscription(TimeSpan.FromSeconds(10)))
-                                           .Retry()
-                                           .Repeat()
-                                           .ObserveOn(SynchronizationContext.Current)
-                                           .Subscribe(OnBuildInfoUpdate)
-                };
-
-                buildStatusCancellationToken = cancellationToken;
-            },
-            TaskScheduler.FromCurrentSynchronizationContext());
-        }
+        public int BuildStatusImageColumnIndex { get; private set; }
+        public int BuildStatusMessageColumnIndex { get; private set; }
+        private GitModule Module { get { return revisionGrid.Module; } }
 
         public void CancelBuildStatusFetchOperation()
         {
@@ -96,6 +48,12 @@ namespace GitUI.BuildServerIntegration
             {
                 cancellationToken.Dispose();
             }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times", Justification = "http://stackoverflow.com/questions/1065168/does-disposing-streamreader-close-the-stream")]
@@ -193,24 +151,56 @@ namespace GitUI.BuildServerIntegration
             }
         }
 
-        private IBuildServerCredentials ShowBuildServerCredentialsForm(string buildServerUniqueKey, IBuildServerCredentials buildServerCredentials)
+        public void LaunchBuildServerInfoFetchOperation()
         {
-            if (revisionGrid.InvokeRequired)
-            {
-                return (IBuildServerCredentials)revisionGrid.Invoke(new Func<IBuildServerCredentials>(() => ShowBuildServerCredentialsForm(buildServerUniqueKey, buildServerCredentials)));
-            }
+            CancelBuildStatusFetchOperation();
 
-            using (var form = new FormBuildServerCredentials(buildServerUniqueKey))
-            {
-                form.BuildServerCredentials = buildServerCredentials;
+            DisposeBuildServerAdapter();
 
-                if (form.ShowDialog(revisionGrid) == DialogResult.OK)
+            // Extract the project name from the last part of the directory path. It is assumed that it matches the project name in the CI build server.
+            GetBuildServerAdapter().ContinueWith((Task<IBuildServerAdapter> task) =>
+            {
+                buildServerAdapter = task.Result;
+
+                UpdateUI();
+
+                if (buildServerAdapter == null)
+                    return;
+
+                var scheduler = NewThreadScheduler.Default;
+                var fullDayObservable = buildServerAdapter.GetFinishedBuildsSince(scheduler, DateTime.Today - TimeSpan.FromDays(3));
+                var fullObservable = buildServerAdapter.GetFinishedBuildsSince(scheduler);
+                var fromNowObservable = buildServerAdapter.GetFinishedBuildsSince(scheduler, DateTime.Now);
+                var runningBuildsObservable = buildServerAdapter.GetRunningBuilds(scheduler);
+
+                var cancellationToken = new CompositeDisposable
                 {
-                    return buildServerCredentials;
-                }
-            }
+                    fullDayObservable.OnErrorResumeNext(fullObservable)
+                                     .OnErrorResumeNext(Observable.Empty<BuildInfo>()
+                                                                  .DelaySubscription(TimeSpan.FromMinutes(1))
+                                                                  .OnErrorResumeNext(fromNowObservable)
+                                                                  .Retry()
+                                                                  .Repeat())
+                                     .ObserveOn(SynchronizationContext.Current)
+                                     .Subscribe(OnBuildInfoUpdate),
 
-            return null;
+                    runningBuildsObservable.OnErrorResumeNext(Observable.Empty<BuildInfo>()
+                                                                        .DelaySubscription(TimeSpan.FromSeconds(10)))
+                                           .Retry()
+                                           .Repeat()
+                                           .ObserveOn(SynchronizationContext.Current)
+                                           .Subscribe(OnBuildInfoUpdate)
+                };
+
+                buildStatusCancellationToken = cancellationToken;
+            },
+            TaskScheduler.FromCurrentSynchronizationContext());
+        }
+
+        private static IsolatedStorageFileStream GetBuildServerOptionsIsolatedStorageStream(IBuildServerAdapter buildServerAdapter, FileAccess fileAccess, FileShare fileShare)
+        {
+            var fileName = string.Format("BuildServer-{0}.options", Convert.ToBase64String(Encoding.UTF8.GetBytes(buildServerAdapter.UniqueKey)));
+            return new IsolatedStorageFileStream(fileName, FileMode.OpenOrCreate, fileAccess, fileShare);
         }
 
         private void AddBuildStatusColumns()
@@ -240,30 +230,22 @@ namespace GitUI.BuildServerIntegration
             }
         }
 
-        private void OnBuildInfoUpdate(BuildInfo buildInfo)
+        private void Dispose(bool disposing)
         {
-            if (buildStatusCancellationToken == null)
-                return;
-
-            foreach (var commitHash in buildInfo.CommitHashList)
+            if (disposing)
             {
-                int row = revisionGrid.TrySearchRevision(commitHash);
-                if (row >= 0)
-                {
-                    var rowData = revisions.GetRowData(row);
-                    if (rowData.BuildStatus == null ||
-                        buildInfo.StartDate >= rowData.BuildStatus.StartDate)
-                    {
-                        rowData.BuildStatus = buildInfo;
+                CancelBuildStatusFetchOperation();
 
-                        if (BuildStatusImageColumnIndex != -1 &&
-                            revisions.Rows[row].Cells[BuildStatusImageColumnIndex].Displayed)
-                            revisions.UpdateCellValue(BuildStatusImageColumnIndex, row);
-                        if (BuildStatusMessageColumnIndex != -1 &&
-                            revisions.Rows[row].Cells[BuildStatusImageColumnIndex].Displayed)
-                            revisions.UpdateCellValue(BuildStatusMessageColumnIndex, row);
-                    }
-                }
+                DisposeBuildServerAdapter();
+            }
+        }
+
+        private void DisposeBuildServerAdapter()
+        {
+            if (buildServerAdapter != null)
+            {
+                buildServerAdapter.Dispose();
+                buildServerAdapter = null;
             }
         }
 
@@ -304,6 +286,53 @@ namespace GitUI.BuildServerIntegration
             });
         }
 
+        private void OnBuildInfoUpdate(BuildInfo buildInfo)
+        {
+            if (buildStatusCancellationToken == null)
+                return;
+
+            foreach (var commitHash in buildInfo.CommitHashList)
+            {
+                int row = revisionGrid.TrySearchRevision(commitHash);
+                if (row >= 0)
+                {
+                    var rowData = revisions.GetRowData(row);
+                    if (rowData.BuildStatus == null ||
+                        buildInfo.StartDate >= rowData.BuildStatus.StartDate)
+                    {
+                        rowData.BuildStatus = buildInfo;
+
+                        if (BuildStatusImageColumnIndex != -1 &&
+                            revisions.Rows[row].Cells[BuildStatusImageColumnIndex].Displayed)
+                            revisions.UpdateCellValue(BuildStatusImageColumnIndex, row);
+                        if (BuildStatusMessageColumnIndex != -1 &&
+                            revisions.Rows[row].Cells[BuildStatusImageColumnIndex].Displayed)
+                            revisions.UpdateCellValue(BuildStatusMessageColumnIndex, row);
+                    }
+                }
+            }
+        }
+
+        private IBuildServerCredentials ShowBuildServerCredentialsForm(string buildServerUniqueKey, IBuildServerCredentials buildServerCredentials)
+        {
+            if (revisionGrid.InvokeRequired)
+            {
+                return (IBuildServerCredentials)revisionGrid.Invoke(new Func<IBuildServerCredentials>(() => ShowBuildServerCredentialsForm(buildServerUniqueKey, buildServerCredentials)));
+            }
+
+            using (var form = new FormBuildServerCredentials(buildServerUniqueKey))
+            {
+                form.BuildServerCredentials = buildServerCredentials;
+
+                if (form.ShowDialog(revisionGrid) == DialogResult.OK)
+                {
+                    return buildServerCredentials;
+                }
+            }
+
+            return null;
+        }
+
         private void UpdateUI()
         {
             var columnsAreVisible = buildServerAdapter != null;
@@ -318,37 +347,6 @@ namespace GitUI.BuildServerIntegration
 
             if (BuildStatusMessageColumnIndex != -1)
                 revisions.Columns[BuildStatusMessageColumnIndex].Visible = columnsAreVisible && Module.EffectiveSettings.BuildServer.ShowBuildSummaryInGrid.ValueOrDefault;
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        private void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                CancelBuildStatusFetchOperation();
-
-                DisposeBuildServerAdapter();
-            }
-        }
-
-        private void DisposeBuildServerAdapter()
-        {
-            if (buildServerAdapter != null)
-            {
-                buildServerAdapter.Dispose();
-                buildServerAdapter = null;
-            }
-        }
-
-        private static IsolatedStorageFileStream GetBuildServerOptionsIsolatedStorageStream(IBuildServerAdapter buildServerAdapter, FileAccess fileAccess, FileShare fileShare)
-        {
-            var fileName = string.Format("BuildServer-{0}.options", Convert.ToBase64String(Encoding.UTF8.GetBytes(buildServerAdapter.UniqueKey)));
-            return new IsolatedStorageFileStream(fileName, FileMode.OpenOrCreate, fileAccess, fileShare);
         }
     }
 }

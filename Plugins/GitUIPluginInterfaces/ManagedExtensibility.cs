@@ -10,9 +10,30 @@ namespace GitUIPluginInterfaces
 {
     public class ManagedExtensibility
     {
+        private static readonly object compositionContainerSyncObj = new object();
         private static List<CompositionContainer> _compositionContainers;
 
-        private static readonly object compositionContainerSyncObj = new object();
+        public static IEnumerable<Lazy<T, TMetadataView>> GetExports<T, TMetadataView>()
+        {
+            var ret = new List<Lazy<T, TMetadataView>>();
+            foreach (var container in GetCompositionContainers())
+            {
+                try
+                {
+                    var exps = container.GetExports<T, TMetadataView>();
+                    ret.AddRange(exps);
+                }
+                catch (System.Reflection.ReflectionTypeLoadException ex)
+                {
+                    Trace.TraceError("GetExports() failed {0}", string.Join(Environment.NewLine, ex.LoaderExceptions.Select(r => r.ToString())));
+                }
+                catch (Exception ex)
+                {
+                    Trace.TraceError("Failed to get exports, {0}", ex.ToString());
+                }
+            }
+            return ret;
+        }
 
         /// <summary>
         /// The MEF container.
@@ -36,28 +57,6 @@ namespace GitUIPluginInterfaces
 
                 return _compositionContainers;
             }
-        }
-
-        public static IEnumerable<Lazy<T, TMetadataView>> GetExports<T, TMetadataView>()
-        {
-            var ret = new List<Lazy<T, TMetadataView>>();
-            foreach (var container in GetCompositionContainers())
-            {
-                try
-                {
-                    var exps = container.GetExports<T, TMetadataView>();
-                    ret.AddRange(exps);
-                }
-                catch (System.Reflection.ReflectionTypeLoadException ex)
-                {
-                    Trace.TraceError("GetExports() failed {0}", string.Join(Environment.NewLine, ex.LoaderExceptions.Select(r => r.ToString())));
-                }
-                catch (Exception ex)
-                {
-                    Trace.TraceError("Failed to get exports, {0}", ex.ToString());
-                }
-            }
-            return ret;
         }
     }
 }

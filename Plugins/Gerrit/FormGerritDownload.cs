@@ -15,13 +15,11 @@ namespace Gerrit
 
         #region Translation
 
-        private readonly TranslationString _downloadGerritChangeCaption = new TranslationString("Download Gerrit Change");
-
-        private readonly TranslationString _downloadCaption = new TranslationString("Download change {0}");
-
-        private readonly TranslationString _selectRemote = new TranslationString("Please select a remote repository");
-        private readonly TranslationString _selectChange = new TranslationString("Please enter a change");
         private readonly TranslationString _cannotGetChangeDetails = new TranslationString("Could not retrieve the change details");
+        private readonly TranslationString _downloadCaption = new TranslationString("Download change {0}");
+        private readonly TranslationString _downloadGerritChangeCaption = new TranslationString("Download Gerrit Change");
+        private readonly TranslationString _selectChange = new TranslationString("Please enter a change");
+        private readonly TranslationString _selectRemote = new TranslationString("Please select a remote repository");
 
         #endregion Translation
 
@@ -43,10 +41,16 @@ namespace Gerrit
             PushAndShowDialogWhenFailed(null);
         }
 
-        private void DownloadClick(object sender, EventArgs e)
+        private static string FixPath(string path)
         {
-            if (DownloadChange(this))
-                Close();
+            path = path.Trim();
+            return path.Replace('\\', '/');
+        }
+
+        private void AddRemoteClick(object sender, EventArgs e)
+        {
+            UICommands.StartRemotesDialog();
+            _NO_TRANSLATE_Remotes.DataSource = Module.GetRemotes(true);
         }
 
         private bool DownloadChange(IWin32Window owner)
@@ -133,15 +137,10 @@ namespace Gerrit
             return RunCommand(checkoutCommand, change);
         }
 
-        private bool RunCommand(IGitRemoteCommand command, string change)
+        private void DownloadClick(object sender, EventArgs e)
         {
-            command.OwnerForm = this;
-            command.Title = string.Format(_downloadCaption.Text, change);
-            command.Remote = _NO_TRANSLATE_Remotes.Text;
-
-            command.Execute();
-
-            return !command.ErrorOccurred;
+            if (DownloadChange(this))
+                Close();
         }
 
         private string FetchCommand(string remote, string remoteBranch)
@@ -159,10 +158,19 @@ namespace Gerrit
             return "fetch " + progressOption + "\"" + remote.Trim() + "\" " + remoteBranch;
         }
 
-        private static string FixPath(string path)
+        private void FormGerritDownloadLoad(object sender, EventArgs e)
         {
-            path = path.Trim();
-            return path.Replace('\\', '/');
+            _NO_TRANSLATE_Remotes.DataSource = Module.GetRemotes(true);
+
+            _currentBranchRemote = Settings.DefaultRemote;
+
+            IList<string> remotes = (IList<string>)_NO_TRANSLATE_Remotes.DataSource;
+            int i = remotes.IndexOf(_currentBranchRemote);
+            _NO_TRANSLATE_Remotes.SelectedIndex = i >= 0 ? i : 0;
+
+            _NO_TRANSLATE_Change.Select();
+
+            Text = string.Concat(_downloadGerritChangeCaption.Text, " (", Module.WorkingDir, ")");
         }
 
         private JObject LoadReviewInfo()
@@ -202,25 +210,15 @@ namespace Gerrit
             return null;
         }
 
-        private void FormGerritDownloadLoad(object sender, EventArgs e)
+        private bool RunCommand(IGitRemoteCommand command, string change)
         {
-            _NO_TRANSLATE_Remotes.DataSource = Module.GetRemotes(true);
+            command.OwnerForm = this;
+            command.Title = string.Format(_downloadCaption.Text, change);
+            command.Remote = _NO_TRANSLATE_Remotes.Text;
 
-            _currentBranchRemote = Settings.DefaultRemote;
+            command.Execute();
 
-            IList<string> remotes = (IList<string>)_NO_TRANSLATE_Remotes.DataSource;
-            int i = remotes.IndexOf(_currentBranchRemote);
-            _NO_TRANSLATE_Remotes.SelectedIndex = i >= 0 ? i : 0;
-
-            _NO_TRANSLATE_Change.Select();
-
-            Text = string.Concat(_downloadGerritChangeCaption.Text, " (", Module.WorkingDir, ")");
-        }
-
-        private void AddRemoteClick(object sender, EventArgs e)
-        {
-            UICommands.StartRemotesDialog();
-            _NO_TRANSLATE_Remotes.DataSource = Module.GetRemotes(true);
+            return !command.ErrorOccurred;
         }
     }
 }

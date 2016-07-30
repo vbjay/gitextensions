@@ -15,12 +15,12 @@ namespace FindLargeFiles
         private readonly TranslationString _areYouSureToDelete = new TranslationString("Are you sure to delete the selected files?");
         private readonly TranslationString _deleteCaption = new TranslationString("Delete");
 
-        private readonly float _threshold;
-        private readonly GitUIBaseEventArgs _gitUiCommands;
         private readonly IGitModule _gitCommands;
-        private string[] _revList;
-        private readonly Dictionary<string, GitObject> _list = new Dictionary<string, GitObject>();
         private readonly SortableObjectsList _gitObjects = new SortableObjectsList();
+        private readonly GitUIBaseEventArgs _gitUiCommands;
+        private readonly Dictionary<string, GitObject> _list = new Dictionary<string, GitObject>();
+        private readonly float _threshold;
+        private string[] _revList;
 
         public FindLargeFilesForm(float threshold, GitUIBaseEventArgs gitUiEventArgs)
         {
@@ -30,6 +30,37 @@ namespace FindLargeFiles
             this._threshold = threshold;
             this._gitUiCommands = gitUiEventArgs;
             this._gitCommands = gitUiEventArgs != null ? gitUiEventArgs.GitModule : null;
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            _revList = _gitCommands.RunGitCmd("rev-list HEAD").Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            pbRevisions.Maximum = (int)(_revList.Length * 1.1f);
+            BranchesGrid.DataSource = _gitObjects;
+            Thread MyThread = new Thread(FindLargeFilesFunction);
+            MyThread.Start();
+        }
+
+        private void Delete_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show(this, _areYouSureToDelete.Text, _deleteCaption.Text, MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                StringBuilder sb = new StringBuilder();
+                foreach (GitObject gitObject in _gitObjects.Where(gitObject => gitObject.Delete))
+                {
+                    sb.AppendLine(String.Format("\"{0}\" filter-branch --index-filter \"git rm -r -f --cached --ignore-unmatch {1}\" --prune-empty -- --all",
+                        _gitCommands.GitCommand, gitObject.Path));
+                }
+                sb.AppendLine(String.Format("for /f %%a IN ('\"{0}\" for-each-ref --format=%%^(refname^) refs/original/') DO \"{0}\" update-ref -d %%a",
+                        _gitCommands.GitCommand));
+                sb.AppendLine(String.Format("\"{0}\" reflog expire --expire=now --all",
+                    _gitCommands.GitCommand));
+                sb.AppendLine(String.Format("\"{0}\" gc --aggressive --prune=now",
+                    _gitCommands.GitCommand));
+                _gitUiCommands.GitUICommands.StartBatchFileProcessDialog(sb.ToString());
+            }
+            Close();
         }
 
         private void FindLargeFilesFunction()
@@ -97,16 +128,6 @@ namespace FindLargeFiles
             }
         }
 
-        protected override void OnLoad(EventArgs e)
-        {
-            base.OnLoad(e);
-            _revList = _gitCommands.RunGitCmd("rev-list HEAD").Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            pbRevisions.Maximum = (int)(_revList.Length * 1.1f);
-            BranchesGrid.DataSource = _gitObjects;
-            Thread MyThread = new Thread(FindLargeFilesFunction);
-            MyThread.Start();
-        }
-
         private IEnumerable<GitObject> GetLargeFiles(float threshold)
         {
             int thresholdSize = (int)(threshold * 1024 * 1024);
@@ -129,27 +150,6 @@ namespace FindLargeFiles
                     }
                 }
             }
-        }
-
-        private void Delete_Click(object sender, EventArgs e)
-        {
-            if (MessageBox.Show(this, _areYouSureToDelete.Text, _deleteCaption.Text, MessageBoxButtons.YesNo) == DialogResult.Yes)
-            {
-                StringBuilder sb = new StringBuilder();
-                foreach (GitObject gitObject in _gitObjects.Where(gitObject => gitObject.Delete))
-                {
-                    sb.AppendLine(String.Format("\"{0}\" filter-branch --index-filter \"git rm -r -f --cached --ignore-unmatch {1}\" --prune-empty -- --all",
-                        _gitCommands.GitCommand, gitObject.Path));
-                }
-                sb.AppendLine(String.Format("for /f %%a IN ('\"{0}\" for-each-ref --format=%%^(refname^) refs/original/') DO \"{0}\" update-ref -d %%a",
-                        _gitCommands.GitCommand));
-                sb.AppendLine(String.Format("\"{0}\" reflog expire --expire=now --all",
-                    _gitCommands.GitCommand));
-                sb.AppendLine(String.Format("\"{0}\" gc --aggressive --prune=now",
-                    _gitCommands.GitCommand));
-                _gitUiCommands.GitUICommands.StartBatchFileProcessDialog(sb.ToString());
-            }
-            Close();
         }
     }
 }

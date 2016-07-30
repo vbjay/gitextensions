@@ -15,31 +15,40 @@ namespace Gerrit
     {
         #region Translation
 
-        private readonly TranslationString _editGitReview = new TranslationString("Edit .gitreview");
         private readonly TranslationString _downloadGerritChange = new TranslationString("Download Gerrit Change");
-        private readonly TranslationString _publishGerritChange = new TranslationString("Publish Gerrit Change");
+        private readonly TranslationString _editGitReview = new TranslationString("Edit .gitreview");
         private readonly TranslationString _installCommitMsgHook = new TranslationString("Install Hook");
-        private readonly TranslationString _installCommitMsgHookShortText = new TranslationString("Install commit-msg hook");
-        private readonly TranslationString _installCommitMsgHookMessage = new TranslationString("Gerrit requires a commit-msg hook to be installed. Do you want to install the commit-msg hook into your repository?");
         private readonly TranslationString _installCommitMsgHookFailed = new TranslationString("Could not download the commit-msg file. Please install the commit-msg hook manually.");
+        private readonly TranslationString _installCommitMsgHookMessage = new TranslationString("Gerrit requires a commit-msg hook to be installed. Do you want to install the commit-msg hook into your repository?");
+        private readonly TranslationString _installCommitMsgHookShortText = new TranslationString("Install commit-msg hook");
+        private readonly TranslationString _publishGerritChange = new TranslationString("Publish Gerrit Change");
 
         #endregion Translation
 
-        private static readonly Dictionary<string, bool> _validatedHooks = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         private static readonly object _syncRoot = new object();
-
-        private bool _initialized;
+        private static readonly Dictionary<string, bool> _validatedHooks = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         private ToolStripItem[] _gerritMenuItems;
         private ToolStripMenuItem _gitReviewMenuItem;
-        private Form _mainForm;
         private IGitUICommands _gitUiCommands;
+        private bool _initialized;
         private ToolStripButton _installCommitMsgMenuItem;
+        private Form _mainForm;
 
         // public only because of FormTranslate
         public GerritPlugin()
         {
             SetNameAndDescription("Gerrit Code Review");
             Translate();
+        }
+
+        public override bool Execute(GitUIBaseEventArgs gitUiCommands)
+        {
+            using (var form = new FormPluginInformation())
+            {
+                form.ShowDialog();
+            }
+
+            return false;
         }
 
         public override void Register(IGitUICommands gitUiCommands)
@@ -56,9 +65,96 @@ namespace Gerrit
             _gitUiCommands = null;
         }
 
-        private void gitUiCommands_PostRegisterPlugin(object sender, GitUIBaseEventArgs e)
+        private string DownloadFromScp(GerritSettings settings)
         {
-            UpdateGerritMenuItems(e);
+            // This is a very quick and dirty "implementation" of the scp
+            // protocol. By sending the 0's as input, we trigger scp to
+            // send the file.
+
+            string content = GerritUtil.RunGerritCommand(
+                _mainForm,
+                _gitUiCommands.GitModule,
+                "scp -f hooks/commit-msg",
+                settings.DefaultRemote,
+                new byte[] { 0, 0, 0, 0, 0, 0, 0 }
+            );
+
+            // The first line of the output contains the file we're receiving
+            // in a format like "C0755 4248 commit-msg".
+
+            if (String.IsNullOrEmpty(content))
+                return null;
+
+            int index = content.IndexOf('\n');
+
+            if (index == -1)
+                return null;
+
+            string header = content.Substring(0, index);
+
+            if (!header.EndsWith(" commit-msg"))
+                return null;
+
+            // This looks like a valid scp response; return the rest of the
+            // response.
+
+            content = content.Substring(index + 1);
+
+            // The file should be terminated by a nul.
+
+            index = content.LastIndexOf((char)0);
+
+            Debug.Assert(index == content.Length - 1);
+
+            if (index != -1)
+                content = content.Substring(0, index);
+
+            return content;
+        }
+
+        private void downloadMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var form = new FormGerritDownload(_gitUiCommands))
+            {
+                form.ShowDialog(_mainForm);
+            }
+
+            _gitUiCommands.RepoChangedNotifier.Notify();
+        }
+
+        private T FindControl<T>(Control form, Func<T, bool> predicate)
+            where T : Control
+        {
+            return FindControl(form.Controls, predicate);
+        }
+
+        private T FindControl<T>(IEnumerable controls, Func<T, bool> predicate)
+            where T : Control
+        {
+            foreach (Control control in controls)
+            {
+                var result = control as T;
+
+                if (result != null && predicate(result))
+                    return result;
+
+                result = FindControl(control.Controls, predicate);
+
+                if (result != null)
+                    return result;
+            }
+
+            return null;
+        }
+
+        private void gitReviewMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var form = new FormGitReview(_gitUiCommands))
+            {
+                form.ShowDialog(_mainForm);
+            }
+
+            _gitUiCommands.RepoChangedNotifier.Notify();
         }
 
         private void gitUiCommands_PostBrowseInitialize(object sender, GitUIBaseEventArgs e)
@@ -66,27 +162,9 @@ namespace Gerrit
             UpdateGerritMenuItems(e);
         }
 
-        private void UpdateGerritMenuItems(GitUIBaseEventArgs e)
+        private void gitUiCommands_PostRegisterPlugin(object sender, GitUIBaseEventArgs e)
         {
-            if (!_initialized)
-                Initialize((Form)e.OwnerForm);
-
-            // Correct enabled/visibility of our menu/tool strip items.
-
-            bool validWorkingDir = e.GitModule.IsValidGitWorkingDir();
-
-            _gitReviewMenuItem.Enabled = validWorkingDir;
-
-            bool showGerritItems = validWorkingDir && File.Exists(e.GitModule.WorkingDir + ".gitreview");
-
-            foreach (var item in _gerritMenuItems)
-            {
-                item.Visible = showGerritItems;
-            }
-
-            _installCommitMsgMenuItem.Visible =
-                showGerritItems &&
-                !HaveValidCommitMsgHook(e.GitModule.GetGitDirectory());
+            UpdateGerritMenuItems(e);
         }
 
         private bool HaveValidCommitMsgHook(string gitDirectory)
@@ -238,42 +316,6 @@ namespace Gerrit
             };
         }
 
-        private void publishMenuItem_Click(object sender, EventArgs e)
-        {
-            using (var form = new FormGerritPublish(_gitUiCommands))
-            {
-                form.ShowDialog(_mainForm);
-            }
-
-            _gitUiCommands.RepoChangedNotifier.Notify();
-        }
-
-        private void downloadMenuItem_Click(object sender, EventArgs e)
-        {
-            using (var form = new FormGerritDownload(_gitUiCommands))
-            {
-                form.ShowDialog(_mainForm);
-            }
-
-            _gitUiCommands.RepoChangedNotifier.Notify();
-        }
-
-        private void installCommitMsgMenuItem_Click(object sender, EventArgs e)
-        {
-            var result = MessageBox.Show(
-                _mainForm,
-                _installCommitMsgHookMessage.Text,
-                _installCommitMsgHookShortText.Text,
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question
-            );
-
-            if (result == DialogResult.Yes)
-                InstallCommitMsgHook();
-
-            _gitUiCommands.RepoChangedNotifier.Notify();
-        }
-
         private void InstallCommitMsgHook()
         {
             var settings = GerritSettings.Load(_mainForm, _gitUiCommands.GitModule);
@@ -318,56 +360,25 @@ namespace Gerrit
             }
         }
 
-        private string DownloadFromScp(GerritSettings settings)
+        private void installCommitMsgMenuItem_Click(object sender, EventArgs e)
         {
-            // This is a very quick and dirty "implementation" of the scp
-            // protocol. By sending the 0's as input, we trigger scp to
-            // send the file.
-
-            string content = GerritUtil.RunGerritCommand(
+            var result = MessageBox.Show(
                 _mainForm,
-                _gitUiCommands.GitModule,
-                "scp -f hooks/commit-msg",
-                settings.DefaultRemote,
-                new byte[] { 0, 0, 0, 0, 0, 0, 0 }
+                _installCommitMsgHookMessage.Text,
+                _installCommitMsgHookShortText.Text,
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
             );
 
-            // The first line of the output contains the file we're receiving
-            // in a format like "C0755 4248 commit-msg".
+            if (result == DialogResult.Yes)
+                InstallCommitMsgHook();
 
-            if (String.IsNullOrEmpty(content))
-                return null;
-
-            int index = content.IndexOf('\n');
-
-            if (index == -1)
-                return null;
-
-            string header = content.Substring(0, index);
-
-            if (!header.EndsWith(" commit-msg"))
-                return null;
-
-            // This looks like a valid scp response; return the rest of the
-            // response.
-
-            content = content.Substring(index + 1);
-
-            // The file should be terminated by a nul.
-
-            index = content.LastIndexOf((char)0);
-
-            Debug.Assert(index == content.Length - 1);
-
-            if (index != -1)
-                content = content.Substring(0, index);
-
-            return content;
+            _gitUiCommands.RepoChangedNotifier.Notify();
         }
 
-        private void gitReviewMenuItem_Click(object sender, EventArgs e)
+        private void publishMenuItem_Click(object sender, EventArgs e)
         {
-            using (var form = new FormGitReview(_gitUiCommands))
+            using (var form = new FormGerritPublish(_gitUiCommands))
             {
                 form.ShowDialog(_mainForm);
             }
@@ -375,39 +386,27 @@ namespace Gerrit
             _gitUiCommands.RepoChangedNotifier.Notify();
         }
 
-        private T FindControl<T>(Control form, Func<T, bool> predicate)
-            where T : Control
+        private void UpdateGerritMenuItems(GitUIBaseEventArgs e)
         {
-            return FindControl(form.Controls, predicate);
-        }
+            if (!_initialized)
+                Initialize((Form)e.OwnerForm);
 
-        private T FindControl<T>(IEnumerable controls, Func<T, bool> predicate)
-            where T : Control
-        {
-            foreach (Control control in controls)
+            // Correct enabled/visibility of our menu/tool strip items.
+
+            bool validWorkingDir = e.GitModule.IsValidGitWorkingDir();
+
+            _gitReviewMenuItem.Enabled = validWorkingDir;
+
+            bool showGerritItems = validWorkingDir && File.Exists(e.GitModule.WorkingDir + ".gitreview");
+
+            foreach (var item in _gerritMenuItems)
             {
-                var result = control as T;
-
-                if (result != null && predicate(result))
-                    return result;
-
-                result = FindControl(control.Controls, predicate);
-
-                if (result != null)
-                    return result;
+                item.Visible = showGerritItems;
             }
 
-            return null;
-        }
-
-        public override bool Execute(GitUIBaseEventArgs gitUiCommands)
-        {
-            using (var form = new FormPluginInformation())
-            {
-                form.ShowDialog();
-            }
-
-            return false;
+            _installCommitMsgMenuItem.Visible =
+                showGerritItems &&
+                !HaveValidCommitMsgHook(e.GitModule.GetGitDirectory());
         }
     }
 }

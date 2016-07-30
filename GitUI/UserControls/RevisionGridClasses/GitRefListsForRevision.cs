@@ -6,8 +6,8 @@ namespace GitUI.UserControls.RevisionGridClasses
     internal class GitRefListsForRevision
     {
         private GitRef[] _allBranches;
-        private GitRef[] _localBranches;
         private GitRef[] _branchesWithNoIdenticalRemotes;
+        private GitRef[] _localBranches;
         private GitRef[] _tags;
 
         public GitRefListsForRevision(GitRevision revision)
@@ -25,9 +25,9 @@ namespace GitUI.UserControls.RevisionGridClasses
             get { return _allBranches; }
         }
 
-        public GitRef[] LocalBranches
+        public GitRef[] AllTags
         {
-            get { return _localBranches; }
+            get { return _tags; }
         }
 
         public GitRef[] BranchesWithNoIdenticalRemotes
@@ -35,9 +35,9 @@ namespace GitUI.UserControls.RevisionGridClasses
             get { return _branchesWithNoIdenticalRemotes; }
         }
 
-        public GitRef[] AllTags
+        public GitRef[] LocalBranches
         {
-            get { return _tags; }
+            get { return _localBranches; }
         }
 
         public string[] GetAllBranchNames()

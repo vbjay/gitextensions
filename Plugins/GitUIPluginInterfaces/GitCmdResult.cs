@@ -4,9 +4,9 @@ namespace GitUIPluginInterfaces
 {
     public struct CmdResult
     {
-        public string StdOutput;
-        public string StdError;
         public int ExitCode;
+        public string StdError;
+        public string StdOutput;
 
         public string GetString()
         {

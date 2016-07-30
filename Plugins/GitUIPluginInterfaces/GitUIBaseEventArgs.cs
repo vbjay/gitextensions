@@ -17,10 +17,6 @@ namespace GitUIPluginInterfaces
             this.GitUICommands = gitUICommands;
         }
 
-        public IGitUICommands GitUICommands { get; private set; }
-
-        public IWin32Window OwnerForm { get; private set; }
-
         public IGitModule GitModule
         {
             get
@@ -28,5 +24,9 @@ namespace GitUIPluginInterfaces
                 return GitUICommands.GitModule;
             }
         }
+
+        public IGitUICommands GitUICommands { get; private set; }
+
+        public IWin32Window OwnerForm { get; private set; }
     }
 }

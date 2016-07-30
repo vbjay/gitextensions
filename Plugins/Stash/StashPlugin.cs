@@ -5,16 +5,19 @@ namespace Stash
 {
     public class StashPlugin : GitPluginBase
     {
+        public static StringSetting StashBaseURL = new StringSetting("Specify the base URL to Stash", "https://example.stash.com");
+
+        public static BoolSetting StashDisableSSL = new BoolSetting("Disable SSL verification", false);
+
+        public static PasswordSetting StashPassword = new PasswordSetting("Stash Password", string.Empty);
+
+        public static StringSetting StashUsername = new StringSetting("Stash Username", string.Empty);
+
         public StashPlugin()
         {
             SetNameAndDescription("Create Stash Pull Request");
             Translate();
         }
-
-        public static StringSetting StashUsername = new StringSetting("Stash Username", string.Empty);
-        public static PasswordSetting StashPassword = new PasswordSetting("Stash Password", string.Empty);
-        public static StringSetting StashBaseURL = new StringSetting("Specify the base URL to Stash", "https://example.stash.com");
-        public static BoolSetting StashDisableSSL = new BoolSetting("Disable SSL verification", false);
 
         public override bool Execute(GitUIBaseEventArgs gitUiCommands)
         {

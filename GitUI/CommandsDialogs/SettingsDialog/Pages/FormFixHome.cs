@@ -8,36 +8,62 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
 {
     public partial class FormFixHome : GitExtensionsForm
     {
-        private readonly TranslationString _gitGlobalConfigNotFound =
-            new TranslationString("The environment variable HOME does not point to a directory that contains the global git config file:" + Environment.NewLine +
-                "\" {0} \"" + Environment.NewLine + Environment.NewLine + "Do you want Git Extensions to help locate the correct folder?");
-
-        private readonly TranslationString _gitGlobalConfigNotFoundCaption =
-            new TranslationString("Global config");
-
         private readonly TranslationString _gitconfigFoundHome =
             new TranslationString("Located .gitconfig in %HOME% ({0}). This setting has been chosen automatically.");
 
         private readonly TranslationString _gitconfigFoundHomedrive =
             new TranslationString("Located .gitconfig in %HOMEDRIVE%%HOMEPATH% ({0}). This setting has been chosen automatically.");
 
-        private readonly TranslationString _gitconfigFoundUserprofile =
-            new TranslationString("Located .gitconfig in %USERPROFILE% ({0}). This setting has been chosen automatically.");
-
         private readonly TranslationString _gitconfigFoundPersonalFolder =
             new TranslationString("Located .gitconfig in personal folder ({0}). This setting has been chosen automatically.");
 
-        private readonly TranslationString _noHomeDirectorySpecified =
-            new TranslationString("Please enter a HOME directory.");
+        private readonly TranslationString _gitconfigFoundUserprofile =
+            new TranslationString("Located .gitconfig in %USERPROFILE% ({0}). This setting has been chosen automatically.");
+
+        private readonly TranslationString _gitGlobalConfigNotFound =
+                                            new TranslationString("The environment variable HOME does not point to a directory that contains the global git config file:" + Environment.NewLine +
+                "\" {0} \"" + Environment.NewLine + Environment.NewLine + "Do you want Git Extensions to help locate the correct folder?");
+
+        private readonly TranslationString _gitGlobalConfigNotFoundCaption =
+            new TranslationString("Global config");
 
         private readonly TranslationString _homeNotAccessible =
             new TranslationString("The environment variable HOME points to a directory that is not accessible:" + Environment.NewLine +
                                 "\"{0}\"");
 
+        private readonly TranslationString _noHomeDirectorySpecified =
+                    new TranslationString("Please enter a HOME directory.");
+
         public FormFixHome()
         {
             InitializeComponent();
             Translate();
+        }
+
+        public static void CheckHomePath()
+        {
+            GitCommandHelpers.SetEnvironmentVariable();
+
+            if (IsFixHome())
+            {
+                using (var frm = new FormFixHome())
+                    frm.ShowIfUserWant();
+            }
+        }
+
+        public void ShowIfUserWant()
+        {
+            if (MessageBox.Show(string.Format(_gitGlobalConfigNotFound.Text, Environment.GetEnvironmentVariable("HOME")),
+                     _gitGlobalConfigNotFoundCaption.Text, MessageBoxButtons.YesNo) == DialogResult.Yes)
+                ShowDialog();
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            LoadSettings();
+
+            defaultHome.Text = string.Format(defaultHome.Text + " ({0})", GitCommandHelpers.GetDefaultHomeDir());
+            userprofileHome.Text = string.Format(userprofileHome.Text + " ({0})", Environment.GetEnvironmentVariable("USERPROFILE"));
         }
 
         private static bool IsFixHome()
@@ -80,32 +106,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
                 return true;
             }
             return false;
-        }
-
-        public void ShowIfUserWant()
-        {
-            if (MessageBox.Show(string.Format(_gitGlobalConfigNotFound.Text, Environment.GetEnvironmentVariable("HOME")),
-                     _gitGlobalConfigNotFoundCaption.Text, MessageBoxButtons.YesNo) == DialogResult.Yes)
-                ShowDialog();
-        }
-
-        public static void CheckHomePath()
-        {
-            GitCommandHelpers.SetEnvironmentVariable();
-
-            if (IsFixHome())
-            {
-                using (var frm = new FormFixHome())
-                    frm.ShowIfUserWant();
-            }
-        }
-
-        protected override void OnLoad(EventArgs e)
-        {
-            LoadSettings();
-
-            defaultHome.Text = string.Format(defaultHome.Text + " ({0})", GitCommandHelpers.GetDefaultHomeDir());
-            userprofileHome.Text = string.Format(userprofileHome.Text + " ({0})", Environment.GetEnvironmentVariable("USERPROFILE"));
         }
 
         private void LoadSettings()

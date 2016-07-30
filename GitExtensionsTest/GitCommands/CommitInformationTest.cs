@@ -11,7 +11,6 @@ namespace GitExtensionsTest
     [TestClass]
     public class CommitInformationTest
     {
-
         [TestMethod]
         public void CanCreateCommitInformationFromFormatedData()
         {
@@ -62,13 +61,6 @@ namespace GitExtensionsTest
         }
 
         [TestMethod]
-        public void GetCommitInfoTestWhenDataIsNull()
-        {
-            var actualResult = CommitInformation.GetCommitInfo(new GitModule(""), "fakesha1");
-            Assert.AreEqual("Cannot find commit fakesha1", actualResult.Header);
-        }
-
-        [TestMethod]
         public void GetAllBranchesWhichContainGivenCommitTestReturnsEmptyList()
         {
             var module = new GitModule("");
@@ -76,6 +68,13 @@ namespace GitExtensionsTest
 
             Assert.IsNotNull(actualResult);
             Assert.IsTrue(!actualResult.Any());
+        }
+
+        [TestMethod]
+        public void GetCommitInfoTestWhenDataIsNull()
+        {
+            var actualResult = CommitInformation.GetCommitInfo(new GitModule(""), "fakesha1");
+            Assert.AreEqual("Cannot find commit fakesha1", actualResult.Header);
         }
     }
 }

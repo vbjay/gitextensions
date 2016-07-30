@@ -10,19 +10,6 @@ namespace GitUI
     public static class BrowseForPrivateKey
     {
         /// <summary>
-        /// Prompts the user to browse for a key, and attempts to load it. Returns the path to the key, if successful.
-        /// </summary>
-        public static string BrowseAndLoad(IWin32Window parent)
-        {
-            var path = Browse(parent);
-            if (!string.IsNullOrEmpty(path))
-                if (LoadKey(parent, path))
-                    return path;
-
-            return null;
-        }
-
-        /// <summary>
         /// Prompts the user to browse for a key. Returns the path chosen, or null.
         /// </summary>
         public static string Browse(IWin32Window parent)
@@ -39,6 +26,19 @@ namespace GitUI
 
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Prompts the user to browse for a key, and attempts to load it. Returns the path to the key, if successful.
+        /// </summary>
+        public static string BrowseAndLoad(IWin32Window parent)
+        {
+            var path = Browse(parent);
+            if (!string.IsNullOrEmpty(path))
+                if (LoadKey(parent, path))
+                    return path;
+
+            return null;
         }
 
         /// <summary>

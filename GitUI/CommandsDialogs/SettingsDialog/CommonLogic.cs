@@ -11,15 +11,21 @@ namespace GitUI.CommandsDialogs.SettingsDialog
 {
     public class CommonLogic : Translate
     {
+        public const string GitExtensionsShellEx32Name = "GitExtensionsShellEx32.dll";
+
+        public const string GitExtensionsShellEx64Name = "GitExtensionsShellEx64.dll";
+
+        public readonly ConfigFileSettingsSet ConfigFileSettingsSet;
+
+        public readonly GitModule Module;
+
+        public readonly RepoDistSettingsSet RepoDistSettingsSet;
+
         private readonly TranslationString _cantReadRegistry =
-            new TranslationString("GitExtensions has insufficient permissions to check the registry.");
+                                                    new TranslationString("GitExtensions has insufficient permissions to check the registry.");
 
         private readonly TranslationString _selectFile =
             new TranslationString("Select file");
-
-        public readonly RepoDistSettingsSet RepoDistSettingsSet;
-        public readonly ConfigFileSettingsSet ConfigFileSettingsSet;
-        public readonly GitModule Module;
 
         public CommonLogic(GitModule aModule)
         {
@@ -51,23 +57,42 @@ namespace GitUI.CommandsDialogs.SettingsDialog
             }
         }
 
-        public const string GitExtensionsShellEx32Name = "GitExtensionsShellEx32.dll";
-        public const string GitExtensionsShellEx64Name = "GitExtensionsShellEx64.dll";
+        public Encoding ComboToEncoding(ComboBox combo)
+        {
+            return combo.SelectedItem as Encoding;
+        }
+
+        public void EncodingToCombo(Encoding encoding, ComboBox combo)
+        {
+            if (encoding == null)
+                combo.Text = "";
+            else
+                combo.Text = encoding.EncodingName;
+        }
+
+        public void FillEncodings(ComboBox combo)
+        {
+            combo.Items.AddRange(AppSettings.AvailableEncodings.Values.ToArray());
+            combo.DisplayMember = "EncodingName";
+        }
+
+        public string GetGlobalEditor()
+        {
+            string editor = Environment.GetEnvironmentVariable("GIT_EDITOR");
+            if (!string.IsNullOrEmpty(editor))
+                return editor;
+            editor = ConfigFileSettingsSet.GlobalSettings.GetValue("core.editor");
+            if (!string.IsNullOrEmpty(editor))
+                return editor;
+            editor = Environment.GetEnvironmentVariable("VISUAL");
+            if (!string.IsNullOrEmpty(editor))
+                return editor;
+            return Environment.GetEnvironmentVariable("EDITOR");
+        }
 
         public string GetGlobalMergeTool()
         {
             return ConfigFileSettingsSet.GlobalSettings.GetValue("merge.tool");
-        }
-
-        public void SetGlobalMergeTool(string value)
-        {
-            ConfigFileSettingsSet.GlobalSettings.SetValue("merge.tool", value);
-        }
-
-        public bool IsMergeTool(string toolName)
-        {
-            return GetGlobalMergeTool().Equals(toolName,
-                StringComparison.CurrentCultureIgnoreCase);
         }
 
         public string GetRegistryValue(RegistryKey root, string subkey, string key)
@@ -91,18 +116,10 @@ namespace GitUI.CommandsDialogs.SettingsDialog
             return value ?? string.Empty;
         }
 
-        public string GetGlobalEditor()
+        public bool IsMergeTool(string toolName)
         {
-            string editor = Environment.GetEnvironmentVariable("GIT_EDITOR");
-            if (!string.IsNullOrEmpty(editor))
-                return editor;
-            editor = ConfigFileSettingsSet.GlobalSettings.GetValue("core.editor");
-            if (!string.IsNullOrEmpty(editor))
-                return editor;
-            editor = Environment.GetEnvironmentVariable("VISUAL");
-            if (!string.IsNullOrEmpty(editor))
-                return editor;
-            return Environment.GetEnvironmentVariable("EDITOR");
+            return GetGlobalMergeTool().Equals(toolName,
+                StringComparison.CurrentCultureIgnoreCase);
         }
 
         public string SelectFile(string initialDirectory, string filter, string prev)
@@ -118,23 +135,9 @@ namespace GitUI.CommandsDialogs.SettingsDialog
             }
         }
 
-        public void EncodingToCombo(Encoding encoding, ComboBox combo)
+        public void SetGlobalMergeTool(string value)
         {
-            if (encoding == null)
-                combo.Text = "";
-            else
-                combo.Text = encoding.EncodingName;
-        }
-
-        public Encoding ComboToEncoding(ComboBox combo)
-        {
-            return combo.SelectedItem as Encoding;
-        }
-
-        public void FillEncodings(ComboBox combo)
-        {
-            combo.Items.AddRange(AppSettings.AvailableEncodings.Values.ToArray());
-            combo.DisplayMember = "EncodingName";
+            ConfigFileSettingsSet.GlobalSettings.SetValue("merge.tool", value);
         }
     }
 }

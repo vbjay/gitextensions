@@ -12,15 +12,15 @@ namespace GitPlugin.Commands
             RunForSelection = runForSelection;
         }
 
+        public override bool IsEnabled(DTE2 application)
+        {
+            return new ItemCommandT().IsEnabled(application);
+        }
+
         public override void OnCommand(DTE2 application, OutputWindowPane pane)
         {
             var command = new ItemCommandT { RunForSelection = RunForSelection };
             command.OnCommand(application, pane);
-        }
-
-        public override bool IsEnabled(DTE2 application)
-        {
-            return new ItemCommandT().IsEnabled(application);
         }
     }
 }

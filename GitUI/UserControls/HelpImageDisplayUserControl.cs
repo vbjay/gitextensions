@@ -14,7 +14,10 @@ namespace GitUI.Help
 
         ////public const string fastForwardHoverText = "Hover to see scenario when fast forward is possible.";
 
+        private bool _isHover;
         private bool _isLoaded;
+
+        private bool _showImage2OnHover;
 
         public HelpImageDisplayUserControl()
         {
@@ -22,19 +25,28 @@ namespace GitUI.Help
             Translate();
         }
 
-        /// <summary>
-        /// NOTE: will also be called if designer code calls "this.helpImageDisplayUserControl1.ShowImage2OnHover = true;"
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void HelpImageDisplayUserControl_Load(object sender, EventArgs e)
+        public Image Image1
         {
-            IsExpanded = LoadIsExpandedValueFromSettings(IsExpanded);
-            UpdateIsExpandedState();
-            UpdateImageDisplay();
-            UpdateControlSize();
+            get { return _image1; }
+            set
+            {
+                _image1 = value;
+                UpdateImageDisplay();
+                if (IsExpanded)
+                    UpdateControlSize();
+            }
+        }
 
-            _isLoaded = true;
+        public Image Image2
+        {
+            get { return _image2; }
+            set
+            {
+                _image2 = value;
+                UpdateImageDisplay();
+                if (IsExpanded)
+                    UpdateControlSize();
+            }
         }
 
         public bool IsExpanded
@@ -62,58 +74,6 @@ namespace GitUI.Help
             }
         }
 
-        public string UniqueIsExpandedSettingsId { get; set; }
-
-        private void UpdateIsExpandedState()
-        {
-            if (_isExpanded)
-            {
-                linkLabelHide.Visible = true;
-
-                buttonShowHelp.Visible = false;
-                //// linkLabelShowHelp.Visible = false; // Why use button instead of label? Because button has constant width independent of language!
-
-                pictureBox1.Visible = true;
-                labelHoverText.Visible = IsOnHoverShowImage2;
-            }
-            else
-            {
-                linkLabelHide.Visible = false;
-
-                buttonShowHelp.Visible = true;
-                ////linkLabelShowHelp.Visible = true;
-
-                pictureBox1.Visible = false;
-                labelHoverText.Visible = false;
-            }
-
-            UpdateControlSize();
-        }
-
-        public Image Image1
-        {
-            get { return _image1; }
-            set
-            {
-                _image1 = value;
-                UpdateImageDisplay();
-                if (IsExpanded)
-                    UpdateControlSize();
-            }
-        }
-
-        public Image Image2
-        {
-            get { return _image2; }
-            set
-            {
-                _image2 = value;
-                UpdateImageDisplay();
-                if (IsExpanded)
-                    UpdateControlSize();
-            }
-        }
-
         /// <summary>
         /// see also IsOnHoverShowImage2NoticeText
         /// </summary>
@@ -136,12 +96,11 @@ namespace GitUI.Help
         /// </summary>
         public string IsOnHoverShowImage2NoticeText { get { return labelHoverText.Text; } set { labelHoverText.Text = value; } }
 
-        private bool _isHover;
-        private bool _showImage2OnHover;
+        public string UniqueIsExpandedSettingsId { get; set; }
 
-        private bool IsHovering()
+        private void buttonShowHelp_Click(object sender, EventArgs e)
         {
-            return _isHover;
+            IsExpanded = true;
         }
 
         private string GetId()
@@ -149,14 +108,62 @@ namespace GitUI.Help
             return UniqueIsExpandedSettingsId ?? "MUST_BE_SET";
         }
 
-        private void SaveIsExpandedValueInSettings(bool value)
+        /// <summary>
+        /// NOTE: will also be called if designer code calls "this.helpImageDisplayUserControl1.ShowImage2OnHover = true;"
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void HelpImageDisplayUserControl_Load(object sender, EventArgs e)
         {
-            AppSettings.SetBool("HelpIsExpanded" + GetId(), value);
+            IsExpanded = LoadIsExpandedValueFromSettings(IsExpanded);
+            UpdateIsExpandedState();
+            UpdateImageDisplay();
+            UpdateControlSize();
+
+            _isLoaded = true;
+        }
+
+        private void HelpImageDisplayUserControl_MouseEnter(object sender, EventArgs e)
+        {
+            if (IsOnHoverShowImage2)
+            {
+                _isHover = true;
+                UpdateImageDisplay();
+            }
+        }
+
+        private void HelpImageDisplayUserControl_MouseLeave(object sender, EventArgs e)
+        {
+            if (IsOnHoverShowImage2)
+            {
+                _isHover = false;
+                UpdateImageDisplay();
+            }
+        }
+
+        private bool IsHovering()
+        {
+            return _isHover;
+        }
+
+        private void linkLabelHide_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            IsExpanded = false;
+        }
+
+        private void linkLabelShowHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            IsExpanded = true;
         }
 
         private bool LoadIsExpandedValueFromSettings(bool defaultValue)
         {
             return AppSettings.GetBool("HelpIsExpanded" + GetId(), defaultValue);
+        }
+
+        private void SaveIsExpandedValueInSettings(bool value)
+        {
+            AppSettings.SetBool("HelpIsExpanded" + GetId(), value);
         }
 
         private void UpdateControlSize()
@@ -236,37 +243,30 @@ namespace GitUI.Help
             }
         }
 
-        private void HelpImageDisplayUserControl_MouseEnter(object sender, EventArgs e)
+        private void UpdateIsExpandedState()
         {
-            if (IsOnHoverShowImage2)
+            if (_isExpanded)
             {
-                _isHover = true;
-                UpdateImageDisplay();
-            }
-        }
+                linkLabelHide.Visible = true;
 
-        private void HelpImageDisplayUserControl_MouseLeave(object sender, EventArgs e)
-        {
-            if (IsOnHoverShowImage2)
+                buttonShowHelp.Visible = false;
+                //// linkLabelShowHelp.Visible = false; // Why use button instead of label? Because button has constant width independent of language!
+
+                pictureBox1.Visible = true;
+                labelHoverText.Visible = IsOnHoverShowImage2;
+            }
+            else
             {
-                _isHover = false;
-                UpdateImageDisplay();
+                linkLabelHide.Visible = false;
+
+                buttonShowHelp.Visible = true;
+                ////linkLabelShowHelp.Visible = true;
+
+                pictureBox1.Visible = false;
+                labelHoverText.Visible = false;
             }
-        }
 
-        private void linkLabelHide_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            IsExpanded = false;
-        }
-
-        private void buttonShowHelp_Click(object sender, EventArgs e)
-        {
-            IsExpanded = true;
-        }
-
-        private void linkLabelShowHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            IsExpanded = true;
+            UpdateControlSize();
         }
     }
 }

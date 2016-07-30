@@ -50,11 +50,6 @@ namespace TeamCityIntegration.Settings
             }
         }
 
-        private void TeamCityBuildIdFilter_TextChanged(object sender, EventArgs e)
-        {
-            labelRegexError.Visible = !BuildServerSettingsHelper.IsRegexValid(TeamCityBuildIdFilter.Text);
-        }
-
         private void buttonProjectChooser_Click(object sender, EventArgs e)
         {
             try
@@ -76,14 +71,19 @@ namespace TeamCityIntegration.Settings
             }
         }
 
-        private void TeamCityServerUrl_TextChanged(object sender, EventArgs e)
-        {
-            SetChooseBuildButtonState();
-        }
-
         private void SetChooseBuildButtonState()
         {
             buttonProjectChooser.Enabled = !string.IsNullOrWhiteSpace(TeamCityServerUrl.Text);
+        }
+
+        private void TeamCityBuildIdFilter_TextChanged(object sender, EventArgs e)
+        {
+            labelRegexError.Visible = !BuildServerSettingsHelper.IsRegexValid(TeamCityBuildIdFilter.Text);
+        }
+
+        private void TeamCityServerUrl_TextChanged(object sender, EventArgs e)
+        {
+            SetChooseBuildButtonState();
         }
     }
 }

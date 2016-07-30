@@ -12,37 +12,24 @@ namespace TfsInterop
 {
     public class BuildInfo : IBuild
     {
+        public string Description { get; set; }
         public string Id { get; set; }
+        public bool IsFinished { get; set; }
         public string Label { get; set; }
+        public string Revision { get; set; }
         public DateTime StartDate { get; set; }
         public BuildStatus Status { get; set; }
-        public bool IsFinished { get; set; }
-        public string Description { get; set; }
-        public string Revision { get; set; }
         public string Url { get; set; }
     }
 
     public class TfsHelper : ITfsHelper
     {
         private IBuildDefinition[] _buildDefinitions;
+        private IBuildServer _buildServer;
         private string _hostname;
         private bool _isWebServer;
-        private string _urlPrefix;
-        private IBuildServer _buildServer;
         private TfsTeamProjectCollection _tfsCollection;
-
-        public bool IsDependencyOk()
-        {
-            try
-            {
-                Trace.WriteLine("Test if Microsoft.TeamFoundation.Build assemblies dependencies are present : " + Microsoft.TeamFoundation.Build.Client.BuildStatus.Succeeded.ToString("G"));
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
+        private string _urlPrefix;
 
         public void ConnectToTfsServer(string hostname, string teamCollection, string projectName, Regex buildDefinitionNameFilter = null)
         {
@@ -80,6 +67,28 @@ namespace TfsInterop
             catch (Exception ex)
             {
                 Trace.WriteLine(ex.Message);
+            }
+        }
+
+        public void Dispose()
+        {
+            _buildServer = null;
+            if (_tfsCollection != null)
+                _tfsCollection.Dispose();
+            _buildDefinitions = null;
+            GC.Collect();
+        }
+
+        public bool IsDependencyOk()
+        {
+            try
+            {
+                Trace.WriteLine("Test if Microsoft.TeamFoundation.Build assemblies dependencies are present : " + Microsoft.TeamFoundation.Build.Client.BuildStatus.Succeeded.ToString("G"));
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
             }
         }
 
@@ -127,41 +136,6 @@ namespace TfsInterop
             return result;
         }
 
-        private static string GetStatus(IBuildDetail build)
-        {
-            if (build.Status == Microsoft.TeamFoundation.Build.Client.BuildStatus.NotStarted)
-                return "Not started";
-            if (build.Status == Microsoft.TeamFoundation.Build.Client.BuildStatus.InProgress)
-                return "In progress...";
-            if (build.Status == Microsoft.TeamFoundation.Build.Client.BuildStatus.None)
-                return "No status";
-            if (build.Status == Microsoft.TeamFoundation.Build.Client.BuildStatus.Stopped)
-                return "Stopped";
-            if (build.Status == Microsoft.TeamFoundation.Build.Client.BuildStatus.Succeeded)
-                return "OK";
-            if (build.Status == Microsoft.TeamFoundation.Build.Client.BuildStatus.Failed
-                || build.Status == Microsoft.TeamFoundation.Build.Client.BuildStatus.PartiallySucceeded)
-            {
-                if (build.CompilationStatus != BuildPhaseStatus.Succeeded)
-                    return "Compilation: " + GetStatusDescription(build.CompilationStatus);
-                if (build.TestStatus != BuildPhaseStatus.Succeeded)
-                    return "Tests: " + GetStatusDescription(build.TestStatus);
-                if (build.Status == Microsoft.TeamFoundation.Build.Client.BuildStatus.Failed)
-                    return "KO";
-                return "Partially Succeeded";
-            }
-            return "-";
-        }
-
-        private static string GetStatusDescription(BuildPhaseStatus status)
-        {
-            if (status == BuildPhaseStatus.Succeeded)
-                return "OK";
-            if (status == BuildPhaseStatus.Failed)
-                return "KO";
-            return "-";
-        }
-
         private static BuildStatus ConvertStatus(Microsoft.TeamFoundation.Build.Client.BuildStatus status)
         {
             switch (status)
@@ -197,13 +171,39 @@ namespace TfsInterop
             return s;
         }
 
-        public void Dispose()
+        private static string GetStatus(IBuildDetail build)
         {
-            _buildServer = null;
-            if (_tfsCollection != null)
-                _tfsCollection.Dispose();
-            _buildDefinitions = null;
-            GC.Collect();
+            if (build.Status == Microsoft.TeamFoundation.Build.Client.BuildStatus.NotStarted)
+                return "Not started";
+            if (build.Status == Microsoft.TeamFoundation.Build.Client.BuildStatus.InProgress)
+                return "In progress...";
+            if (build.Status == Microsoft.TeamFoundation.Build.Client.BuildStatus.None)
+                return "No status";
+            if (build.Status == Microsoft.TeamFoundation.Build.Client.BuildStatus.Stopped)
+                return "Stopped";
+            if (build.Status == Microsoft.TeamFoundation.Build.Client.BuildStatus.Succeeded)
+                return "OK";
+            if (build.Status == Microsoft.TeamFoundation.Build.Client.BuildStatus.Failed
+                || build.Status == Microsoft.TeamFoundation.Build.Client.BuildStatus.PartiallySucceeded)
+            {
+                if (build.CompilationStatus != BuildPhaseStatus.Succeeded)
+                    return "Compilation: " + GetStatusDescription(build.CompilationStatus);
+                if (build.TestStatus != BuildPhaseStatus.Succeeded)
+                    return "Tests: " + GetStatusDescription(build.TestStatus);
+                if (build.Status == Microsoft.TeamFoundation.Build.Client.BuildStatus.Failed)
+                    return "KO";
+                return "Partially Succeeded";
+            }
+            return "-";
+        }
+
+        private static string GetStatusDescription(BuildPhaseStatus status)
+        {
+            if (status == BuildPhaseStatus.Succeeded)
+                return "OK";
+            if (status == BuildPhaseStatus.Failed)
+                return "KO";
+            return "-";
         }
     }
 }

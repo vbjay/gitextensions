@@ -5,9 +5,9 @@ namespace GitUI.CommandsDialogs.SettingsDialog
     public class RepoDistSettingsSet
     {
         public readonly RepoDistSettings EffectiveSettings;
+        public readonly RepoDistSettings GlobalSettings;
         public readonly RepoDistSettings LocalSettings;
         public readonly RepoDistSettings RepoDistSettings;
-        public readonly RepoDistSettings GlobalSettings;
 
         public RepoDistSettingsSet(
             RepoDistSettings aEffectiveSettings,

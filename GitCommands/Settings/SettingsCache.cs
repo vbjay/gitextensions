@@ -17,8 +17,48 @@ namespace GitCommands
             GC.SuppressFinalize(this);
         }
 
-        protected virtual void Dispose(bool disposing)
+        public bool HasADifferentValue<T>(string name, T value, Func<T, string> encode)
         {
+            string s;
+
+            if (value == null)
+                s = null;
+            else
+                s = encode(value);
+
+            return LockedAction<bool>(() =>
+            {
+                string inMemValue = GetValue(name);
+                return inMemValue != null && !string.Equals(inMemValue, s);
+            });
+        }
+
+        public bool HasValue(string name)
+        {
+            return GetValue(name) != null;
+        }
+
+        public void Import(IEnumerable<Tuple<string, string>> keyValuePairs)
+        {
+            LockedAction(() =>
+            {
+                foreach (var pair in keyValuePairs)
+                {
+                    if (pair.Item2 != null)
+                        SetValueImpl(pair.Item1, pair.Item2);
+                }
+
+                Save();
+            });
+        }
+
+        public void Load()
+        {
+            LockedAction(() =>
+                {
+                    Clear();
+                    LoadImpl();
+                });
         }
 
         public void LockedAction(Action action)
@@ -38,110 +78,9 @@ namespace GitCommands
             }
         }
 
-        protected abstract void SaveImpl();
-
-        protected abstract void LoadImpl();
-
-        protected abstract void SetValueImpl(string key, string value);
-
-        protected abstract string GetValueImpl(string key);
-
-        protected abstract bool NeedRefresh();
-
-        protected virtual void ClearImpl()
-        {
-            ByNameMap.Clear();
-        }
-
-        private void Clear()
-        {
-            LockedAction(ClearImpl);
-        }
-
         public void Save()
         {
             LockedAction(SaveImpl);
-        }
-
-        public void Load()
-        {
-            LockedAction(() =>
-                {
-                    Clear();
-                    LoadImpl();
-                });
-        }
-
-        public void Import(IEnumerable<Tuple<string, string>> keyValuePairs)
-        {
-            LockedAction(() =>
-            {
-                foreach (var pair in keyValuePairs)
-                {
-                    if (pair.Item2 != null)
-                        SetValueImpl(pair.Item1, pair.Item2);
-                }
-
-                Save();
-            });
-        }
-
-        protected void EnsureSettingsAreUpToDate()
-        {
-            if (NeedRefresh())
-            {
-                LockedAction(Load);
-            }
-        }
-
-        protected virtual void SettingsChanged()
-        {
-        }
-
-        private void SetValue(string name, string value)
-        {
-            LockedAction(() =>
-            {
-                //will refresh EncodedNameMap if needed
-                string inMemValue = GetValue(name);
-
-                if (string.Equals(inMemValue, value))
-                    return;
-
-                SetValueImpl(name, value);
-
-                SettingsChanged();
-            });
-        }
-
-        private string GetValue(string name)
-        {
-            return LockedAction<string>(() =>
-            {
-                EnsureSettingsAreUpToDate();
-                return GetValueImpl(name);
-            });
-        }
-
-        public bool HasValue(string name)
-        {
-            return GetValue(name) != null;
-        }
-
-        public bool HasADifferentValue<T>(string name, T value, Func<T, string> encode)
-        {
-            string s;
-
-            if (value == null)
-                s = null;
-            else
-                s = encode(value);
-
-            return LockedAction<bool>(() =>
-            {
-                string inMemValue = GetValue(name);
-                return inMemValue != null && !string.Equals(inMemValue, s);
-            });
         }
 
         public void SetValue<T>(string name, T value, Func<T, string> encode)
@@ -213,6 +152,67 @@ namespace GitCommands
             });
             value = val;
             return result;
+        }
+
+        protected virtual void ClearImpl()
+        {
+            ByNameMap.Clear();
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+        }
+
+        protected void EnsureSettingsAreUpToDate()
+        {
+            if (NeedRefresh())
+            {
+                LockedAction(Load);
+            }
+        }
+
+        protected abstract string GetValueImpl(string key);
+
+        protected abstract void LoadImpl();
+
+        protected abstract bool NeedRefresh();
+
+        protected abstract void SaveImpl();
+
+        protected virtual void SettingsChanged()
+        {
+        }
+
+        protected abstract void SetValueImpl(string key, string value);
+
+        private void Clear()
+        {
+            LockedAction(ClearImpl);
+        }
+
+        private string GetValue(string name)
+        {
+            return LockedAction<string>(() =>
+            {
+                EnsureSettingsAreUpToDate();
+                return GetValueImpl(name);
+            });
+        }
+
+        private void SetValue(string name, string value)
+        {
+            LockedAction(() =>
+            {
+                //will refresh EncodedNameMap if needed
+                string inMemValue = GetValue(name);
+
+                if (string.Equals(inMemValue, value))
+                    return;
+
+                SetValueImpl(name, value);
+
+                SettingsChanged();
+            });
         }
     }
 }

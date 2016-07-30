@@ -9,46 +9,13 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
 {
     public partial class GitExtensionsSettingsPage : SettingsPageWithHeader
     {
+        private bool loadedDefaultClone = false;
+
         public GitExtensionsSettingsPage()
         {
             InitializeComponent();
             Text = "Git Extensions";
             Translate();
-        }
-
-        private bool loadedDefaultClone = false;
-
-        private void defaultCloneDropDown(object sender, EventArgs e)
-        {
-            if (!loadedDefaultClone)
-            {
-                FillDefaultCloneDestinationDropDown();
-                loadedDefaultClone = true;
-            }
-        }
-
-        protected override void SettingsToPage()
-        {
-            chkShowDiffForAllParents.Checked = AppSettings.ShowDiffForAllParents;
-            chkCheckForUncommittedChangesInCheckoutBranch.Checked = AppSettings.CheckForUncommittedChangesInCheckoutBranch;
-            chkStartWithRecentWorkingDir.Checked = AppSettings.StartWithRecentWorkingDir;
-            chkPlaySpecialStartupSound.Checked = AppSettings.PlaySpecialStartupSound;
-            chkUsePatienceDiffAlgorithm.Checked = AppSettings.UsePatienceDiffAlgorithm;
-            RevisionGridQuickSearchTimeout.Value = AppSettings.RevisionGridQuickSearchTimeout;
-            chkFollowRenamesInFileHistory.Checked = AppSettings.FollowRenamesInFileHistory;
-            chkStashUntrackedFiles.Checked = AppSettings.IncludeUntrackedFilesInAutoStash;
-            chkShowCurrentChangesInRevisionGraph.Checked = AppSettings.RevisionGraphShowWorkingDirChanges;
-            chkShowStashCountInBrowseWindow.Checked = AppSettings.ShowStashCount;
-            chkShowGitStatusInToolbar.Checked = AppSettings.ShowGitStatusInBrowseToolbar;
-            SmtpServer.Text = AppSettings.SmtpServer;
-            SmtpServerPort.Text = AppSettings.SmtpPort.ToString();
-            chkUseSSL.Checked = AppSettings.SmtpUseSsl;
-            _NO_TRANSLATE_MaxCommits.Value = AppSettings.MaxRevisionGraphCommits;
-            chkCloseProcessDialog.Checked = AppSettings.CloseProcessDialog;
-            chkShowGitCommandLine.Checked = AppSettings.ShowGitCommandLine;
-            chkUseFastChecks.Checked = AppSettings.UseFastChecks;
-            cbDefaultCloneDestination.Text = AppSettings.DefaultCloneDestinationPath;
-            chkFollowRenamesInFileHistoryExact.Checked = AppSettings.FollowRenamesInFileHistoryExactOnly;
         }
 
         protected override void PageToSettings()
@@ -77,29 +44,28 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             AppSettings.FollowRenamesInFileHistoryExactOnly = chkFollowRenamesInFileHistoryExact.Checked;
         }
 
-        private void chkUseSSL_CheckedChanged(object sender, System.EventArgs e)
+        protected override void SettingsToPage()
         {
-            if (!chkUseSSL.Checked)
-            {
-                if (SmtpServerPort.Text == "587")
-                    SmtpServerPort.Text = "465";
-            }
-            else
-            {
-                if (SmtpServerPort.Text == "465")
-                    SmtpServerPort.Text = "587";
-            }
-        }
-
-        private void FillDefaultCloneDestinationDropDown()
-        {
-            var historicPaths = Repositories.RepositoryHistory.Repositories
-                                           .Select(GetParentPath())
-                                           .Where(x => !string.IsNullOrEmpty(x))
-                                           .Distinct(StringComparer.CurrentCultureIgnoreCase)
-                                           .ToArray();
-
-            cbDefaultCloneDestination.Items.AddRange(historicPaths);
+            chkShowDiffForAllParents.Checked = AppSettings.ShowDiffForAllParents;
+            chkCheckForUncommittedChangesInCheckoutBranch.Checked = AppSettings.CheckForUncommittedChangesInCheckoutBranch;
+            chkStartWithRecentWorkingDir.Checked = AppSettings.StartWithRecentWorkingDir;
+            chkPlaySpecialStartupSound.Checked = AppSettings.PlaySpecialStartupSound;
+            chkUsePatienceDiffAlgorithm.Checked = AppSettings.UsePatienceDiffAlgorithm;
+            RevisionGridQuickSearchTimeout.Value = AppSettings.RevisionGridQuickSearchTimeout;
+            chkFollowRenamesInFileHistory.Checked = AppSettings.FollowRenamesInFileHistory;
+            chkStashUntrackedFiles.Checked = AppSettings.IncludeUntrackedFilesInAutoStash;
+            chkShowCurrentChangesInRevisionGraph.Checked = AppSettings.RevisionGraphShowWorkingDirChanges;
+            chkShowStashCountInBrowseWindow.Checked = AppSettings.ShowStashCount;
+            chkShowGitStatusInToolbar.Checked = AppSettings.ShowGitStatusInBrowseToolbar;
+            SmtpServer.Text = AppSettings.SmtpServer;
+            SmtpServerPort.Text = AppSettings.SmtpPort.ToString();
+            chkUseSSL.Checked = AppSettings.SmtpUseSsl;
+            _NO_TRANSLATE_MaxCommits.Value = AppSettings.MaxRevisionGraphCommits;
+            chkCloseProcessDialog.Checked = AppSettings.CloseProcessDialog;
+            chkShowGitCommandLine.Checked = AppSettings.ShowGitCommandLine;
+            chkUseFastChecks.Checked = AppSettings.UseFastChecks;
+            cbDefaultCloneDestination.Text = AppSettings.DefaultCloneDestinationPath;
+            chkFollowRenamesInFileHistoryExact.Checked = AppSettings.FollowRenamesInFileHistoryExactOnly;
         }
 
         private static Func<Repository, string> GetParentPath()
@@ -120,6 +86,20 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             };
         }
 
+        private void chkUseSSL_CheckedChanged(object sender, System.EventArgs e)
+        {
+            if (!chkUseSSL.Checked)
+            {
+                if (SmtpServerPort.Text == "587")
+                    SmtpServerPort.Text = "465";
+            }
+            else
+            {
+                if (SmtpServerPort.Text == "465")
+                    SmtpServerPort.Text = "587";
+            }
+        }
+
         private void DefaultCloneDestinationBrowseClick(object sender, EventArgs e)
         {
             using (var dialog = new FolderBrowserDialog { SelectedPath = cbDefaultCloneDestination.Text })
@@ -127,6 +107,26 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
                 if (dialog.ShowDialog(this) == DialogResult.OK)
                     cbDefaultCloneDestination.Text = dialog.SelectedPath;
             }
+        }
+
+        private void defaultCloneDropDown(object sender, EventArgs e)
+        {
+            if (!loadedDefaultClone)
+            {
+                FillDefaultCloneDestinationDropDown();
+                loadedDefaultClone = true;
+            }
+        }
+
+        private void FillDefaultCloneDestinationDropDown()
+        {
+            var historicPaths = Repositories.RepositoryHistory.Repositories
+                                           .Select(GetParentPath())
+                                           .Where(x => !string.IsNullOrEmpty(x))
+                                           .Distinct(StringComparer.CurrentCultureIgnoreCase)
+                                           .ToArray();
+
+            cbDefaultCloneDestination.Items.AddRange(historicPaths);
         }
     }
 }

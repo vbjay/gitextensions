@@ -16,14 +16,44 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             Translate();
         }
 
+        public static SettingsPageReference GetPageReference()
+        {
+            return new SettingsPageReferenceByType(typeof(SshSettingsPage));
+        }
+
+        public bool AutoFindPuttyPaths()
+        {
+            if (!EnvUtils.RunningOnWindows())
+                return false;
+
+            foreach (var path in GetPuttyLocations())
+            {
+                if (AutoFindPuttyPathsInDir(path))
+                    return true;
+            }
+            return false;
+        }
+
         protected override string GetCommaSeparatedKeywordList()
         {
             return "plink,putty,openssh,pageant";
         }
 
-        public static SettingsPageReference GetPageReference()
+        protected override void PageToSettings()
         {
-            return new SettingsPageReferenceByType(typeof(SshSettingsPage));
+            AppSettings.Plink = PlinkPath.Text;
+            AppSettings.Puttygen = PuttygenPath.Text;
+            AppSettings.Pageant = PageantPath.Text;
+            AppSettings.AutoStartPageant = AutostartPageant.Checked;
+
+            if (OpenSSH.Checked)
+                GitCommandHelpers.UnsetSsh();
+
+            if (Putty.Checked)
+                GitCommandHelpers.SetSsh(PlinkPath.Text);
+
+            if (Other.Checked)
+                GitCommandHelpers.SetSsh(OtherSsh.Text);
         }
 
         protected override void SettingsToPage()
@@ -44,74 +74,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             }
 
             EnableSshOptions();
-        }
-
-        protected override void PageToSettings()
-        {
-            AppSettings.Plink = PlinkPath.Text;
-            AppSettings.Puttygen = PuttygenPath.Text;
-            AppSettings.Pageant = PageantPath.Text;
-            AppSettings.AutoStartPageant = AutostartPageant.Checked;
-
-            if (OpenSSH.Checked)
-                GitCommandHelpers.UnsetSsh();
-
-            if (Putty.Checked)
-                GitCommandHelpers.SetSsh(PlinkPath.Text);
-
-            if (Other.Checked)
-                GitCommandHelpers.SetSsh(OtherSsh.Text);
-        }
-
-        private void OpenSSH_CheckedChanged(object sender, EventArgs e)
-        {
-            EnableSshOptions();
-        }
-
-        private void Putty_CheckedChanged(object sender, EventArgs e)
-        {
-            if (Putty.Checked)
-            {
-                AutoFindPuttyPaths();
-            }
-            EnableSshOptions();
-        }
-
-        private IEnumerable<string> GetPuttyLocations()
-        {
-            string envVariable = Environment.GetEnvironmentVariable("GITEXT_PUTTY");
-            if (!String.IsNullOrEmpty(envVariable)) yield return envVariable;
-            yield return Path.Combine(AppSettings.GetInstallDir(), @"PuTTY\");
-            string programFiles = Environment.GetEnvironmentVariable("ProgramFiles");
-            string programFilesX86 = null;
-            if (8 == IntPtr.Size
-                || !String.IsNullOrEmpty(Environment.GetEnvironmentVariable("PROCESSOR_ARCHITEW6432")))
-                programFilesX86 = Environment.GetEnvironmentVariable("ProgramFiles(x86)");
-            yield return programFiles + @"\TortoiseGit\bin\";
-            if (programFilesX86 != null)
-                yield return programFilesX86 + @"\TortoiseGit\bin\";
-            yield return programFiles + @"\TortoiseSvn\bin\";
-            if (programFilesX86 != null)
-                yield return programFilesX86 + @"\TortoiseSvn\bin\";
-            yield return programFiles + @"\PuTTY\";
-            if (programFilesX86 != null)
-                yield return programFilesX86 + @"\PuTTY\";
-            yield return CommonLogic.GetRegistryValue(Registry.LocalMachine,
-                                                        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\PuTTY_is1",
-                                                        "InstallLocation");
-        }
-
-        public bool AutoFindPuttyPaths()
-        {
-            if (!EnvUtils.RunningOnWindows())
-                return false;
-
-            foreach (var path in GetPuttyLocations())
-            {
-                if (AutoFindPuttyPathsInDir(path))
-                    return true;
-            }
-            return false;
         }
 
         private bool AutoFindPuttyPathsInDir(string installdir)
@@ -147,11 +109,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             return false;
         }
 
-        private void Other_CheckedChanged(object sender, EventArgs e)
-        {
-            EnableSshOptions();
-        }
-
         private void EnableSshOptions()
         {
             OtherSsh.Enabled = Other.Checked;
@@ -166,9 +123,57 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             AutostartPageant.Enabled = Putty.Checked;
         }
 
+        private IEnumerable<string> GetPuttyLocations()
+        {
+            string envVariable = Environment.GetEnvironmentVariable("GITEXT_PUTTY");
+            if (!String.IsNullOrEmpty(envVariable)) yield return envVariable;
+            yield return Path.Combine(AppSettings.GetInstallDir(), @"PuTTY\");
+            string programFiles = Environment.GetEnvironmentVariable("ProgramFiles");
+            string programFilesX86 = null;
+            if (8 == IntPtr.Size
+                || !String.IsNullOrEmpty(Environment.GetEnvironmentVariable("PROCESSOR_ARCHITEW6432")))
+                programFilesX86 = Environment.GetEnvironmentVariable("ProgramFiles(x86)");
+            yield return programFiles + @"\TortoiseGit\bin\";
+            if (programFilesX86 != null)
+                yield return programFilesX86 + @"\TortoiseGit\bin\";
+            yield return programFiles + @"\TortoiseSvn\bin\";
+            if (programFilesX86 != null)
+                yield return programFilesX86 + @"\TortoiseSvn\bin\";
+            yield return programFiles + @"\PuTTY\";
+            if (programFilesX86 != null)
+                yield return programFilesX86 + @"\PuTTY\";
+            yield return CommonLogic.GetRegistryValue(Registry.LocalMachine,
+                                                        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\PuTTY_is1",
+                                                        "InstallLocation");
+        }
+
+        private void OpenSSH_CheckedChanged(object sender, EventArgs e)
+        {
+            EnableSshOptions();
+        }
+
+        private void Other_CheckedChanged(object sender, EventArgs e)
+        {
+            EnableSshOptions();
+        }
+
         private void OtherSshBrowse_Click(object sender, EventArgs e)
         {
             OtherSsh.Text = CommonLogic.SelectFile(".", "Executable file (*.exe)|*.exe", OtherSsh.Text);
+        }
+
+        private void PageantBrowse_Click(object sender, EventArgs e)
+        {
+            PageantPath.Text = CommonLogic.SelectFile(".", "PAgeant (pageant.exe)|pageant.exe", PageantPath.Text);
+        }
+
+        private void Putty_CheckedChanged(object sender, EventArgs e)
+        {
+            if (Putty.Checked)
+            {
+                AutoFindPuttyPaths();
+            }
+            EnableSshOptions();
         }
 
         private void PuttyBrowse_Click(object sender, EventArgs e)
@@ -181,11 +186,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
         private void PuttygenBrowse_Click(object sender, EventArgs e)
         {
             PuttygenPath.Text = CommonLogic.SelectFile(".", "PuttyGen (puttygen.exe)|puttygen.exe", PuttygenPath.Text);
-        }
-
-        private void PageantBrowse_Click(object sender, EventArgs e)
-        {
-            PageantPath.Text = CommonLogic.SelectFile(".", "PAgeant (pageant.exe)|pageant.exe", PageantPath.Text);
         }
     }
 }

@@ -3,13 +3,48 @@ using System.IO;
 
 namespace GitCommands.Settings
 {
+    public class BuildServer : SettingsPath
+    {
+        public readonly BoolNullableSetting EnableIntegration;
+        public readonly BoolNullableSetting ShowBuildSummaryInGrid;
+        public readonly StringSetting Type;
+
+        public BuildServer(RepoDistSettings container)
+            : base(container, "BuildServer")
+        {
+            Type = new StringSetting("Type", this, null);
+            EnableIntegration = new BoolNullableSetting("EnableIntegration", this, false);
+            ShowBuildSummaryInGrid = new BoolNullableSetting("ShowBuildSummaryInGrid", this, true);
+        }
+
+        public SettingsPath TypeSettings
+        {
+            get
+            {
+                return new SettingsPath(this, Type.Value);
+            }
+        }
+    }
+
+    public class DetailedGroup : SettingsPath
+    {
+        public readonly BoolNullableSetting ShowConEmuTab;
+
+        public DetailedGroup(RepoDistSettings container)
+            : base(container, "Detailed")
+        {
+            ShowConEmuTab = new BoolNullableSetting("ShowConEmuTab", this, true);
+        }
+    }
+
     /// <summary>
     /// Settings that can be distributed with repository
     /// they can be overriden for a particular repository
     /// </summary>
     public class RepoDistSettings : SettingsContainer<RepoDistSettings, GitExtSettingsCache>
     {
-        public GitModule Module { get; private set; }
+        public readonly BuildServer BuildServer;
+        public readonly DetailedGroup Detailed;
 
         public RepoDistSettings(RepoDistSettings aLowerPriority, GitExtSettingsCache aSettingsCache)
             : base(aLowerPriority, aSettingsCache)
@@ -18,18 +53,29 @@ namespace GitCommands.Settings
             Detailed = new DetailedGroup(this);
         }
 
+        public string Dictionary
+        {
+            get { return this.GetString("dictionary", "en-US"); }
+            set { this.SetString("dictionary", value); }
+        }
+
+        public GitModule Module { get; private set; }
+
         #region CreateXXX
+
+        public static RepoDistSettings CreateDistributed(GitModule aModule, bool allowCache = true)
+        {
+            return CreateDistributed(aModule, null, allowCache);
+        }
 
         public static RepoDistSettings CreateEffective(GitModule aModule)
         {
             return CreateLocal(aModule, CreateDistributed(aModule, CreateGlobal()));
         }
 
-        private static RepoDistSettings CreateLocal(GitModule aModule, RepoDistSettings aLowerPriority, bool allowCache = true)
+        public static RepoDistSettings CreateGlobal(bool allowCache = true)
         {
-            //if (aModule.IsBareRepository()
-            return new RepoDistSettings(aLowerPriority,
-                GitExtSettingsCache.Create(Path.Combine(aModule.GetGitDirectory(), AppSettings.SettingsFileName), allowCache));
+            return new RepoDistSettings(null, GitExtSettingsCache.Create(AppSettings.SettingsFilePath, allowCache));
         }
 
         public static RepoDistSettings CreateLocal(GitModule aModule, bool allowCache = true)
@@ -43,17 +89,20 @@ namespace GitCommands.Settings
                 GitExtSettingsCache.Create(Path.Combine(aModule.WorkingDir, AppSettings.SettingsFileName), allowCache));
         }
 
-        public static RepoDistSettings CreateDistributed(GitModule aModule, bool allowCache = true)
+        private static RepoDistSettings CreateLocal(GitModule aModule, RepoDistSettings aLowerPriority, bool allowCache = true)
         {
-            return CreateDistributed(aModule, null, allowCache);
-        }
-
-        public static RepoDistSettings CreateGlobal(bool allowCache = true)
-        {
-            return new RepoDistSettings(null, GitExtSettingsCache.Create(AppSettings.SettingsFilePath, allowCache));
+            //if (aModule.IsBareRepository()
+            return new RepoDistSettings(aLowerPriority,
+                GitExtSettingsCache.Create(Path.Combine(aModule.GetGitDirectory(), AppSettings.SettingsFileName), allowCache));
         }
 
         #endregion CreateXXX
+
+        public bool NoFastForwardMerge
+        {
+            get { return this.GetBool("NoFastForwardMerge", false); }
+            set { this.SetBool("NoFastForwardMerge", value); }
+        }
 
         public override void SetValue<T>(string name, T value, Func<T, string> encode)
         {
@@ -91,55 +140,6 @@ namespace GitCommands.Settings
             {
                 LowerPriority.SetValue(name, value, encode);
             }
-        }
-
-        public readonly BuildServer BuildServer;
-        public readonly DetailedGroup Detailed;
-
-        public bool NoFastForwardMerge
-        {
-            get { return this.GetBool("NoFastForwardMerge", false); }
-            set { this.SetBool("NoFastForwardMerge", value); }
-        }
-
-        public string Dictionary
-        {
-            get { return this.GetString("dictionary", "en-US"); }
-            set { this.SetString("dictionary", value); }
-        }
-    }
-
-    public class BuildServer : SettingsPath
-    {
-        public readonly StringSetting Type;
-        public readonly BoolNullableSetting EnableIntegration;
-        public readonly BoolNullableSetting ShowBuildSummaryInGrid;
-
-        public BuildServer(RepoDistSettings container)
-            : base(container, "BuildServer")
-        {
-            Type = new StringSetting("Type", this, null);
-            EnableIntegration = new BoolNullableSetting("EnableIntegration", this, false);
-            ShowBuildSummaryInGrid = new BoolNullableSetting("ShowBuildSummaryInGrid", this, true);
-        }
-
-        public SettingsPath TypeSettings
-        {
-            get
-            {
-                return new SettingsPath(this, Type.Value);
-            }
-        }
-    }
-
-    public class DetailedGroup : SettingsPath
-    {
-        public readonly BoolNullableSetting ShowConEmuTab;
-
-        public DetailedGroup(RepoDistSettings container)
-            : base(container, "Detailed")
-        {
-            ShowConEmuTab = new BoolNullableSetting("ShowConEmuTab", this, true);
         }
     }
 }

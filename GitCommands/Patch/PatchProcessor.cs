@@ -8,8 +8,6 @@ namespace PatchApply
 {
     public class PatchProcessor
     {
-        public Encoding FilesContentEncoding { get; private set; }
-
         public PatchProcessor(Encoding filesContentEncoding)
         {
             FilesContentEncoding = filesContentEncoding;
@@ -20,6 +18,49 @@ namespace PatchApply
             InHeader,
             InBody,
             OutsidePatch
+        }
+
+        public Encoding FilesContentEncoding { get; private set; }
+
+        public static Patch CreatePatchFromString(string patchText, Encoding filesContentEncoding)
+        {
+            var processor = new PatchProcessor(filesContentEncoding);
+            string[] lines = patchText.Split('\n');
+            int i = 0;
+            Patch patch = processor.CreatePatchFromString(lines, ref i);
+            return patch;
+        }
+
+        public static bool IsCombinedDiff(string diff)
+        {
+            return !string.IsNullOrWhiteSpace(diff) &&
+                                 (diff.StartsWith("diff --cc") || diff.StartsWith("diff --combined"));
+        }
+
+        /// <summary>
+        /// Diff part of patch is printed verbatim, everything else (header, warnings, ...) is printed in git encoding (GitModule.SystemEncoding)
+        /// Since patch may contain diff for more than one file, it would be nice to obtaining encoding for each of file
+        /// from .gitattributes, for now there is used one encoding, common for every file in repo (Settings.FilesEncoding)
+        /// File path can be quoted see core.quotepath, it is unquoted by GitCommandHelpers.ReEncodeFileNameFromLossless
+        /// </summary>
+        /// <param name="patchText"></param>
+        /// <returns></returns>
+        public IEnumerable<Patch> CreatePatchesFromString(string patchText)
+        {
+            string[] lines = patchText.Split('\n');
+            int i = 0;
+            // skip email header
+            for (; i < lines.Length; i++)
+            {
+                if (IsStartOfANewPatch(lines[i]))
+                    break;
+            }
+            for (; i < lines.Length; i++)
+            {
+                Patch patch = CreatePatchFromString(lines, ref i);
+                if (patch != null)
+                    yield return patch;
+            }
         }
 
         /// <summary>
@@ -148,39 +189,33 @@ namespace PatchApply
             return patch;
         }
 
-        public static Patch CreatePatchFromString(string patchText, Encoding filesContentEncoding)
+        private static void ExtractPatchFilenames(Patch patch)
         {
-            var processor = new PatchProcessor(filesContentEncoding);
-            string[] lines = patchText.Split('\n');
-            int i = 0;
-            Patch patch = processor.CreatePatchFromString(lines, ref i);
-            return patch;
+            if (!patch.CombinedDiff)
+            {
+                Match match = Regex.Match(patch.PatchHeader,
+                                          " [\\\"]?[aiwco12]/(.*)[\\\"]? [\\\"]?[biwco12]/(.*)[\\\"]?");
+
+                patch.FileNameA = match.Groups[1].Value.Trim();
+                patch.FileNameB = match.Groups[2].Value.Trim();
+            }
+            else
+            {
+                Match match = Regex.Match(patch.PatchHeader,
+                                          "--cc [\\\"]?(.*)[\\\"]?");
+
+                patch.FileNameA = match.Groups[1].Value.Trim();
+            }
         }
 
-        /// <summary>
-        /// Diff part of patch is printed verbatim, everything else (header, warnings, ...) is printed in git encoding (GitModule.SystemEncoding)
-        /// Since patch may contain diff for more than one file, it would be nice to obtaining encoding for each of file
-        /// from .gitattributes, for now there is used one encoding, common for every file in repo (Settings.FilesEncoding)
-        /// File path can be quoted see core.quotepath, it is unquoted by GitCommandHelpers.ReEncodeFileNameFromLossless
-        /// </summary>
-        /// <param name="patchText"></param>
-        /// <returns></returns>
-        public IEnumerable<Patch> CreatePatchesFromString(string patchText)
+        private static bool IsBinaryPatch(string input)
         {
-            string[] lines = patchText.Split('\n');
-            int i = 0;
-            // skip email header
-            for (; i < lines.Length; i++)
-            {
-                if (IsStartOfANewPatch(lines[i]))
-                    break;
-            }
-            for (; i < lines.Length; i++)
-            {
-                Patch patch = CreatePatchFromString(lines, ref i);
-                if (patch != null)
-                    yield return patch;
-            }
+            return input.StartsWith("GIT binary patch");
+        }
+
+        private static bool IsChunkHeader(string input)
+        {
+            return input.StartsWith("@@");
         }
 
         private static bool IsIndexLine(string input)
@@ -188,10 +223,50 @@ namespace PatchApply
             return input.StartsWith("index ");
         }
 
-        public static bool IsCombinedDiff(string diff)
+        private static bool IsNewFileMissing(string input)
         {
-            return !string.IsNullOrWhiteSpace(diff) &&
-                                 (diff.StartsWith("diff --cc") || diff.StartsWith("diff --combined"));
+            return input.StartsWith("+++ /dev/null");
+        }
+
+        private static bool IsOldFileMissing(string input)
+        {
+            return input.StartsWith("--- /dev/null");
+        }
+
+        private static bool IsStartOfANewPatch(string input, out bool combinedDiff)
+        {
+            combinedDiff = IsCombinedDiff(input);
+            return input.StartsWith("diff --git ") || combinedDiff;
+        }
+
+        private static bool IsStartOfANewPatch(string input)
+        {
+            bool combinedDiff;
+            return IsStartOfANewPatch(input, out combinedDiff);
+        }
+
+        private static bool IsUnlistedBinaryFileDelete(string input)
+        {
+            return input.StartsWith("Binary files a/") && input.EndsWith(" and /dev/null differ");
+        }
+
+        private static bool IsUnlistedBinaryNewFile(string input)
+        {
+            return input.StartsWith("Binary files /dev/null and b/") && input.EndsWith(" differ");
+        }
+
+        private static bool SetPatchType(string input, Patch patch)
+        {
+            if (input.StartsWith("new file mode "))
+                patch.Type = Patch.PatchType.NewFile;
+            else if (input.StartsWith("deleted file mode "))
+                patch.Type = Patch.PatchType.DeleteFile;
+            else if (input.StartsWith("old mode "))
+                patch.Type = Patch.PatchType.ChangeFileMode;
+            else
+                return false;
+
+            return true;
         }
 
         private void ValidateHeader(ref string input, Patch patch)
@@ -231,81 +306,6 @@ namespace PatchApply
                 else
                     throw new FormatException("New filename not parsed correct: " + input);
             }
-        }
-
-        private static bool IsChunkHeader(string input)
-        {
-            return input.StartsWith("@@");
-        }
-
-        private static bool IsNewFileMissing(string input)
-        {
-            return input.StartsWith("+++ /dev/null");
-        }
-
-        private static bool IsOldFileMissing(string input)
-        {
-            return input.StartsWith("--- /dev/null");
-        }
-
-        private static bool IsBinaryPatch(string input)
-        {
-            return input.StartsWith("GIT binary patch");
-        }
-
-        private static bool IsUnlistedBinaryFileDelete(string input)
-        {
-            return input.StartsWith("Binary files a/") && input.EndsWith(" and /dev/null differ");
-        }
-
-        private static bool IsUnlistedBinaryNewFile(string input)
-        {
-            return input.StartsWith("Binary files /dev/null and b/") && input.EndsWith(" differ");
-        }
-
-        private static void ExtractPatchFilenames(Patch patch)
-        {
-            if (!patch.CombinedDiff)
-            {
-                Match match = Regex.Match(patch.PatchHeader,
-                                          " [\\\"]?[aiwco12]/(.*)[\\\"]? [\\\"]?[biwco12]/(.*)[\\\"]?");
-
-                patch.FileNameA = match.Groups[1].Value.Trim();
-                patch.FileNameB = match.Groups[2].Value.Trim();
-            }
-            else
-            {
-                Match match = Regex.Match(patch.PatchHeader,
-                                          "--cc [\\\"]?(.*)[\\\"]?");
-
-                patch.FileNameA = match.Groups[1].Value.Trim();
-            }
-        }
-
-        private static bool IsStartOfANewPatch(string input, out bool combinedDiff)
-        {
-            combinedDiff = IsCombinedDiff(input);
-            return input.StartsWith("diff --git ") || combinedDiff;
-        }
-
-        private static bool IsStartOfANewPatch(string input)
-        {
-            bool combinedDiff;
-            return IsStartOfANewPatch(input, out combinedDiff);
-        }
-
-        private static bool SetPatchType(string input, Patch patch)
-        {
-            if (input.StartsWith("new file mode "))
-                patch.Type = Patch.PatchType.NewFile;
-            else if (input.StartsWith("deleted file mode "))
-                patch.Type = Patch.PatchType.DeleteFile;
-            else if (input.StartsWith("old mode "))
-                patch.Type = Patch.PatchType.ChangeFileMode;
-            else
-                return false;
-
-            return true;
         }
     }
 }

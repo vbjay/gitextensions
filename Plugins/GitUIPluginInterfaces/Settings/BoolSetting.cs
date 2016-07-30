@@ -17,14 +17,9 @@ namespace GitUIPluginInterfaces
             DefaultValue = aDefaultValue;
         }
 
-        public string Name { get; private set; }
         public string Caption { get; private set; }
         public bool DefaultValue { get; set; }
-
-        public ISettingControlBinding CreateControlBinding()
-        {
-            return new CheckBoxBinding(this);
-        }
+        public string Name { get; private set; }
 
         public bool? this[ISettingsSource settings]
         {
@@ -37,6 +32,11 @@ namespace GitUIPluginInterfaces
             {
                 settings.SetBool(Name, value);
             }
+        }
+
+        public ISettingControlBinding CreateControlBinding()
+        {
+            return new CheckBoxBinding(this);
         }
 
         public bool ValueOrDefault(ISettingsSource settings)

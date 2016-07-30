@@ -6,14 +6,16 @@ namespace GitUI.CommandsDialogs.CommitDialog
 {
     public partial class FormCommitTemplateSettings : GitExtensionsForm
     {
+        private const int _maxCommitTemplates = 5;
+
+        private const int _maxShownCharsForName = 15;
+
+        private const int _maxUsedCharsForName = 80;
+
         private readonly TranslationString _emptyTemplate =
-            new TranslationString("empty");
+                                    new TranslationString("empty");
 
         private CommitTemplateItem[] _commitTemplates;
-
-        private const int _maxCommitTemplates = 5;
-        private const int _maxShownCharsForName = 15;
-        private const int _maxUsedCharsForName = 80;
 
         public FormCommitTemplateSettings()
         {
@@ -23,6 +25,23 @@ namespace GitUI.CommandsDialogs.CommitDialog
             _NO_TRANSLATE_textBoxCommitTemplateName.MaxLength = _maxUsedCharsForName;
 
             LoadSettings();
+        }
+
+        private void buttonCancel_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
+        private void buttonOk_Click(object sender, EventArgs e)
+        {
+            SaveSettings();
+            Close();
+        }
+
+        private void comboBoxCommitTemplates_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            _NO_TRANSLATE_textCommitTemplateText.Text = _commitTemplates[_NO_TRANSLATE_comboBoxCommitTemplates.SelectedIndex].Text;
+            _NO_TRANSLATE_textBoxCommitTemplateName.Text = _commitTemplates[_NO_TRANSLATE_comboBoxCommitTemplates.SelectedIndex].Name;
         }
 
         private void LoadSettings()
@@ -54,46 +73,6 @@ namespace GitUI.CommandsDialogs.CommitDialog
             checkBoxAutoWrap.Checked = AppSettings.CommitValidationAutoWrap;
         }
 
-        private void SaveSettings()
-        {
-            AppSettings.CommitValidationMaxCntCharsFirstLine = Convert.ToInt32(_NO_TRANSLATE_numericMaxFirstLineLength.Value);
-            AppSettings.CommitValidationMaxCntCharsPerLine = Convert.ToInt32(_NO_TRANSLATE_numericMaxLineLength.Value);
-            AppSettings.CommitValidationSecondLineMustBeEmpty = checkBoxSecondLineEmpty.Checked;
-            AppSettings.CommitValidationIndentAfterFirstLine = checkBoxUseIndent.Checked;
-            AppSettings.CommitValidationRegEx = _NO_TRANSLATE_textBoxCommitValidationRegex.Text;
-
-            CommitTemplateItem.SaveToSettings(_commitTemplates);
-            AppSettings.CommitValidationAutoWrap = checkBoxAutoWrap.Checked;
-        }
-
-        private void buttonOk_Click(object sender, EventArgs e)
-        {
-            SaveSettings();
-            Close();
-        }
-
-        private void buttonCancel_Click(object sender, EventArgs e)
-        {
-            Close();
-        }
-
-        private void textCommitTemplateText_TextChanged(object sender, EventArgs e)
-        {
-            _commitTemplates[_NO_TRANSLATE_comboBoxCommitTemplates.SelectedIndex].Text = _NO_TRANSLATE_textCommitTemplateText.Text;
-        }
-
-        private void textBoxCommitTemplateName_TextChanged(object sender, EventArgs e)
-        {
-            _commitTemplates[_NO_TRANSLATE_comboBoxCommitTemplates.SelectedIndex].Name = _NO_TRANSLATE_textBoxCommitTemplateName.Text;
-            RefreshLineInListBox(_NO_TRANSLATE_comboBoxCommitTemplates.SelectedIndex);
-        }
-
-        private void comboBoxCommitTemplates_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            _NO_TRANSLATE_textCommitTemplateText.Text = _commitTemplates[_NO_TRANSLATE_comboBoxCommitTemplates.SelectedIndex].Text;
-            _NO_TRANSLATE_textBoxCommitTemplateName.Text = _commitTemplates[_NO_TRANSLATE_comboBoxCommitTemplates.SelectedIndex].Name;
-        }
-
         private void RefreshLineInListBox(int line)
         {
             string comboBoxText;
@@ -107,6 +86,29 @@ namespace GitUI.CommandsDialogs.CommitDialog
                 comboBoxText = "<" + _emptyTemplate.Text + ">";
 
             _NO_TRANSLATE_comboBoxCommitTemplates.Items[line] = String.Format("{0} : {1}", (line + 1), comboBoxText);
+        }
+
+        private void SaveSettings()
+        {
+            AppSettings.CommitValidationMaxCntCharsFirstLine = Convert.ToInt32(_NO_TRANSLATE_numericMaxFirstLineLength.Value);
+            AppSettings.CommitValidationMaxCntCharsPerLine = Convert.ToInt32(_NO_TRANSLATE_numericMaxLineLength.Value);
+            AppSettings.CommitValidationSecondLineMustBeEmpty = checkBoxSecondLineEmpty.Checked;
+            AppSettings.CommitValidationIndentAfterFirstLine = checkBoxUseIndent.Checked;
+            AppSettings.CommitValidationRegEx = _NO_TRANSLATE_textBoxCommitValidationRegex.Text;
+
+            CommitTemplateItem.SaveToSettings(_commitTemplates);
+            AppSettings.CommitValidationAutoWrap = checkBoxAutoWrap.Checked;
+        }
+
+        private void textBoxCommitTemplateName_TextChanged(object sender, EventArgs e)
+        {
+            _commitTemplates[_NO_TRANSLATE_comboBoxCommitTemplates.SelectedIndex].Name = _NO_TRANSLATE_textBoxCommitTemplateName.Text;
+            RefreshLineInListBox(_NO_TRANSLATE_comboBoxCommitTemplates.SelectedIndex);
+        }
+
+        private void textCommitTemplateText_TextChanged(object sender, EventArgs e)
+        {
+            _commitTemplates[_NO_TRANSLATE_comboBoxCommitTemplates.SelectedIndex].Text = _NO_TRANSLATE_textCommitTemplateText.Text;
         }
     }
 }

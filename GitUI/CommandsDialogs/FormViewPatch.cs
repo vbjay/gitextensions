@@ -21,14 +21,21 @@ namespace GitUI.CommandsDialogs
             PatchManager = new PatchManager();
         }
 
+        public Patch CurrentPatch { get; set; }
+
+        public PatchManager PatchManager { get; set; }
+
         public void LoadPatch(string patch)
         {
             PatchFileNameEdit.Text = patch;
             LoadButton_Click(null, null);
         }
 
-        public PatchManager PatchManager { get; set; }
-        public Patch CurrentPatch { get; set; }
+        private void BrowsePatch_Click(object sender, EventArgs e)
+        {
+            PatchFileNameEdit.Text = SelectPatchFile(@".");
+            LoadButton_Click(sender, e);
+        }
 
         private void GridChangedFiles_SelectionChanged(object sender, EventArgs e)
         {
@@ -40,25 +47,6 @@ namespace GitUI.CommandsDialogs
             if (patch == null) return;
 
             ChangesList.ViewPatch(patch);
-        }
-
-        private string SelectPatchFile(string initialDirectory)
-        {
-            using (var dialog = new OpenFileDialog
-            {
-                Filter = _patchFileFilterString.Text + "|*.Patch",
-                InitialDirectory = initialDirectory,
-                Title = _patchFileFilterTitle.Text
-            })
-            {
-                return (dialog.ShowDialog(this) == DialogResult.OK) ? dialog.FileName : PatchFileNameEdit.Text;
-            }
-        }
-
-        private void BrowsePatch_Click(object sender, EventArgs e)
-        {
-            PatchFileNameEdit.Text = SelectPatchFile(@".");
-            LoadButton_Click(sender, e);
         }
 
         private void LoadButton_Click(object sender, EventArgs e)
@@ -77,6 +65,19 @@ namespace GitUI.CommandsDialogs
 
         private void PatchFileNameEdit_TextChanged(object sender, EventArgs e)
         {
+        }
+
+        private string SelectPatchFile(string initialDirectory)
+        {
+            using (var dialog = new OpenFileDialog
+            {
+                Filter = _patchFileFilterString.Text + "|*.Patch",
+                InitialDirectory = initialDirectory,
+                Title = _patchFileFilterTitle.Text
+            })
+            {
+                return (dialog.ShowDialog(this) == DialogResult.OK) ? dialog.FileName : PatchFileNameEdit.Text;
+            }
         }
 
         private void ViewPatch_Load(object sender, EventArgs e)

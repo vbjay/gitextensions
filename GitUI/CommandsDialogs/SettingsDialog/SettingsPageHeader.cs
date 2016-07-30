@@ -11,9 +11,9 @@ namespace GitUI.CommandsDialogs.SettingsDialog
 
     public interface ILocalSettingsPage : IGlobalSettingsPage
     {
-        void SetLocalSettings();
-
         void SetEffectiveSettings();
+
+        void SetLocalSettings();
     }
 
     public interface IRepoDistSettingsPage : ILocalSettingsPage

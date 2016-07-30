@@ -23,32 +23,46 @@ namespace GitCommands
         }
     }
 
-    public class GitBlameLine
-    {
-        //Line
-        public string CommitGuid { get; set; }
-
-        public int FinalLineNumber { get; set; }
-        public int OriginLineNumber { get; set; }
-
-        public string LineText { get; set; }
-    }
-
     public class GitBlameHeader
     {
+        public string Author { get; set; }
+
+        public string AuthorMail { get; set; }
+
+        public DateTime AuthorTime { get; set; }
+
+        public string AuthorTimeZone { get; set; }
+
         //Header
         public string CommitGuid { get; set; }
 
-        public string AuthorMail { get; set; }
-        public DateTime AuthorTime { get; set; }
-        public string AuthorTimeZone { get; set; }
-        public string Author { get; set; }
+        public string Committer { get; set; }
         public string CommitterMail { get; set; }
         public DateTime CommitterTime { get; set; }
         public string CommitterTimeZone { get; set; }
-        public string Committer { get; set; }
-        public string Summary { get; set; }
         public string FileName { get; set; }
+        public string Summary { get; set; }
+
+        public static bool operator !=(GitBlameHeader x, GitBlameHeader y)
+        {
+            return !(x == y);
+        }
+
+        public static bool operator ==(GitBlameHeader x, GitBlameHeader y)
+        {
+            if (Object.ReferenceEquals(x, y))
+                return true;
+            if (Object.ReferenceEquals(x, null) || Object.ReferenceEquals(y, null))
+                return false;
+            return x.Author == y.Author && x.AuthorTime == y.AuthorTime &&
+                x.Committer == y.Committer && x.CommitterTime == y.CommitterTime &&
+                x.Summary == y.Summary && x.FileName == y.FileName;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return this == (GitBlameHeader)obj;
+        }
 
         public Color GetColor()
         {
@@ -58,14 +72,9 @@ namespace GitCommands
             //return Color.White;
         }
 
-        private int GenerateIntFromString(string text)
+        public override int GetHashCode()
         {
-            int number = 0;
-            foreach (char c in text)
-            {
-                number += (int)c;
-            }
-            return number;
+            return ToString().GetHashCode();
         }
 
         public override string ToString()
@@ -82,30 +91,24 @@ namespace GitCommands
             return toStringValue.ToString().Trim();
         }
 
-        public override bool Equals(object obj)
+        private int GenerateIntFromString(string text)
         {
-            return this == (GitBlameHeader)obj;
+            int number = 0;
+            foreach (char c in text)
+            {
+                number += (int)c;
+            }
+            return number;
         }
+    }
 
-        public override int GetHashCode()
-        {
-            return ToString().GetHashCode();
-        }
+    public class GitBlameLine
+    {
+        //Line
+        public string CommitGuid { get; set; }
 
-        public static bool operator ==(GitBlameHeader x, GitBlameHeader y)
-        {
-            if (Object.ReferenceEquals(x, y))
-                return true;
-            if (Object.ReferenceEquals(x, null) || Object.ReferenceEquals(y, null))
-                return false;
-            return x.Author == y.Author && x.AuthorTime == y.AuthorTime &&
-                x.Committer == y.Committer && x.CommitterTime == y.CommitterTime &&
-                x.Summary == y.Summary && x.FileName == y.FileName;
-        }
-
-        public static bool operator !=(GitBlameHeader x, GitBlameHeader y)
-        {
-            return !(x == y);
-        }
+        public int FinalLineNumber { get; set; }
+        public string LineText { get; set; }
+        public int OriginLineNumber { get; set; }
     }
 }

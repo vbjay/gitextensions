@@ -5,8 +5,8 @@ namespace GitUI.CommandsDialogs.SettingsDialog
     public class ConfigFileSettingsSet
     {
         public readonly ConfigFileSettings EffectiveSettings;
-        public readonly ConfigFileSettings LocalSettings;
         public readonly ConfigFileSettings GlobalSettings;
+        public readonly ConfigFileSettings LocalSettings;
 
         public ConfigFileSettingsSet(
             ConfigFileSettings aEffectiveSettings,

@@ -8,6 +8,13 @@ namespace GitUI.UserManual
     {
         private static string _Location;
 
+        private readonly string _anchorName;
+
+        public SingleHtmlUserManual(string anchorName)
+        {
+            _anchorName = anchorName;
+        }
+
         public static string Location
         {
             get
@@ -20,13 +27,6 @@ namespace GitUI.UserManual
                 }
                 return _Location;
             }
-        }
-
-        private readonly string _anchorName;
-
-        public SingleHtmlUserManual(string anchorName)
-        {
-            _anchorName = anchorName;
         }
 
         public string GetUrl()

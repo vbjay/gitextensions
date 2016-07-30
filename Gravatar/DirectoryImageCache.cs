@@ -9,11 +9,39 @@ namespace Gravatar
         private static Object padlock = new Object();
 
         private string cachePath;
-        public string Path { get { return cachePath; } }
 
         public DirectoryImageCache(string cachePath)
         {
             this.cachePath = cachePath;
+        }
+
+        public string Path { get { return cachePath; } }
+
+        public void CacheImage(string imageFileName, Stream imageStream)
+        {
+            if (!Directory.Exists(cachePath))
+                Directory.CreateDirectory(cachePath);
+
+            lock (padlock)
+            {
+                try
+                {
+                    using (var output = new FileStream(cachePath + imageFileName, FileMode.Create))
+                    {
+                        byte[] buffer = new byte[1024];
+                        int read;
+
+                        if (imageStream != null)
+                            while ((read = imageStream.Read(buffer, 0, buffer.Length)) > 0)
+                            {
+                                output.Write(buffer, 0, read);
+                            }
+                    }
+                }
+                catch
+                {
+                }
+            }
         }
 
         public void ClearCache()
@@ -88,33 +116,6 @@ namespace Gravatar
                 catch
                 {
                     return null;
-                }
-            }
-        }
-
-        public void CacheImage(string imageFileName, Stream imageStream)
-        {
-            if (!Directory.Exists(cachePath))
-                Directory.CreateDirectory(cachePath);
-
-            lock (padlock)
-            {
-                try
-                {
-                    using (var output = new FileStream(cachePath + imageFileName, FileMode.Create))
-                    {
-                        byte[] buffer = new byte[1024];
-                        int read;
-
-                        if (imageStream != null)
-                            while ((read = imageStream.Read(buffer, 0, buffer.Length)) > 0)
-                            {
-                                output.Write(buffer, 0, read);
-                            }
-                    }
-                }
-                catch
-                {
                 }
             }
         }

@@ -1,26 +1,5 @@
 ﻿namespace GitCommands.Settings
 {
-    public class StringSetting : Setting<string>
-    {
-        public StringSetting(string aName, SettingsPath settingsSource, string aDefaultValue)
-            : base(aName, settingsSource, aDefaultValue)
-        {
-        }
-
-        public override string Value
-        {
-            get
-            {
-                return SettingsSource.GetString(Name, DefaultValue);
-            }
-
-            set
-            {
-                SettingsSource.SetString(Name, value);
-            }
-        }
-    }
-
     public class BoolNullableSetting : Setting<bool?>
     {
         public BoolNullableSetting(string aName, SettingsPath settingsSource, bool aDefaultValue)
@@ -72,6 +51,26 @@
         }
     }
 
+    public class EnumNullableSetting<T> : Setting<T?> where T : struct
+    {
+        public EnumNullableSetting(string aName, SettingsPath settingsSource)
+            : base(aName, settingsSource, null)
+        { }
+
+        public override T? Value
+        {
+            get
+            {
+                return SettingsSource.GetNullableEnum<T>(Name);
+            }
+
+            set
+            {
+                SettingsSource.SetNullableEnum(Name, value);
+            }
+        }
+    }
+
     public class EnumSetting<T> : Setting<T> where T : struct
     {
         public EnumSetting(string aName, SettingsPath settingsSource, T aDefaultValue)
@@ -92,22 +91,23 @@
         }
     }
 
-    public class EnumNullableSetting<T> : Setting<T?> where T : struct
+    public class StringSetting : Setting<string>
     {
-        public EnumNullableSetting(string aName, SettingsPath settingsSource)
-            : base(aName, settingsSource, null)
-        { }
+        public StringSetting(string aName, SettingsPath settingsSource, string aDefaultValue)
+            : base(aName, settingsSource, aDefaultValue)
+        {
+        }
 
-        public override T? Value
+        public override string Value
         {
             get
             {
-                return SettingsSource.GetNullableEnum<T>(Name);
+                return SettingsSource.GetString(Name, DefaultValue);
             }
 
             set
             {
-                SettingsSource.SetNullableEnum(Name, value);
+                SettingsSource.SetString(Name, value);
             }
         }
     }

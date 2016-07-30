@@ -8,14 +8,14 @@ namespace GitUI.CommandsDialogs
 {
     public sealed partial class FormCreateBranch : GitModuleForm
     {
-        private readonly TranslationString _noRevisionSelected =
-            new TranslationString("Select 1 revision to create the branch on.");
-
         private readonly TranslationString _branchNameIsEmpty =
             new TranslationString("Enter branch name.");
 
         private readonly TranslationString _branchNameIsNotValud =
             new TranslationString("“{0}” is not valid branch name.");
+
+        private readonly TranslationString _noRevisionSelected =
+                            new TranslationString("Select 1 revision to create the branch on.");
 
         public FormCreateBranch(GitUICommands aCommands, GitRevision revision)
             : base(aCommands)

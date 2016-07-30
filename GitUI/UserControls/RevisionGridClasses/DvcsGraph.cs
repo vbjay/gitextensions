@@ -52,16 +52,9 @@ namespace GitUI.RevisionGridClasses
 
         #endregion FilterType enum
 
-        private int _nodeDimension = 8;
-        private int _laneWidth = 13;
-        private int _laneLineWidth = 2;
         private const int MaxLanes = 40;
-        private Brush _selectionBrush;
-
-        private Pen _whiteBorderPen;
-        private Pen _blackBorderPen;
-
         private readonly AutoResetEvent _backgroundEvent = new AutoResetEvent(false);
+        private readonly Thread _backgroundThread;
         private readonly Graph _graphData;
         private readonly Dictionary<Junction, int> _junctionColors = new Dictionary<Junction, int>();
         private readonly Color _nonRelativeColor = Color.LightGray;
@@ -83,30 +76,39 @@ namespace GitUI.RevisionGridClasses
             };
 
         private int _backgroundScrollTo;
-        private readonly Thread _backgroundThread;
-        private volatile bool _shouldRun = true;
-        private int _cacheCount; // Number of elements in the cache.
-        private int _cacheCountMax; // Number of elements allowed in the cache. Is based on control height.
-        private int _cacheHead = -1; // The 'slot' that is the head of the circular bitmap
-        private int _cacheHeadRow; // The node row that is in the head slot
+        private Pen _blackBorderPen;
+        private int _cacheCount;
+
+        // Number of elements in the cache.
+        private int _cacheCountMax;
+
+        // Number of elements allowed in the cache. Is based on control height.
+        private int _cacheHead = -1;
+
+        // The 'slot' that is the head of the circular bitmap
+        private int _cacheHeadRow;
+
+        // The node row that is in the head slot
         private FilterType _filterMode = FilterType.None;
+
         private Bitmap _graphBitmap;
         private int _graphDataCount;
         private Graphics _graphWorkArea;
-        private int _rowHeight; // Height of elements in the cache. Is equal to the control's row height.
+        private int _laneLineWidth = 2;
+        private int _laneWidth = 13;
+        private int _nodeDimension = 8;
+        private RevisionGraphDrawStyleEnum _revisionGraphDrawStyle;
+        private int _rowHeight;
+        private Brush _selectionBrush;
+
+        private volatile bool _shouldRun = true;
+
+        // Height of elements in the cache. Is equal to the control's row height.
         private int _visibleBottom;
+
         private int _visibleTop;
-
-        public void SetDimensions(int nodeDimension, int laneWidth, int laneLineWidth, int rowHeight, Brush selectionBrush)
-        {
-            RowTemplate.Height = rowHeight;
-            _nodeDimension = nodeDimension;
-            _laneWidth = laneWidth;
-            _laneLineWidth = laneLineWidth;
-            this._selectionBrush = selectionBrush;
-
-            dataGrid_Resize(null, null);
-        }
+        private Pen _whiteBorderPen;
+        private RevisionGraphDrawStyleEnum revisionGraphDrawStyleCache;
 
         public DvcsGraph()
         {
@@ -143,51 +145,9 @@ namespace GitUI.RevisionGridClasses
             Clear();
         }
 
-        protected override void OnCreateControl()
-        {
-            DataGridViewColumn dataGridColumnGraph;
-            if (ColumnCount <= 0 || GraphColumn.HeaderText != "")
-                dataGridColumnGraph = new DataGridViewTextBoxColumn();
-            else
-                dataGridColumnGraph = GraphColumn;
-            dataGridColumnGraph.HeaderText = "";
-            dataGridColumnGraph.Frozen = true;
-            dataGridColumnGraph.Name = "dataGridColumnGraph";
-            dataGridColumnGraph.ReadOnly = true;
-            dataGridColumnGraph.SortMode = DataGridViewColumnSortMode.NotSortable;
-            dataGridColumnGraph.Width = 70;
-            dataGridColumnGraph.DefaultCellStyle.Font = SystemFonts.DefaultFont;
-            if (ColumnCount == 0 || GraphColumn.HeaderText != "")
-                Columns.Insert(0, dataGridColumnGraph);
-        }
-
-        /// <summary>
-        /// 0
-        /// </summary>
-        internal DataGridViewColumn GraphColumn { get { return Columns[0]; } }
-
-        /// <summary>
-        /// 1
-        /// </summary>
-        internal DataGridViewColumn MessageColumn { get { return Columns[1]; } }
-
-        /// <summary>
-        /// 2
-        /// </summary>
-        internal DataGridViewColumn AuthorColumn { get { return Columns[2]; } }
-
-        /// <summary>
-        /// 3
-        /// </summary>
-        internal DataGridViewColumn DateColumn { get { return Columns[3]; } }
-
-        internal DataGridViewColumn IdColumn { get { return Columns[4]; } }
-
-        public void ShowAuthor(bool show)
-        {
-            this.AuthorColumn.Visible = show;
-            this.DateColumn.Visible = show;
-        }
+        [Description("Loading Handler. NOTE: This will often happen on a background thread so UI operations may not be safe!")]
+        [Category("Behavior")]
+        public event EventHandler<LoadingEventArgs> Loading;
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2002:DoNotLockOnObjectsWithWeakIdentity", Justification = "It looks like such lock was made intentionally but it is better to rewrite this")]
         [DefaultValue(FilterType.None)]
@@ -220,6 +180,34 @@ namespace GitUI.RevisionGridClasses
                             }
                         }
                     });
+            }
+        }
+
+        [DefaultValue(RevisionGraphDrawStyleEnum.DrawNonRelativesGray)]
+        [Browsable(false)]
+        public RevisionGraphDrawStyleEnum RevisionGraphDrawStyle
+        {
+            get
+            {
+                if (_revisionGraphDrawStyle == RevisionGraphDrawStyleEnum.HighlightSelected)
+                    return _revisionGraphDrawStyle;
+                if (AppSettings.RevisionGraphDrawNonRelativesGray)
+                    return RevisionGraphDrawStyleEnum.DrawNonRelativesGray;
+                return RevisionGraphDrawStyleEnum.Normal;
+            }
+            set
+            {
+                _revisionGraphDrawStyle = value;
+            }
+        }
+
+        [DefaultValue(true)]
+        [Browsable(false)]
+        public bool RevisionGraphVisible
+        {
+            get
+            {
+                return GraphColumn.Visible;
             }
         }
 
@@ -293,6 +281,223 @@ namespace GitUI.RevisionGridClasses
             }
         }
 
+        public bool UpdatingVisibleRows { get; private set; }
+
+        /// <summary>
+        /// 2
+        /// </summary>
+        internal DataGridViewColumn AuthorColumn { get { return Columns[2]; } }
+
+        /// <summary>
+        /// 3
+        /// </summary>
+        internal DataGridViewColumn DateColumn { get { return Columns[3]; } }
+
+        /// <summary>
+        /// 0
+        /// </summary>
+        internal DataGridViewColumn GraphColumn { get { return Columns[0]; } }
+
+        internal DataGridViewColumn IdColumn { get { return Columns[4]; } }
+
+        /// <summary>
+        /// 1
+        /// </summary>
+        internal DataGridViewColumn MessageColumn { get { return Columns[1]; } }
+
+        public void Add(string aId, string[] aParentIds, DataType aType, GitRevision aData)
+        {
+            lock (_graphData)
+            {
+                _graphData.Add(aId, aParentIds, aType, aData);
+            }
+
+            UpdateData();
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2002:DoNotLockOnObjectsWithWeakIdentity", Justification = "It looks like such lock was made intentionally but it is better to rewrite this")]
+        public void Clear()
+        {
+            lock (_backgroundThread)
+            {
+                _backgroundScrollTo = 0;
+            }
+            lock (_graphData)
+            {
+                SetRowCount(0);
+                _junctionColors.Clear();
+                _graphData.Clear();
+                _graphDataCount = 0;
+                RebuildGraph();
+            }
+            _filterMode = FilterType.None;
+        }
+
+        public void Filter(string aId)
+        {
+            lock (_graphData)
+            {
+                _graphData.Filter(aId);
+            }
+        }
+
+        public void FilterClear()
+        {
+            lock (_graphData)
+            {
+                foreach (Node n in _graphData.Nodes.Values)
+                {
+                    n.IsFiltered = false;
+                }
+                _graphData.IsFilter = false;
+            }
+        }
+
+        public int FindRow(string aId)
+        {
+            lock (_graphData)
+            {
+                int i;
+                for (i = 0; i < _graphData.CachedCount; i++)
+                {
+                    if (_graphData[i] != null && _graphData[i].Node.Id.CompareTo(aId) == 0)
+                    {
+                        break;
+                    }
+                }
+
+                return i == _graphData.Count ? -1 : i;
+            }
+        }
+
+        public GitRevision GetRevision(string guid)
+        {
+            Node node;
+
+            if (_graphData.Nodes.TryGetValue(guid, out node))
+                return node.Data;
+
+            return null;
+        }
+
+        public List<string> GetRevisionChildren(string guid)
+        {
+            Node node;
+
+            List<string> childrenIds = new List<string>();
+
+            //We do not need a lock here since we load the data from the first commit and walkt through all
+            //parents. Children are always loaded, since we start at the newest commit.
+            //With lock, loading the commit info slows down terrible.
+            if (_graphData.Nodes.TryGetValue(guid, out node))
+            {
+                foreach (var descendant in node.Descendants)
+                {
+                    childrenIds.Add(descendant.ChildOf(node).Id);
+                }
+            }
+
+            return childrenIds;
+        }
+
+        public GitRevision GetRowData(int aRow)
+        {
+            lock (_graphData)
+            {
+                Graph.ILaneRow row = _graphData[aRow];
+                return row == null ? null : row.Node.Data;
+            }
+        }
+
+        public string GetRowId(int aRow)
+        {
+            lock (_graphData)
+            {
+                Graph.ILaneRow row = _graphData[aRow];
+                if (row == null)
+                {
+                    return null;
+                }
+                return row.Node.Id;
+            }
+        }
+
+        public void HideRevisionGraph()
+        {
+            GraphColumn.Visible = false;
+            //updateData();
+            _backgroundEvent.Set();
+        }
+
+        public void HighlightBranch(string aId)
+        {
+            _graphData.HighlightBranch(aId);
+            Update();
+        }
+
+        public bool IsRevisionRelative(string aGuid)
+        {
+            return _graphData.IsRevisionRelative(aGuid);
+        }
+
+        public void Prune()
+        {
+            int count;
+            lock (_graphData)
+            {
+                _graphData.Prune();
+                count = _graphData.Count;
+                SetRowCount(count);
+            }
+        }
+
+        public override void Refresh()
+        {
+            ClearDrawCache();
+            base.Refresh();
+        }
+
+        public bool RowIsRelative(int aRow)
+        {
+            lock (_graphData)
+            {
+                Graph.ILaneRow row = _graphData[aRow];
+                if (row == null)
+                {
+                    return false;
+                }
+
+                if (row.Node.Ancestors.Count > 0)
+                    return row.Node.Ancestors[0].IsRelative;
+
+                return true;
+            }
+        }
+
+        public void SetDimensions(int nodeDimension, int laneWidth, int laneLineWidth, int rowHeight, Brush selectionBrush)
+        {
+            RowTemplate.Height = rowHeight;
+            _nodeDimension = nodeDimension;
+            _laneWidth = laneWidth;
+            _laneLineWidth = laneLineWidth;
+            this._selectionBrush = selectionBrush;
+
+            dataGrid_Resize(null, null);
+        }
+
+        public void ShowAuthor(bool show)
+        {
+            this.AuthorColumn.Visible = show;
+            this.DateColumn.Visible = show;
+        }
+
+        public void ShowRevisionGraph()
+        {
+            GraphColumn.Visible = true;
+            //updateData();
+            _backgroundEvent.Set();
+        }
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2002:DoNotLockOnObjectsWithWeakIdentity", Justification = "It looks like such lock was made intentionally but it is better to rewrite this")]
         protected override void Dispose(bool disposing)
         {
@@ -324,251 +529,47 @@ namespace GitUI.RevisionGridClasses
             base.Dispose(disposing);
         }
 
-        [Description("Loading Handler. NOTE: This will often happen on a background thread so UI operations may not be safe!")]
-        [Category("Behavior")]
-        public event EventHandler<LoadingEventArgs> Loading;
-
-        public void ShowRevisionGraph()
+        protected override void OnCreateControl()
         {
-            GraphColumn.Visible = true;
-            //updateData();
-            _backgroundEvent.Set();
+            DataGridViewColumn dataGridColumnGraph;
+            if (ColumnCount <= 0 || GraphColumn.HeaderText != "")
+                dataGridColumnGraph = new DataGridViewTextBoxColumn();
+            else
+                dataGridColumnGraph = GraphColumn;
+            dataGridColumnGraph.HeaderText = "";
+            dataGridColumnGraph.Frozen = true;
+            dataGridColumnGraph.Name = "dataGridColumnGraph";
+            dataGridColumnGraph.ReadOnly = true;
+            dataGridColumnGraph.SortMode = DataGridViewColumnSortMode.NotSortable;
+            dataGridColumnGraph.Width = 70;
+            dataGridColumnGraph.DefaultCellStyle.Font = SystemFonts.DefaultFont;
+            if (ColumnCount == 0 || GraphColumn.HeaderText != "")
+                Columns.Insert(0, dataGridColumnGraph);
         }
 
-        public void HideRevisionGraph()
+        protected override void OnKeyDown(KeyEventArgs e)
         {
-            GraphColumn.Visible = false;
-            //updateData();
-            _backgroundEvent.Set();
-        }
-
-        [DefaultValue(true)]
-        [Browsable(false)]
-        public bool RevisionGraphVisible
-        {
-            get
+            if (e.KeyData == Keys.Home)
             {
-                return GraphColumn.Visible;
-            }
-        }
-
-        public void Add(string aId, string[] aParentIds, DataType aType, GitRevision aData)
-        {
-            lock (_graphData)
-            {
-                _graphData.Add(aId, aParentIds, aType, aData);
-            }
-
-            UpdateData();
-        }
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2002:DoNotLockOnObjectsWithWeakIdentity", Justification = "It looks like such lock was made intentionally but it is better to rewrite this")]
-        public void Clear()
-        {
-            lock (_backgroundThread)
-            {
-                _backgroundScrollTo = 0;
-            }
-            lock (_graphData)
-            {
-                SetRowCount(0);
-                _junctionColors.Clear();
-                _graphData.Clear();
-                _graphDataCount = 0;
-                RebuildGraph();
-            }
-            _filterMode = FilterType.None;
-        }
-
-        public void FilterClear()
-        {
-            lock (_graphData)
-            {
-                foreach (Node n in _graphData.Nodes.Values)
+                if (RowCount != 0)
                 {
-                    n.IsFiltered = false;
+                    ClearSelection();
+                    Rows[0].Selected = true;
+                    CurrentCell = Rows[0].Cells[1];
                 }
-                _graphData.IsFilter = false;
-            }
-        }
-
-        public void Filter(string aId)
-        {
-            lock (_graphData)
-            {
-                _graphData.Filter(aId);
-            }
-        }
-
-        public bool RowIsRelative(int aRow)
-        {
-            lock (_graphData)
-            {
-                Graph.ILaneRow row = _graphData[aRow];
-                if (row == null)
-                {
-                    return false;
-                }
-
-                if (row.Node.Ancestors.Count > 0)
-                    return row.Node.Ancestors[0].IsRelative;
-
-                return true;
-            }
-        }
-
-        public GitRevision GetRowData(int aRow)
-        {
-            lock (_graphData)
-            {
-                Graph.ILaneRow row = _graphData[aRow];
-                return row == null ? null : row.Node.Data;
-            }
-        }
-
-        public string GetRowId(int aRow)
-        {
-            lock (_graphData)
-            {
-                Graph.ILaneRow row = _graphData[aRow];
-                if (row == null)
-                {
-                    return null;
-                }
-                return row.Node.Id;
-            }
-        }
-
-        public int FindRow(string aId)
-        {
-            lock (_graphData)
-            {
-                int i;
-                for (i = 0; i < _graphData.CachedCount; i++)
-                {
-                    if (_graphData[i] != null && _graphData[i].Node.Id.CompareTo(aId) == 0)
-                    {
-                        break;
-                    }
-                }
-
-                return i == _graphData.Count ? -1 : i;
-            }
-        }
-
-        public void Prune()
-        {
-            int count;
-            lock (_graphData)
-            {
-                _graphData.Prune();
-                count = _graphData.Count;
-                SetRowCount(count);
-            }
-        }
-
-        private void RebuildGraph()
-        {
-            // Redraw
-            _cacheHead = -1;
-            _cacheHeadRow = 0;
-            ClearDrawCache();
-            UpdateData();
-            Invalidate(true);
-        }
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2002:DoNotLockOnObjectsWithWeakIdentity", Justification = "It looks like such lock was made intentionally but it is better to rewrite this")]
-        private void SetRowCount(int count)
-        {
-            if (InvokeRequired)
-            {
-                // DO NOT INVOKE! The RowCount is fixed at other strategic points in time.
-                // -Doing this in synch can lock up the application
-                // -Doing this asynch causes the scrollbar to flicker and eats performance
-                // -At first I was concerned that returning might lead to some cases where
-                //  we have more items in the list than we're showing, but I'm pretty sure
-                //  when we're done processing we'll update with the final count, so the
-                //  problem will only be temporary, and not able to distinguish it from
-                //  just git giving us data slowly.
-                //Invoke(new MethodInvoker(delegate { setRowCount(count); }));
                 return;
             }
-
-            lock (_backgroundThread)
+            else if (e.KeyData == Keys.End)
             {
-                UpdatingVisibleRows = true;
-
-                try
+                if (RowCount != 0)
                 {
-                    if (CurrentCell == null)
-                    {
-                        RowCount = count;
-                        CurrentCell = null;
-                    }
-                    else
-                    {
-                        RowCount = count;
-                    }
+                    ClearSelection();
+                    Rows[RowCount - 1].Selected = true;
+                    CurrentCell = Rows[RowCount - 1].Cells[1];
                 }
-                finally
-                {
-                    UpdatingVisibleRows = false;
-                }
-            }
-        }
-
-        private void graphData_Updated(object graph)
-        {
-            // We have to post this since the thread owns a lock on GraphData that we'll
-            // need in order to re-draw the graph.
-            this.InvokeAsync(() =>
-                {
-                    ClearDrawCache();
-                    Invalidate();
-                });
-        }
-
-        private void dataGrid_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
-        {
-            if (e.RowIndex < 0)
                 return;
-            if (Rows[e.RowIndex].Height != RowTemplate.Height)
-            {
-                Rows[e.RowIndex].Height = RowTemplate.Height;
-                dataGrid_Scroll(null, null);
             }
-
-            if ((e.State & DataGridViewElementStates.Visible) == 0 || e.ColumnIndex != 0)
-                return;
-
-            var brush = (e.State & DataGridViewElementStates.Selected) == DataGridViewElementStates.Selected
-                            ? _selectionBrush : Brushes.White;
-            e.Graphics.FillRectangle(brush, e.CellBounds);
-
-            Rectangle srcRect = DrawGraph(e.RowIndex);
-            if (!srcRect.IsEmpty)
-            {
-                e.Graphics.DrawImage
-                    (
-                        _graphBitmap,
-                        e.CellBounds,
-                        srcRect,
-                        GraphicsUnit.Pixel
-                    );
-            }
-
-            e.Handled = true;
-        }
-
-        private void dataGrid_ColumnWidthChanged(object sender, DataGridViewColumnEventArgs e)
-        {
-            ClearDrawCache();
-        }
-
-        private void dataGrid_Scroll(object sender, ScrollEventArgs e)
-        {
-            UpdateData();
-            UpdateColumnWidth();
+            base.OnKeyDown(e);
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2002:DoNotLockOnObjectsWithWeakIdentity", Justification = "It looks like such lock was made intentionally but it is better to rewrite this")]
@@ -608,254 +609,73 @@ namespace GitUI.RevisionGridClasses
             }
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2002:DoNotLockOnObjectsWithWeakIdentity", Justification = "It looks like such lock was made intentionally but it is better to rewrite this")]
-        private void UpdateGraph(int curCount, int scrollTo)
-        {
-            while (curCount < scrollTo)
-            {
-                lock (_graphData)
-                {
-                    // Cache the next item
-                    if (!_graphData.CacheTo(curCount))
-                    {
-                        Debug.WriteLine("Cached item FAILED {0}", curCount.ToString());
-                        lock (_backgroundThread)
-                        {
-                            _backgroundScrollTo = curCount;
-                        }
-                        break;
-                    }
-
-                    // Update the row (if needed)
-                    if (curCount < _visibleBottom)
-                    {
-                        this.InvokeAsync(o => UpdateRow((int)o), curCount);
-                    }
-
-                    int count = 0;
-                    if (FirstDisplayedCell != null)
-                        count = FirstDisplayedCell.RowIndex + DisplayedRowCount(true);
-                    if (curCount == count)
-                        this.InvokeAsync(UpdateColumnWidth);
-
-                    curCount = _graphData.CachedCount;
-                    _graphDataCount = curCount;
-                }
-            }
-        }
-
-        private void UpdateData()
-        {
-            _visibleTop = FirstDisplayedCell == null ? 0 : FirstDisplayedCell.RowIndex;
-            _visibleBottom = _rowHeight > 0 ? _visibleTop + (Height / _rowHeight) : _visibleTop;
-
-            //Add 5 for safe merge (1 for rounding and 1 for whitespace)....
-            if (_visibleBottom + 2 > _graphData.Count)
-            {
-                //Currently we are doing some important work; we are recieving
-                //rows that the user is viewing
-                if (Loading != null && _graphData.Count > RowCount)// && graphData.Count != RowCount)
-                {
-                    Loading(this, new LoadingEventArgs(true));
-                }
-            }
-            else
-            {
-                //All rows that the user is viewing are loaded. We now can hide the loading
-                //animation that is shown. (the event Loading(bool) triggers this!)
-                if (Loading != null)
-                {
-                    Loading(this, new LoadingEventArgs(false));
-                }
-            }
-
-            if (_visibleBottom >= _graphData.Count)
-            {
-                _visibleBottom = _graphData.Count;
-            }
-
-            int targetBottom = _visibleBottom + 250;
-            targetBottom = Math.Min(targetBottom, _graphData.Count);
-            if (_backgroundScrollTo < targetBottom)
-            {
-                _backgroundScrollTo = targetBottom;
-                _backgroundEvent.Set();
-            }
-        }
-
-        private void UpdateRow(int row)
-        {
-            if (RowCount < _graphData.Count)
-            {
-                lock (_graphData)
-                {
-                    SetRowCount(_graphData.Count);
-                }
-            }
-
-            //We only need to invalidate if the row is visible
-            if (_visibleBottom >= row &&
-                _visibleTop <= row &&
-                row < RowCount)
-            {
-                try
-                {
-                    InvalidateRow(row);
-                }
-                catch (ArgumentOutOfRangeException)
-                {
-                    // Ignore. It is possible that RowCount gets changed before
-                    // this is processed and the row is larger than RowCount.
-                }
-            }
-        }
-
-        public bool UpdatingVisibleRows { get; private set; }
-
-        private void UpdateColumnWidth()
-        {
-            // Auto scale width on scroll
-            if (GraphColumn.Visible)
-            {
-                int laneCount = 2;
-                if (_graphData != null)
-                {
-                    int width = 1;
-                    int start = VerticalScrollBar.Value / _rowHeight;
-                    int stop = start + DisplayedRowCount(true);
-                    lock (_graphData)
-                    {
-                        for (int i = start; i < stop && _graphData[i] != null; i++)
-                        {
-                            width = Math.Max(_graphData[i].Count, width);
-                        }
-                    }
-
-                    laneCount = Math.Min(Math.Max(laneCount, width), MaxLanes);
-                }
-                if (GraphColumn.Width != _laneWidth * laneCount && _laneWidth * laneCount > GraphColumn.MinimumWidth)
-                    GraphColumn.Width = _laneWidth * laneCount;
-            }
-        }
-
-        //Color of non-relative branches.
-
-        private List<Color> GetJunctionColors(IEnumerable<Junction> aJunction)
-        {
-            List<Color> colors = new List<Color>();
-            foreach (Junction j in aJunction)
-            {
-                colors.Add(GetJunctionColor(j));
-            }
-
-            if (colors.Count == 0)
-            {
-                colors.Add(Color.Black);
-            }
-
-            return colors;
-        }
-
-        private RevisionGraphDrawStyleEnum _revisionGraphDrawStyle;
-
-        [DefaultValue(RevisionGraphDrawStyleEnum.DrawNonRelativesGray)]
-        [Browsable(false)]
-        public RevisionGraphDrawStyleEnum RevisionGraphDrawStyle
-        {
-            get
-            {
-                if (_revisionGraphDrawStyle == RevisionGraphDrawStyleEnum.HighlightSelected)
-                    return _revisionGraphDrawStyle;
-                if (AppSettings.RevisionGraphDrawNonRelativesGray)
-                    return RevisionGraphDrawStyleEnum.DrawNonRelativesGray;
-                return RevisionGraphDrawStyleEnum.Normal;
-            }
-            set
-            {
-                _revisionGraphDrawStyle = value;
-            }
-        }
-
-        // http://en.wikipedia.org/wiki/File:RBG_color_wheel.svg
-
-        private Color GetJunctionColor(Junction aJunction)
-        {
-            //Draw non-relative branches gray
-            if (!aJunction.IsRelative && revisionGraphDrawStyleCache == RevisionGraphDrawStyleEnum.DrawNonRelativesGray)
-                return _nonRelativeColor;
-
-            //Draw non-highlighted branches gray
-            if (!aJunction.HighLight && revisionGraphDrawStyleCache == RevisionGraphDrawStyleEnum.HighlightSelected)
-                return _nonRelativeColor;
-
-            if (!AppSettings.MulticolorBranches)
-                return AppSettings.GraphColor;
-
-            // This is the order to grab the colors in.
-            int[] preferedColors = { 4, 8, 6, 10, 2, 5, 7, 3, 9, 1, 11 };
-
-            int colorIndex;
-            if (_junctionColors.TryGetValue(aJunction, out colorIndex))
-            {
-                return _possibleColors[colorIndex];
-            }
-
-            // Get adjacent junctions
-            var adjacentJunctions = new List<Junction>();
-            var adjacentColors = new List<int>();
-            adjacentJunctions.AddRange(aJunction.Youngest.Ancestors);
-            adjacentJunctions.AddRange(aJunction.Youngest.Descendants);
-            adjacentJunctions.AddRange(aJunction.Oldest.Ancestors);
-            adjacentJunctions.AddRange(aJunction.Oldest.Descendants);
-            foreach (Junction peer in adjacentJunctions)
-            {
-                if (_junctionColors.TryGetValue(peer, out colorIndex))
-                {
-                    adjacentColors.Add(colorIndex);
-                }
-                else
-                {
-                    colorIndex = -1;
-                }
-            }
-
-            if (adjacentColors.Count == 0) //This is an end-point. We need to 'pick' a new color
-            {
-                colorIndex = 0;
-            }
-            else //This is a parent branch, calculate new color based on parent branch
-            {
-                int start = adjacentColors[0];
-                int i;
-                for (i = 0; i < preferedColors.Length; i++)
-                {
-                    colorIndex = (start + preferedColors[i]) % _possibleColors.Length;
-                    if (!adjacentColors.Contains(colorIndex))
-                    {
-                        break;
-                    }
-                }
-                if (i == preferedColors.Length)
-                {
-                    var r = new Random();
-                    colorIndex = r.Next(preferedColors.Length);
-                }
-            }
-
-            _junctionColors[aJunction] = colorIndex;
-            return _possibleColors[colorIndex];
-        }
-
-        public override void Refresh()
-        {
-            ClearDrawCache();
-            base.Refresh();
-        }
-
         private void ClearDrawCache()
         {
             _cacheHead = 0;
             _cacheCount = 0;
+        }
+
+        private Rectangle CreateRectangle(int aNeededRow, int width)
+        {
+            return new Rectangle
+                (
+                0,
+                (_cacheHeadRow + aNeededRow - _cacheHead) % _cacheCountMax * RowTemplate.Height,
+                width,
+                _rowHeight
+                );
+        }
+
+        private void dataGrid_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+        {
+            if (e.RowIndex < 0)
+                return;
+            if (Rows[e.RowIndex].Height != RowTemplate.Height)
+            {
+                Rows[e.RowIndex].Height = RowTemplate.Height;
+                dataGrid_Scroll(null, null);
+            }
+
+            if ((e.State & DataGridViewElementStates.Visible) == 0 || e.ColumnIndex != 0)
+                return;
+
+            var brush = (e.State & DataGridViewElementStates.Selected) == DataGridViewElementStates.Selected
+                            ? _selectionBrush : Brushes.White;
+            e.Graphics.FillRectangle(brush, e.CellBounds);
+
+            Rectangle srcRect = DrawGraph(e.RowIndex);
+            if (!srcRect.IsEmpty)
+            {
+                e.Graphics.DrawImage
+                    (
+                        _graphBitmap,
+                        e.CellBounds,
+                        srcRect,
+                        GraphicsUnit.Pixel
+                    );
+            }
+
+            e.Handled = true;
+        }
+
+        private void dataGrid_ColumnWidthChanged(object sender, DataGridViewColumnEventArgs e)
+        {
+            ClearDrawCache();
+        }
+
+        private void dataGrid_Resize(object sender, EventArgs e)
+        {
+            _rowHeight = RowTemplate.Height;
+            // Keep an extra page in the cache
+            _cacheCountMax = Height * 2 / _rowHeight + 1;
+            ClearDrawCache();
+            dataGrid_Scroll(null, null);
+        }
+
+        private void dataGrid_Scroll(object sender, ScrollEventArgs e)
+        {
+            UpdateData();
+            UpdateColumnWidth();
         }
 
         private Rectangle DrawGraph(int aNeededRow)
@@ -954,76 +774,7 @@ namespace GitUI.RevisionGridClasses
             return CreateRectangle(aNeededRow, width);
         }
 
-        private bool DrawVisibleGraph(int start, int end)
-        {
-            for (int rowIndex = start; rowIndex < end; rowIndex++)
-            {
-                Graph.ILaneRow row = _graphData[rowIndex];
-                if (row == null)
-                {
-                    // This shouldn't be happening...If it does, clear the cache so we
-                    // eventually pick it up.
-                    Debug.WriteLine("Draw lane {0} NO DATA", rowIndex.ToString());
-                    ClearDrawCache();
-                    return false;
-                }
-
-                Region oldClip = _graphWorkArea.Clip;
-
-                // Get the x,y value of the current item's upper left in the cache
-                int curCacheRow = (_cacheHeadRow + rowIndex - _cacheHead) % _cacheCountMax;
-                int x = 0;
-                int y = curCacheRow * _rowHeight;
-
-                var laneRect = new Rectangle(0, y, Width, _rowHeight);
-                if (rowIndex == start || curCacheRow == 0)
-                {
-                    // Draw previous row first. Clip top to row. We also need to clear the area
-                    // before we draw since nothing else would clear the top 1/2 of the item to draw.
-                    _graphWorkArea.RenderingOrigin = new Point(x, y - _rowHeight);
-                    var newClip = new Region(laneRect);
-                    _graphWorkArea.Clip = newClip;
-                    _graphWorkArea.Clear(Color.Transparent);
-                    DrawItem(_graphWorkArea, _graphData[rowIndex - 1]);
-                    _graphWorkArea.Clip = oldClip;
-                }
-
-                bool isLast = (rowIndex == end - 1);
-                if (isLast)
-                {
-                    var newClip = new Region(laneRect);
-                    _graphWorkArea.Clip = newClip;
-                }
-
-                _graphWorkArea.RenderingOrigin = new Point(x, y);
-                bool success = DrawItem(_graphWorkArea, row);
-
-                _graphWorkArea.Clip = oldClip;
-
-                if (!success)
-                {
-                    ClearDrawCache();
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        private Rectangle CreateRectangle(int aNeededRow, int width)
-        {
-            return new Rectangle
-                (
-                0,
-                (_cacheHeadRow + aNeededRow - _cacheHead) % _cacheCountMax * RowTemplate.Height,
-                width,
-                _rowHeight
-                );
-        }
-
         // end drawGraph
-
-        private RevisionGraphDrawStyleEnum revisionGraphDrawStyleCache;
-
         private bool DrawItem(Graphics wa, Graph.ILaneRow row)
         {
             if (row == null || row.NodeLane == -1)
@@ -1240,80 +991,336 @@ namespace GitUI.RevisionGridClasses
             return true;
         }
 
-        public void HighlightBranch(string aId)
+        private bool DrawVisibleGraph(int start, int end)
         {
-            _graphData.HighlightBranch(aId);
-            Update();
-        }
-
-        public bool IsRevisionRelative(string aGuid)
-        {
-            return _graphData.IsRevisionRelative(aGuid);
-        }
-
-        public GitRevision GetRevision(string guid)
-        {
-            Node node;
-
-            if (_graphData.Nodes.TryGetValue(guid, out node))
-                return node.Data;
-
-            return null;
-        }
-
-        public List<string> GetRevisionChildren(string guid)
-        {
-            Node node;
-
-            List<string> childrenIds = new List<string>();
-
-            //We do not need a lock here since we load the data from the first commit and walkt through all
-            //parents. Children are always loaded, since we start at the newest commit.
-            //With lock, loading the commit info slows down terrible.
-            if (_graphData.Nodes.TryGetValue(guid, out node))
+            for (int rowIndex = start; rowIndex < end; rowIndex++)
             {
-                foreach (var descendant in node.Descendants)
+                Graph.ILaneRow row = _graphData[rowIndex];
+                if (row == null)
                 {
-                    childrenIds.Add(descendant.ChildOf(node).Id);
+                    // This shouldn't be happening...If it does, clear the cache so we
+                    // eventually pick it up.
+                    Debug.WriteLine("Draw lane {0} NO DATA", rowIndex.ToString());
+                    ClearDrawCache();
+                    return false;
+                }
+
+                Region oldClip = _graphWorkArea.Clip;
+
+                // Get the x,y value of the current item's upper left in the cache
+                int curCacheRow = (_cacheHeadRow + rowIndex - _cacheHead) % _cacheCountMax;
+                int x = 0;
+                int y = curCacheRow * _rowHeight;
+
+                var laneRect = new Rectangle(0, y, Width, _rowHeight);
+                if (rowIndex == start || curCacheRow == 0)
+                {
+                    // Draw previous row first. Clip top to row. We also need to clear the area
+                    // before we draw since nothing else would clear the top 1/2 of the item to draw.
+                    _graphWorkArea.RenderingOrigin = new Point(x, y - _rowHeight);
+                    var newClip = new Region(laneRect);
+                    _graphWorkArea.Clip = newClip;
+                    _graphWorkArea.Clear(Color.Transparent);
+                    DrawItem(_graphWorkArea, _graphData[rowIndex - 1]);
+                    _graphWorkArea.Clip = oldClip;
+                }
+
+                bool isLast = (rowIndex == end - 1);
+                if (isLast)
+                {
+                    var newClip = new Region(laneRect);
+                    _graphWorkArea.Clip = newClip;
+                }
+
+                _graphWorkArea.RenderingOrigin = new Point(x, y);
+                bool success = DrawItem(_graphWorkArea, row);
+
+                _graphWorkArea.Clip = oldClip;
+
+                if (!success)
+                {
+                    ClearDrawCache();
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private Color GetJunctionColor(Junction aJunction)
+        {
+            //Draw non-relative branches gray
+            if (!aJunction.IsRelative && revisionGraphDrawStyleCache == RevisionGraphDrawStyleEnum.DrawNonRelativesGray)
+                return _nonRelativeColor;
+
+            //Draw non-highlighted branches gray
+            if (!aJunction.HighLight && revisionGraphDrawStyleCache == RevisionGraphDrawStyleEnum.HighlightSelected)
+                return _nonRelativeColor;
+
+            if (!AppSettings.MulticolorBranches)
+                return AppSettings.GraphColor;
+
+            // This is the order to grab the colors in.
+            int[] preferedColors = { 4, 8, 6, 10, 2, 5, 7, 3, 9, 1, 11 };
+
+            int colorIndex;
+            if (_junctionColors.TryGetValue(aJunction, out colorIndex))
+            {
+                return _possibleColors[colorIndex];
+            }
+
+            // Get adjacent junctions
+            var adjacentJunctions = new List<Junction>();
+            var adjacentColors = new List<int>();
+            adjacentJunctions.AddRange(aJunction.Youngest.Ancestors);
+            adjacentJunctions.AddRange(aJunction.Youngest.Descendants);
+            adjacentJunctions.AddRange(aJunction.Oldest.Ancestors);
+            adjacentJunctions.AddRange(aJunction.Oldest.Descendants);
+            foreach (Junction peer in adjacentJunctions)
+            {
+                if (_junctionColors.TryGetValue(peer, out colorIndex))
+                {
+                    adjacentColors.Add(colorIndex);
+                }
+                else
+                {
+                    colorIndex = -1;
                 }
             }
 
-            return childrenIds;
+            if (adjacentColors.Count == 0) //This is an end-point. We need to 'pick' a new color
+            {
+                colorIndex = 0;
+            }
+            else //This is a parent branch, calculate new color based on parent branch
+            {
+                int start = adjacentColors[0];
+                int i;
+                for (i = 0; i < preferedColors.Length; i++)
+                {
+                    colorIndex = (start + preferedColors[i]) % _possibleColors.Length;
+                    if (!adjacentColors.Contains(colorIndex))
+                    {
+                        break;
+                    }
+                }
+                if (i == preferedColors.Length)
+                {
+                    var r = new Random();
+                    colorIndex = r.Next(preferedColors.Length);
+                }
+            }
+
+            _junctionColors[aJunction] = colorIndex;
+            return _possibleColors[colorIndex];
         }
 
-        private void dataGrid_Resize(object sender, EventArgs e)
+        private List<Color> GetJunctionColors(IEnumerable<Junction> aJunction)
         {
-            _rowHeight = RowTemplate.Height;
-            // Keep an extra page in the cache
-            _cacheCountMax = Height * 2 / _rowHeight + 1;
+            List<Color> colors = new List<Color>();
+            foreach (Junction j in aJunction)
+            {
+                colors.Add(GetJunctionColor(j));
+            }
+
+            if (colors.Count == 0)
+            {
+                colors.Add(Color.Black);
+            }
+
+            return colors;
+        }
+
+        private void graphData_Updated(object graph)
+        {
+            // We have to post this since the thread owns a lock on GraphData that we'll
+            // need in order to re-draw the graph.
+            this.InvokeAsync(() =>
+                {
+                    ClearDrawCache();
+                    Invalidate();
+                });
+        }
+
+        private void RebuildGraph()
+        {
+            // Redraw
+            _cacheHead = -1;
+            _cacheHeadRow = 0;
             ClearDrawCache();
-            dataGrid_Scroll(null, null);
+            UpdateData();
+            Invalidate(true);
         }
 
-        protected override void OnKeyDown(KeyEventArgs e)
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2002:DoNotLockOnObjectsWithWeakIdentity", Justification = "It looks like such lock was made intentionally but it is better to rewrite this")]
+        private void SetRowCount(int count)
         {
-            if (e.KeyData == Keys.Home)
+            if (InvokeRequired)
             {
-                if (RowCount != 0)
-                {
-                    ClearSelection();
-                    Rows[0].Selected = true;
-                    CurrentCell = Rows[0].Cells[1];
-                }
+                // DO NOT INVOKE! The RowCount is fixed at other strategic points in time.
+                // -Doing this in synch can lock up the application
+                // -Doing this asynch causes the scrollbar to flicker and eats performance
+                // -At first I was concerned that returning might lead to some cases where
+                //  we have more items in the list than we're showing, but I'm pretty sure
+                //  when we're done processing we'll update with the final count, so the
+                //  problem will only be temporary, and not able to distinguish it from
+                //  just git giving us data slowly.
+                //Invoke(new MethodInvoker(delegate { setRowCount(count); }));
                 return;
             }
-            else if (e.KeyData == Keys.End)
+
+            lock (_backgroundThread)
             {
-                if (RowCount != 0)
+                UpdatingVisibleRows = true;
+
+                try
                 {
-                    ClearSelection();
-                    Rows[RowCount - 1].Selected = true;
-                    CurrentCell = Rows[RowCount - 1].Cells[1];
+                    if (CurrentCell == null)
+                    {
+                        RowCount = count;
+                        CurrentCell = null;
+                    }
+                    else
+                    {
+                        RowCount = count;
+                    }
                 }
-                return;
+                finally
+                {
+                    UpdatingVisibleRows = false;
+                }
             }
-            base.OnKeyDown(e);
         }
+
+        private void UpdateColumnWidth()
+        {
+            // Auto scale width on scroll
+            if (GraphColumn.Visible)
+            {
+                int laneCount = 2;
+                if (_graphData != null)
+                {
+                    int width = 1;
+                    int start = VerticalScrollBar.Value / _rowHeight;
+                    int stop = start + DisplayedRowCount(true);
+                    lock (_graphData)
+                    {
+                        for (int i = start; i < stop && _graphData[i] != null; i++)
+                        {
+                            width = Math.Max(_graphData[i].Count, width);
+                        }
+                    }
+
+                    laneCount = Math.Min(Math.Max(laneCount, width), MaxLanes);
+                }
+                if (GraphColumn.Width != _laneWidth * laneCount && _laneWidth * laneCount > GraphColumn.MinimumWidth)
+                    GraphColumn.Width = _laneWidth * laneCount;
+            }
+        }
+
+        private void UpdateData()
+        {
+            _visibleTop = FirstDisplayedCell == null ? 0 : FirstDisplayedCell.RowIndex;
+            _visibleBottom = _rowHeight > 0 ? _visibleTop + (Height / _rowHeight) : _visibleTop;
+
+            //Add 5 for safe merge (1 for rounding and 1 for whitespace)....
+            if (_visibleBottom + 2 > _graphData.Count)
+            {
+                //Currently we are doing some important work; we are recieving
+                //rows that the user is viewing
+                if (Loading != null && _graphData.Count > RowCount)// && graphData.Count != RowCount)
+                {
+                    Loading(this, new LoadingEventArgs(true));
+                }
+            }
+            else
+            {
+                //All rows that the user is viewing are loaded. We now can hide the loading
+                //animation that is shown. (the event Loading(bool) triggers this!)
+                if (Loading != null)
+                {
+                    Loading(this, new LoadingEventArgs(false));
+                }
+            }
+
+            if (_visibleBottom >= _graphData.Count)
+            {
+                _visibleBottom = _graphData.Count;
+            }
+
+            int targetBottom = _visibleBottom + 250;
+            targetBottom = Math.Min(targetBottom, _graphData.Count);
+            if (_backgroundScrollTo < targetBottom)
+            {
+                _backgroundScrollTo = targetBottom;
+                _backgroundEvent.Set();
+            }
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2002:DoNotLockOnObjectsWithWeakIdentity", Justification = "It looks like such lock was made intentionally but it is better to rewrite this")]
+        private void UpdateGraph(int curCount, int scrollTo)
+        {
+            while (curCount < scrollTo)
+            {
+                lock (_graphData)
+                {
+                    // Cache the next item
+                    if (!_graphData.CacheTo(curCount))
+                    {
+                        Debug.WriteLine("Cached item FAILED {0}", curCount.ToString());
+                        lock (_backgroundThread)
+                        {
+                            _backgroundScrollTo = curCount;
+                        }
+                        break;
+                    }
+
+                    // Update the row (if needed)
+                    if (curCount < _visibleBottom)
+                    {
+                        this.InvokeAsync(o => UpdateRow((int)o), curCount);
+                    }
+
+                    int count = 0;
+                    if (FirstDisplayedCell != null)
+                        count = FirstDisplayedCell.RowIndex + DisplayedRowCount(true);
+                    if (curCount == count)
+                        this.InvokeAsync(UpdateColumnWidth);
+
+                    curCount = _graphData.CachedCount;
+                    _graphDataCount = curCount;
+                }
+            }
+        }
+
+        private void UpdateRow(int row)
+        {
+            if (RowCount < _graphData.Count)
+            {
+                lock (_graphData)
+                {
+                    SetRowCount(_graphData.Count);
+                }
+            }
+
+            //We only need to invalidate if the row is visible
+            if (_visibleBottom >= row &&
+                _visibleTop <= row &&
+                row < RowCount)
+            {
+                try
+                {
+                    InvalidateRow(row);
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    // Ignore. It is possible that RowCount gets changed before
+                    // this is processed and the row is larger than RowCount.
+                }
+            }
+        }
+
+        //Color of non-relative branches.
+        // http://en.wikipedia.org/wiki/File:RBG_color_wheel.svg
 
         #region Nested type: Node
 
@@ -1324,8 +1331,8 @@ namespace GitUI.RevisionGridClasses
             public readonly string Id;
             public GitRevision Data;
             public DataType DataType;
-            public int InLane = int.MaxValue;
             public int Index = int.MaxValue;
+            public int InLane = int.MaxValue;
 
             public Node(string aId)
             {

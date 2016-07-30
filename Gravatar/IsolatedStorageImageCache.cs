@@ -14,6 +14,27 @@ namespace Gravatar
             return IsolatedStorageFile.GetStore(IsolatedStorageScope.User | IsolatedStorageScope.Assembly, null, null);
         }
 
+        public void CacheImage(string imageFileName, Stream imageStream)
+        {
+            using (var output = new IsolatedStorageFileStream(imageFileName, FileMode.Create, GetIsolatedStorageFile()))
+            {
+                var buffer = new byte[1024];
+                int read;
+
+                if (imageStream != null)
+                    while ((read = imageStream.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        output.Write(buffer, 0, read);
+                    }
+            }
+        }
+
+        public void ClearCache()
+        {
+            foreach (var gravatarFileName in GetIsolatedStorageFile().GetFileNames("*.png"))
+                GetIsolatedStorageFile().DeleteFile(gravatarFileName);
+        }
+
         public void DeleteCachedFile(string imageFileName)
         {
             var isolatedStorage = GetIsolatedStorageFile();
@@ -22,12 +43,6 @@ namespace Gravatar
             {
                 isolatedStorage.DeleteFile(imageFileName);
             }
-        }
-
-        public void ClearCache()
-        {
-            foreach (var gravatarFileName in GetIsolatedStorageFile().GetFileNames("*.png"))
-                GetIsolatedStorageFile().DeleteFile(gravatarFileName);
         }
 
         public bool FileIsCached(string imageFileName)
@@ -87,21 +102,6 @@ namespace Gravatar
             {
                 // Other erros, ignore
                 return defaultBitmap;
-            }
-        }
-
-        public void CacheImage(string imageFileName, Stream imageStream)
-        {
-            using (var output = new IsolatedStorageFileStream(imageFileName, FileMode.Create, GetIsolatedStorageFile()))
-            {
-                var buffer = new byte[1024];
-                int read;
-
-                if (imageStream != null)
-                    while ((read = imageStream.Read(buffer, 0, buffer.Length)) > 0)
-                    {
-                        output.Write(buffer, 0, read);
-                    }
             }
         }
     }

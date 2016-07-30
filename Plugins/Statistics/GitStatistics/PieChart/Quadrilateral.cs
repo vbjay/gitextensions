@@ -8,6 +8,8 @@ namespace GitStatistics.PieChart
     /// </summary>
     public class Quadrilateral
     {
+        public static readonly Quadrilateral Empty = new Quadrilateral();
+
         /// <summary>
         ///   <c>PathPointType</c>s decribing the <c>GraphicsPath</c> points.
         /// </summary>
@@ -21,19 +23,10 @@ namespace GitStatistics.PieChart
                     // | (byte)PathPointType.CloseSubpath
                 };
 
-        public static readonly Quadrilateral Empty = new Quadrilateral();
-
         /// <summary>
         ///   <c>GraphicsPath</c> representing the quadrilateral.
         /// </summary>
         private readonly GraphicsPath _path = new GraphicsPath();
-
-        /// <summary>
-        ///   Creates empty <c>Quadrilateral</c> object
-        /// </summary>
-        protected Quadrilateral()
-        {
-        }
 
         /// <summary>
         ///   Initilizes <c>Quadrilateral</c> object with given corner points.
@@ -62,38 +55,10 @@ namespace GitStatistics.PieChart
         }
 
         /// <summary>
-        ///   Draws the <c>Quadrilateral</c> with <c>Graphics</c> provided.
+        ///   Creates empty <c>Quadrilateral</c> object
         /// </summary>
-        /// <param name = "graphics">
-        ///   <c>Graphics</c> used to draw.
-        /// </param>
-        /// <param name = "pen">
-        ///   <c>Pen</c> used to draw outline.
-        /// </param>
-        /// <param name = "brush">
-        ///   <c>Brush</c> used to fill the inside.
-        /// </param>
-        public void Draw(Graphics graphics, Pen pen, Brush brush)
+        protected Quadrilateral()
         {
-            graphics.FillPath(brush, _path);
-            graphics.DrawPath(pen, _path);
-        }
-
-        /// <summary>
-        ///   Checks if the given <c>PointF</c> is contained within the
-        ///   quadrilateral.
-        /// </summary>
-        /// <param name = "point">
-        ///   <c>PointF</c> structure to check for.
-        /// </param>
-        /// <returns>
-        ///   <c>true</c> if the point is contained within the quadrilateral.
-        /// </returns>
-        public bool Contains(PointF point)
-        {
-            if (_path.PointCount == 0 || _path.PathPoints.Length == 0)
-                return false;
-            return Contains(point, _path.PathPoints);
         }
 
         /// <summary>
@@ -121,6 +86,41 @@ namespace GitStatistics.PieChart
             if (DoesIntersects(point, cornerPoints[cornerPoints.Length - 1], cornerPoints[0]))
                 ++intersections;
             return (intersections % 2 != 0);
+        }
+
+        /// <summary>
+        ///   Checks if the given <c>PointF</c> is contained within the
+        ///   quadrilateral.
+        /// </summary>
+        /// <param name = "point">
+        ///   <c>PointF</c> structure to check for.
+        /// </param>
+        /// <returns>
+        ///   <c>true</c> if the point is contained within the quadrilateral.
+        /// </returns>
+        public bool Contains(PointF point)
+        {
+            if (_path.PointCount == 0 || _path.PathPoints.Length == 0)
+                return false;
+            return Contains(point, _path.PathPoints);
+        }
+
+        /// <summary>
+        ///   Draws the <c>Quadrilateral</c> with <c>Graphics</c> provided.
+        /// </summary>
+        /// <param name = "graphics">
+        ///   <c>Graphics</c> used to draw.
+        /// </param>
+        /// <param name = "pen">
+        ///   <c>Pen</c> used to draw outline.
+        /// </param>
+        /// <param name = "brush">
+        ///   <c>Brush</c> used to fill the inside.
+        /// </param>
+        public void Draw(Graphics graphics, Pen pen, Brush brush)
+        {
+            graphics.FillPath(brush, _path);
+            graphics.DrawPath(pen, _path);
         }
 
         /// <summary>

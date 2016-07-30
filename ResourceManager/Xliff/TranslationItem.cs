@@ -7,6 +7,14 @@ namespace ResourceManager.Xliff
     [DebuggerDisplay("{name}.{property}={value}")]
     public class TranslationItem : IComparable<TranslationItem>, ICloneable
     {
+        private string _name;
+
+        private string _property;
+
+        private string _source;
+
+        private string _value;
+
         public TranslationItem()
         {
         }
@@ -26,36 +34,6 @@ namespace ResourceManager.Xliff
             _value = value;
         }
 
-        private string _name;
-
-        [XmlIgnore]
-        public string Name
-        {
-            get
-            {
-                return _name;
-            }
-            set
-            {
-                _name = value;
-            }
-        }
-
-        private string _property;
-
-        [XmlIgnore]
-        public string Property
-        {
-            get
-            {
-                return _property;
-            }
-            set
-            {
-                _property = value;
-            }
-        }
-
         [XmlAttribute("id")]
         public string Id
         {
@@ -71,7 +49,31 @@ namespace ResourceManager.Xliff
             }
         }
 
-        private string _source;
+        [XmlIgnore]
+        public string Name
+        {
+            get
+            {
+                return _name;
+            }
+            set
+            {
+                _name = value;
+            }
+        }
+
+        [XmlIgnore]
+        public string Property
+        {
+            get
+            {
+                return _property;
+            }
+            set
+            {
+                _property = value;
+            }
+        }
 
         [XmlElement("source")]
         public string Source
@@ -86,8 +88,6 @@ namespace ResourceManager.Xliff
             }
         }
 
-        private string _value;
-
         [XmlElement("target")]
         public string Value
         {
@@ -101,6 +101,11 @@ namespace ResourceManager.Xliff
             }
         }
 
+        public TranslationItem Clone()
+        {
+            return new TranslationItem(_name, _property, _source, _value);
+        }
+
         public int CompareTo(TranslationItem other)
         {
             int val = String.Compare(Name, other.Name, StringComparison.Ordinal);
@@ -111,11 +116,6 @@ namespace ResourceManager.Xliff
         object ICloneable.Clone()
         {
             return Clone();
-        }
-
-        public TranslationItem Clone()
-        {
-            return new TranslationItem(_name, _property, _source, _value);
         }
     }
 }

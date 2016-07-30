@@ -19,15 +19,6 @@ namespace GitUI.CommandsDialogs.SubmodulesDialog
             Translate();
         }
 
-        private void BrowseClick(object sender, EventArgs e)
-        {
-            using (var browseDialog = new FolderBrowserDialog { SelectedPath = Directory.Text })
-            {
-                if (browseDialog.ShowDialog(this) == DialogResult.OK)
-                    Directory.Text = browseDialog.SelectedPath;
-            }
-        }
-
         private void AddClick(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(Directory.Text) || string.IsNullOrEmpty(LocalPath.Text))
@@ -44,19 +35,6 @@ namespace GitUI.CommandsDialogs.SubmodulesDialog
             Cursor.Current = Cursors.Default;
         }
 
-        private void DirectorySelectedIndexChanged(object sender, EventArgs e)
-        {
-            DirectoryTextUpdate(null, null);
-        }
-
-        private void FormAddSubmoduleShown(object sender, EventArgs e)
-        {
-            Directory.DataSource = Repositories.RemoteRepositoryHistory.Repositories;
-            Directory.DisplayMember = "Path";
-            Directory.Text = "";
-            LocalPath.Text = "";
-        }
-
         private void BranchDropDown(object sender, EventArgs e)
         {
             GitModule module = new GitModule(Directory.Text);
@@ -70,6 +48,20 @@ namespace GitUI.CommandsDialogs.SubmodulesDialog
             Branch.DataSource = heads;
         }
 
+        private void BrowseClick(object sender, EventArgs e)
+        {
+            using (var browseDialog = new FolderBrowserDialog { SelectedPath = Directory.Text })
+            {
+                if (browseDialog.ShowDialog(this) == DialogResult.OK)
+                    Directory.Text = browseDialog.SelectedPath;
+            }
+        }
+
+        private void DirectorySelectedIndexChanged(object sender, EventArgs e)
+        {
+            DirectoryTextUpdate(null, null);
+        }
+
         private void DirectoryTextUpdate(object sender, EventArgs e)
         {
             string path = PathUtil.GetRepositoryName(Directory.Text);
@@ -78,6 +70,14 @@ namespace GitUI.CommandsDialogs.SubmodulesDialog
             {
                 LocalPath.Text = path;
             }
+        }
+
+        private void FormAddSubmoduleShown(object sender, EventArgs e)
+        {
+            Directory.DataSource = Repositories.RemoteRepositoryHistory.Repositories;
+            Directory.DisplayMember = "Path";
+            Directory.Text = "";
+            LocalPath.Text = "";
         }
     }
 }

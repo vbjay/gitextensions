@@ -50,24 +50,6 @@ namespace TranslationApp
             }
         }
 
-        private static void UpdateAllTranslations()
-        {
-            Cursor.Current = Cursors.WaitCursor;
-            var neutralItems = TranslationHelpers.LoadNeutralItems();
-            string filename = Path.Combine(Translator.GetTranslationDir(), "English.xlf");
-            TranslationHelpers.SaveTranslation(null, neutralItems, filename);
-
-            var translationsNames = Translator.GetAllTranslations();
-            foreach (var name in translationsNames)
-            {
-                var translation = Translator.GetTranslation(name);
-                var translateItems = TranslationHelpers.LoadTranslation(translation, neutralItems);
-                filename = Path.Combine(Translator.GetTranslationDir(), name + ".xlf");
-                TranslationHelpers.SaveTranslation(translation.First().Value.LanguageCode, translateItems, filename);
-            }
-            Cursor.Current = Cursors.Default;
-        }
-
         private static void ShowStatus()
         {
             Cursor.Current = Cursors.WaitCursor;
@@ -91,6 +73,24 @@ namespace TranslationApp
                     stream.WriteLine("{0};{1:F}%;{2};{3}", item.Key, 100.0f * item.Value / neutralItems.Count, item.Value,
                         neutralItems.Count);
                 }
+            }
+            Cursor.Current = Cursors.Default;
+        }
+
+        private static void UpdateAllTranslations()
+        {
+            Cursor.Current = Cursors.WaitCursor;
+            var neutralItems = TranslationHelpers.LoadNeutralItems();
+            string filename = Path.Combine(Translator.GetTranslationDir(), "English.xlf");
+            TranslationHelpers.SaveTranslation(null, neutralItems, filename);
+
+            var translationsNames = Translator.GetAllTranslations();
+            foreach (var name in translationsNames)
+            {
+                var translation = Translator.GetTranslation(name);
+                var translateItems = TranslationHelpers.LoadTranslation(translation, neutralItems);
+                filename = Path.Combine(Translator.GetTranslationDir(), name + ".xlf");
+                TranslationHelpers.SaveTranslation(translation.First().Value.LanguageCode, translateItems, filename);
             }
             Cursor.Current = Cursors.Default;
         }

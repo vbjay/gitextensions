@@ -9,6 +9,16 @@ namespace GitUI.CommandsDialogs
     {
         private sealed class SortableLostObjectsList : BindingList<LostObject>
         {
+            protected override bool SupportsSortingCore
+            {
+                get { return true; }
+            }
+
+            private List<LostObject> LostObjects
+            {
+                get { return (List<LostObject>)Items; }
+            }
+
             public void AddRange(IEnumerable<LostObject> lostObjects)
             {
                 LostObjects.AddRange(lostObjects);
@@ -22,19 +32,9 @@ namespace GitUI.CommandsDialogs
                 OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
             }
 
-            protected override bool SupportsSortingCore
-            {
-                get { return true; }
-            }
-
             protected override void ApplySortCore(PropertyDescriptor propertyDescriptor, ListSortDirection direction)
             {
                 LostObjects.Sort(LostObjectsComparer.Create(propertyDescriptor, direction == ListSortDirection.Descending));
-            }
-
-            private List<LostObject> LostObjects
-            {
-                get { return (List<LostObject>)Items; }
             }
 
             private static class LostObjectsComparer

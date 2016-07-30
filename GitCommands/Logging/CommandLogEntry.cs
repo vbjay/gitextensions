@@ -4,16 +4,16 @@ namespace GitCommands.Logging
 {
     public class CommandLogEntry
     {
-        public string Command { get; private set; }
-        public DateTime ExecutionStartTimestamp { get; private set; }
-        public DateTime ExecutionEndTimestamp { get; private set; }
-
         public CommandLogEntry(string command, DateTime executionStartTimestamp, DateTime executionEndTimestamp)
         {
             Command = command;
             ExecutionStartTimestamp = executionStartTimestamp;
             ExecutionEndTimestamp = executionEndTimestamp;
         }
+
+        public string Command { get; private set; }
+        public DateTime ExecutionEndTimestamp { get; private set; }
+        public DateTime ExecutionStartTimestamp { get; private set; }
 
         public override string ToString()
         {

@@ -1,6 +1,6 @@
-﻿using NUnit.Framework;
-using FluentAssertions;
+﻿using FluentAssertions;
 using GitUI.Hotkey;
+using NUnit.Framework;
 using ResourceManager;
 
 namespace GitExtensionsTest.GitUI
@@ -37,7 +37,7 @@ namespace GitExtensionsTest.GitUI
             HotkeySettingsManager.DidDefaultSettingsChange(null, null).Should().BeTrue();
         }
 
-        [Test(Description="Move one command from one settings to another should also be detected in 'changed settings'")]
+        [Test(Description = "Move one command from one settings to another should also be detected in 'changed settings'")]
         public void DidDefaultSettingsChangeTest2()
         {
             // arrange

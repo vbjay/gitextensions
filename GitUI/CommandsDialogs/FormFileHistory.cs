@@ -12,35 +12,11 @@ namespace GitUI.CommandsDialogs
 {
     public sealed partial class FormFileHistory : GitModuleForm
     {
-        private readonly FilterRevisionsHelper _filterRevisionsHelper;
-        private readonly FilterBranchHelper _filterBranchHelper;
+        private const string FormBrowseName = "FormBrowse";
         private readonly AsyncLoader _asyncLoader;
-
-        private FormFileHistory()
-            : this(null)
-        { }
-
-        internal FormFileHistory(GitUICommands aCommands)
-            : base(aCommands)
-        {
-            InitializeComponent();
-            _asyncLoader = new AsyncLoader();
-            // set tab page images
-            {
-                var imageList = new ImageList();
-                tabControl1.ImageList = imageList;
-                imageList.ColorDepth = ColorDepth.Depth8Bit;
-                imageList.Images.Add(global::GitUI.Properties.Resources.IconViewFile);
-                imageList.Images.Add(global::GitUI.Properties.Resources.IconDiff);
-                imageList.Images.Add(global::GitUI.Properties.Resources.IconBlame);
-                tabControl1.TabPages[0].ImageIndex = 0;
-                tabControl1.TabPages[1].ImageIndex = 1;
-                tabControl1.TabPages[2].ImageIndex = 2;
-            }
-
-            _filterBranchHelper = new FilterBranchHelper(toolStripBranches, toolStripDropDownButton2, FileChanges);
-            _filterRevisionsHelper = new FilterRevisionsHelper(toolStripTextBoxFilter, toolStripDropDownButton1, FileChanges, toolStripLabel2, this);
-        }
+        private readonly FilterBranchHelper _filterBranchHelper;
+        private readonly FilterRevisionsHelper _filterRevisionsHelper;
+        private BuildReportTabPageExtension BuildReportTabPageExtension;
 
         public FormFileHistory(GitUICommands aCommands, string fileName, GitRevision revision, bool filterByRevision)
             : this(aCommands)
@@ -72,6 +48,72 @@ namespace GitUI.CommandsDialogs
         {
         }
 
+        internal FormFileHistory(GitUICommands aCommands)
+            : base(aCommands)
+        {
+            InitializeComponent();
+            _asyncLoader = new AsyncLoader();
+            // set tab page images
+            {
+                var imageList = new ImageList();
+                tabControl1.ImageList = imageList;
+                imageList.ColorDepth = ColorDepth.Depth8Bit;
+                imageList.Images.Add(global::GitUI.Properties.Resources.IconViewFile);
+                imageList.Images.Add(global::GitUI.Properties.Resources.IconDiff);
+                imageList.Images.Add(global::GitUI.Properties.Resources.IconBlame);
+                tabControl1.TabPages[0].ImageIndex = 0;
+                tabControl1.TabPages[1].ImageIndex = 1;
+                tabControl1.TabPages[2].ImageIndex = 2;
+            }
+
+            _filterBranchHelper = new FilterBranchHelper(toolStripBranches, toolStripDropDownButton2, FileChanges);
+            _filterRevisionsHelper = new FilterRevisionsHelper(toolStripTextBoxFilter, toolStripDropDownButton1, FileChanges, toolStripLabel2, this);
+        }
+
+        private FormFileHistory()
+                                            : this(null)
+        { }
+
+        private string FileName { get; set; }
+
+        public override void AddTranslationItems(ITranslation translation)
+        {
+            base.AddTranslationItems(translation);
+            TranslationUtils.AddTranslationItemsFromFields(FormBrowseName, _filterRevisionsHelper, translation);
+            TranslationUtils.AddTranslationItemsFromFields(FormBrowseName, _filterBranchHelper, translation);
+        }
+
+        public void SelectBlameTab()
+        {
+            tabControl1.SelectedTab = BlameTab;
+        }
+
+        public override void TranslateItems(ITranslation translation)
+        {
+            base.TranslateItems(translation);
+            TranslationUtils.TranslateItemsFromFields(FormBrowseName, _filterRevisionsHelper, translation);
+            TranslationUtils.TranslateItemsFromFields(FormBrowseName, _filterBranchHelper, translation);
+        }
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _asyncLoader.Cancel();
+                _asyncLoader.Dispose();
+                _filterRevisionsHelper.Dispose();
+                _filterBranchHelper.Dispose();
+
+                if (components != null)
+                    components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
         protected override void OnRuntimeLoad(EventArgs e)
         {
             base.OnRuntimeLoad(e);
@@ -84,35 +126,27 @@ namespace GitUI.CommandsDialogs
                 FileChanges.Visible = false;
         }
 
-        private string FileName { get; set; }
-
-        public void SelectBlameTab()
+        private void Blame_CommandClick(object sender, CommitInfo.CommandEventArgs e)
         {
-            tabControl1.SelectedTab = BlameTab;
-        }
-
-        private void LoadFileHistory()
-        {
-            FileChanges.Visible = true;
-
-            _asyncLoader.Load(() => BuildFilter(FileName), (filter) =>
+            if (e.Command == "gotocommit")
             {
-                if (filter == null)
-                    return;
-                FileChanges.FixedRevisionFilter = filter.RevisionFilter;
-                FileChanges.FixedPathFilter = filter.PathFilter;
-                FileChanges.Rewriter = filter.Rewriter;
-                FileChanges.FiltredFileName = FileName;
-                FileChanges.AllowGraphWithFilter = true;
-                FileChanges.Load();
-            });
-        }
-
-        private class FixedFilterTuple
-        {
-            public string RevisionFilter;
-            public string PathFilter;
-            public FollowParentRewriter Rewriter;
+                FileChanges.SetSelectedRevision(new GitRevision(Module, e.Data));
+            }
+            else if (e.Command == "gotobranch" || e.Command == "gototag")
+            {
+                string error = "";
+                CommitData commit = CommitData.GetCommitData(Module, e.Data, ref error);
+                if (commit != null)
+                    FileChanges.SetSelectedRevision(new GitRevision(Module, commit.Guid));
+            }
+            else if (e.Command == "navigatebackward")
+            {
+                FileChanges.NavigateBackward();
+            }
+            else if (e.Command == "navigateforward")
+            {
+                FileChanges.NavigateForward();
+            }
         }
 
         private FixedFilterTuple BuildFilter(string fileName)
@@ -192,9 +226,32 @@ namespace GitUI.CommandsDialogs
             return res;
         }
 
+        private void cherryPickThisCommitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var selectedRevisions = FileChanges.GetSelectedRevisions();
+            if (selectedRevisions.Count == 1)
+            {
+                UICommands.StartCherryPickDialog(this, selectedRevisions[0]);
+            }
+        }
+
+        private void DiffContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+        }
+
         private void DiffExtraDiffArgumentsChanged(object sender, EventArgs e)
         {
             UpdateSelectedFileViewers();
+        }
+
+        private void diffToolremotelocalStripMenuItem_Click(object sender, EventArgs e)
+        {
+            FileChanges.OpenWithDifftool(FileName, string.Empty, GitUIExtensions.DiffWithRevisionKind.DiffBLocal, null);
+        }
+
+        private void FileChangesDoubleClick(object sender, EventArgs e)
+        {
+            FileChanges.ViewSelectedRevisions();
         }
 
         private void FileChangesSelectionChanged(object sender, EventArgs e)
@@ -214,6 +271,112 @@ namespace GitUI.CommandsDialogs
             UpdateSelectedFileViewers();
         }
 
+        private void followFileHistoryRenamesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            AppSettings.FollowRenamesInFileHistoryExactOnly = !AppSettings.FollowRenamesInFileHistoryExactOnly;
+            UpdateFollowHistoryMenuItems();
+            LoadFileHistory();
+        }
+
+        private void followFileHistoryToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            AppSettings.FollowRenamesInFileHistory = !AppSettings.FollowRenamesInFileHistory;
+            UpdateFollowHistoryMenuItems();
+
+            LoadFileHistory();
+        }
+
+        private void fullHistoryToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            AppSettings.FullHistoryInFileHistory = !AppSettings.FullHistoryInFileHistory;
+            fullHistoryToolStripMenuItem.Checked = AppSettings.FullHistoryInFileHistory;
+            LoadFileHistory();
+        }
+
+        private void loadBlameOnShowToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            AppSettings.LoadBlameOnShow = !AppSettings.LoadBlameOnShow;
+            loadBlameOnShowToolStripMenuItem.Checked = AppSettings.LoadBlameOnShow;
+        }
+
+        private void LoadFileHistory()
+        {
+            FileChanges.Visible = true;
+
+            _asyncLoader.Load(() => BuildFilter(FileName), (filter) =>
+            {
+                if (filter == null)
+                    return;
+                FileChanges.FixedRevisionFilter = filter.RevisionFilter;
+                FileChanges.FixedPathFilter = filter.PathFilter;
+                FileChanges.Rewriter = filter.Rewriter;
+                FileChanges.FiltredFileName = FileName;
+                FileChanges.AllowGraphWithFilter = true;
+                FileChanges.Load();
+            });
+        }
+
+        private void loadHistoryOnShowToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            AppSettings.LoadFileHistoryOnShow = !AppSettings.LoadFileHistoryOnShow;
+            loadHistoryOnShowToolStripMenuItem.Checked = AppSettings.LoadFileHistoryOnShow;
+        }
+
+        private void OpenWithDifftoolToolStripMenuItemClick(object sender, EventArgs e)
+        {
+            var selectedRows = FileChanges.GetSelectedRevisions();
+
+            string orgFileName = null;
+            if (selectedRows.Count > 0)
+            {
+                orgFileName = selectedRows[0].Name;
+            }
+            FileChanges.OpenWithDifftool(FileName, orgFileName, GitUIExtensions.DiffWithRevisionKind.DiffAB, null);
+        }
+
+        private void revertCommitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var selectedRevisions = FileChanges.GetSelectedRevisions();
+            if (selectedRevisions.Count == 1)
+            {
+                UICommands.StartRevertCommitDialog(this, selectedRevisions[0]);
+            }
+        }
+
+        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var selectedRows = FileChanges.GetSelectedRevisions();
+
+            if (selectedRows.Count > 0)
+            {
+                string orgFileName = selectedRows[0].Name;
+
+                if (string.IsNullOrEmpty(orgFileName))
+                    orgFileName = FileName;
+
+                string fullName = Module.WorkingDir + orgFileName.ToNativePath();
+
+                using (var fileDialog = new SaveFileDialog
+                {
+                    InitialDirectory = Path.GetDirectoryName(fullName),
+                    FileName = Path.GetFileName(fullName),
+                    DefaultExt = GitCommandHelpers.GetFileExtension(fullName),
+                    AddExtension = true
+                })
+                {
+                    fileDialog.Filter =
+                        "Current format (*." +
+                        fileDialog.DefaultExt + ")|*." +
+                        fileDialog.DefaultExt +
+                        "|All files (*.*)|*.*";
+                    if (fileDialog.ShowDialog(this) == DialogResult.OK)
+                    {
+                        Module.SaveBlobAs(fileDialog.FileName, selectedRows[0].Guid + ":\"" + orgFileName + "\"");
+                    }
+                }
+            }
+        }
+
         private void SetTitle(string fileName)
         {
             Text = string.Format("File History - {0}", FileName);
@@ -221,6 +384,27 @@ namespace GitUI.CommandsDialogs
                 Text = Text + string.Format(" ({0})", fileName);
 
             Text += " - " + Module.WorkingDir;
+        }
+
+        private void TabControl1SelectedIndexChanged(object sender, EventArgs e)
+        {
+            FileChangesSelectionChanged(sender, e);
+        }
+
+        private void ToolStrip_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+        }
+
+        private void toolStripSplitLoad_ButtonClick(object sender, EventArgs e)
+        {
+            LoadFileHistory();
+        }
+
+        private void UpdateFollowHistoryMenuItems()
+        {
+            followFileHistoryToolStripMenuItem.Checked = AppSettings.FollowRenamesInFileHistory;
+            followFileHistoryRenamesToolStripMenuItem.Enabled = AppSettings.FollowRenamesInFileHistory;
+            followFileHistoryRenamesToolStripMenuItem.Checked = AppSettings.FollowRenamesInFileHistoryExactOnly;
         }
 
         private void UpdateSelectedFileViewers()
@@ -267,202 +451,16 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-        private BuildReportTabPageExtension BuildReportTabPageExtension;
-
-        private void TabControl1SelectedIndexChanged(object sender, EventArgs e)
-        {
-            FileChangesSelectionChanged(sender, e);
-        }
-
-        private void FileChangesDoubleClick(object sender, EventArgs e)
-        {
-            FileChanges.ViewSelectedRevisions();
-        }
-
-        private void OpenWithDifftoolToolStripMenuItemClick(object sender, EventArgs e)
-        {
-            var selectedRows = FileChanges.GetSelectedRevisions();
-
-            string orgFileName = null;
-            if (selectedRows.Count > 0)
-            {
-                orgFileName = selectedRows[0].Name;
-            }
-            FileChanges.OpenWithDifftool(FileName, orgFileName, GitUIExtensions.DiffWithRevisionKind.DiffAB, null);
-        }
-
-        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            var selectedRows = FileChanges.GetSelectedRevisions();
-
-            if (selectedRows.Count > 0)
-            {
-                string orgFileName = selectedRows[0].Name;
-
-                if (string.IsNullOrEmpty(orgFileName))
-                    orgFileName = FileName;
-
-                string fullName = Module.WorkingDir + orgFileName.ToNativePath();
-
-                using (var fileDialog = new SaveFileDialog
-                {
-                    InitialDirectory = Path.GetDirectoryName(fullName),
-                    FileName = Path.GetFileName(fullName),
-                    DefaultExt = GitCommandHelpers.GetFileExtension(fullName),
-                    AddExtension = true
-                })
-                {
-                    fileDialog.Filter =
-                        "Current format (*." +
-                        fileDialog.DefaultExt + ")|*." +
-                        fileDialog.DefaultExt +
-                        "|All files (*.*)|*.*";
-                    if (fileDialog.ShowDialog(this) == DialogResult.OK)
-                    {
-                        Module.SaveBlobAs(fileDialog.FileName, selectedRows[0].Guid + ":\"" + orgFileName + "\"");
-                    }
-                }
-            }
-        }
-
-        private void followFileHistoryToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            AppSettings.FollowRenamesInFileHistory = !AppSettings.FollowRenamesInFileHistory;
-            UpdateFollowHistoryMenuItems();
-
-            LoadFileHistory();
-        }
-
-        private void UpdateFollowHistoryMenuItems()
-        {
-            followFileHistoryToolStripMenuItem.Checked = AppSettings.FollowRenamesInFileHistory;
-            followFileHistoryRenamesToolStripMenuItem.Enabled = AppSettings.FollowRenamesInFileHistory;
-            followFileHistoryRenamesToolStripMenuItem.Checked = AppSettings.FollowRenamesInFileHistoryExactOnly;
-        }
-
-        private void fullHistoryToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            AppSettings.FullHistoryInFileHistory = !AppSettings.FullHistoryInFileHistory;
-            fullHistoryToolStripMenuItem.Checked = AppSettings.FullHistoryInFileHistory;
-            LoadFileHistory();
-        }
-
-        private void cherryPickThisCommitToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            var selectedRevisions = FileChanges.GetSelectedRevisions();
-            if (selectedRevisions.Count == 1)
-            {
-                UICommands.StartCherryPickDialog(this, selectedRevisions[0]);
-            }
-        }
-
-        private void revertCommitToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            var selectedRevisions = FileChanges.GetSelectedRevisions();
-            if (selectedRevisions.Count == 1)
-            {
-                UICommands.StartRevertCommitDialog(this, selectedRevisions[0]);
-            }
-        }
-
         private void viewCommitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             FileChanges.ViewSelectedRevisions();
         }
 
-        private const string FormBrowseName = "FormBrowse";
-
-        public override void AddTranslationItems(ITranslation translation)
+        private class FixedFilterTuple
         {
-            base.AddTranslationItems(translation);
-            TranslationUtils.AddTranslationItemsFromFields(FormBrowseName, _filterRevisionsHelper, translation);
-            TranslationUtils.AddTranslationItemsFromFields(FormBrowseName, _filterBranchHelper, translation);
-        }
-
-        public override void TranslateItems(ITranslation translation)
-        {
-            base.TranslateItems(translation);
-            TranslationUtils.TranslateItemsFromFields(FormBrowseName, _filterRevisionsHelper, translation);
-            TranslationUtils.TranslateItemsFromFields(FormBrowseName, _filterBranchHelper, translation);
-        }
-
-        private void diffToolremotelocalStripMenuItem_Click(object sender, EventArgs e)
-        {
-            FileChanges.OpenWithDifftool(FileName, string.Empty, GitUIExtensions.DiffWithRevisionKind.DiffBLocal, null);
-        }
-
-        private void toolStripSplitLoad_ButtonClick(object sender, EventArgs e)
-        {
-            LoadFileHistory();
-        }
-
-        private void loadHistoryOnShowToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            AppSettings.LoadFileHistoryOnShow = !AppSettings.LoadFileHistoryOnShow;
-            loadHistoryOnShowToolStripMenuItem.Checked = AppSettings.LoadFileHistoryOnShow;
-        }
-
-        private void loadBlameOnShowToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            AppSettings.LoadBlameOnShow = !AppSettings.LoadBlameOnShow;
-            loadBlameOnShowToolStripMenuItem.Checked = AppSettings.LoadBlameOnShow;
-        }
-
-        private void Blame_CommandClick(object sender, CommitInfo.CommandEventArgs e)
-        {
-            if (e.Command == "gotocommit")
-            {
-                FileChanges.SetSelectedRevision(new GitRevision(Module, e.Data));
-            }
-            else if (e.Command == "gotobranch" || e.Command == "gototag")
-            {
-                string error = "";
-                CommitData commit = CommitData.GetCommitData(Module, e.Data, ref error);
-                if (commit != null)
-                    FileChanges.SetSelectedRevision(new GitRevision(Module, commit.Guid));
-            }
-            else if (e.Command == "navigatebackward")
-            {
-                FileChanges.NavigateBackward();
-            }
-            else if (e.Command == "navigateforward")
-            {
-                FileChanges.NavigateForward();
-            }
-        }
-
-        private void DiffContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-        }
-
-        private void ToolStrip_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
-        {
-        }
-
-        private void followFileHistoryRenamesToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            AppSettings.FollowRenamesInFileHistoryExactOnly = !AppSettings.FollowRenamesInFileHistoryExactOnly;
-            UpdateFollowHistoryMenuItems();
-            LoadFileHistory();
-        }
-
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _asyncLoader.Cancel();
-                _asyncLoader.Dispose();
-                _filterRevisionsHelper.Dispose();
-                _filterBranchHelper.Dispose();
-
-                if (components != null)
-                    components.Dispose();
-            }
-            base.Dispose(disposing);
+            public string PathFilter;
+            public string RevisionFilter;
+            public FollowParentRewriter Rewriter;
         }
     }
 }

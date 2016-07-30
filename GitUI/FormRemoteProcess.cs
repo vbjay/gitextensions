@@ -24,14 +24,9 @@ namespace GitUI
 
         #endregion Translation
 
-        public bool Plink { get; set; }
-        private bool restart;
         protected readonly GitModule Module;
-
-        // only for translation
-        protected FormRemoteProcess()
-            : base()
-        { }
+        private bool restart;
+        private string UrlTryingToConnect = string.Empty;
 
         public FormRemoteProcess(GitModule module, string process, string arguments)
             : base(process, arguments, module.WorkingDir, null, true)
@@ -43,6 +38,29 @@ namespace GitUI
             : base(null, arguments, module.WorkingDir, null, true)
         {
             this.Module = module;
+        }
+
+        // only for translation
+        protected FormRemoteProcess()
+            : base()
+        { }
+
+        public bool Plink { get; set; }
+
+        public static bool AskForCacheHostkey(IWin32Window owner, GitModule module, string remoteUrl)
+        {
+            if (!remoteUrl.IsNullOrEmpty() && MessageBoxes.CacheHostkey(owner))
+            {
+                remoteUrl = GitCommandHelpers.GetPlinkCompatibleUrl(remoteUrl);
+
+                module.RunExternalCmdShowConsole(
+                    "cmd.exe",
+                    string.Format("/k \"\"{0}\" -T {1}\"", AppSettings.Plink, remoteUrl));
+
+                return true;
+            }
+
+            return false;
         }
 
         public static new bool ShowDialog(GitModuleForm owner, string arguments)
@@ -59,8 +77,6 @@ namespace GitUI
             }
         }
 
-        private string UrlTryingToConnect = string.Empty;
-
         /// <summary>
         /// When cloning a remote using putty, sometimes an error occurs that the fingerprint is not known.
         /// This is fixed by trying to connect from the command line, and choose yes when asked for storing
@@ -76,6 +92,29 @@ namespace GitUI
             restart = false;
             Plink = GitCommandHelpers.Plink();
             base.BeforeProcessStart();
+        }
+
+        protected override void DataReceived(object sender, TextEventArgs e)
+        {
+            if (Plink)
+            {
+                if (e.Text.StartsWith("If you trust this host, enter \"y\" to add the key to"))
+                {
+                    if (MessageBox.Show(this, _fingerprintNotRegistredText.Text, _fingerprintNotRegistredTextCaption.Text, MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    {
+                        string remoteUrl = Module.GetPathSetting(string.Format(SettingKeyString.RemoteUrl, Remote));
+                        remoteUrl = string.IsNullOrEmpty(remoteUrl) ? Remote : remoteUrl;
+                        remoteUrl = GitCommandHelpers.GetPlinkCompatibleUrl(remoteUrl);
+
+                        Module.RunExternalCmdShowConsole("cmd.exe", string.Format("/k \"\"{0}\" {1}\"", AppSettings.Plink, remoteUrl));
+
+                        restart = true;
+                    }
+
+                    KillGitCommand();
+                }
+            }
+            base.DataReceived(sender, e);
         }
 
         protected override bool HandleOnExit(ref bool isError)
@@ -136,45 +175,6 @@ namespace GitUI
             }
 
             return base.HandleOnExit(ref isError);
-        }
-
-        public static bool AskForCacheHostkey(IWin32Window owner, GitModule module, string remoteUrl)
-        {
-            if (!remoteUrl.IsNullOrEmpty() && MessageBoxes.CacheHostkey(owner))
-            {
-                remoteUrl = GitCommandHelpers.GetPlinkCompatibleUrl(remoteUrl);
-
-                module.RunExternalCmdShowConsole(
-                    "cmd.exe",
-                    string.Format("/k \"\"{0}\" -T {1}\"", AppSettings.Plink, remoteUrl));
-
-                return true;
-            }
-
-            return false;
-        }
-
-        protected override void DataReceived(object sender, TextEventArgs e)
-        {
-            if (Plink)
-            {
-                if (e.Text.StartsWith("If you trust this host, enter \"y\" to add the key to"))
-                {
-                    if (MessageBox.Show(this, _fingerprintNotRegistredText.Text, _fingerprintNotRegistredTextCaption.Text, MessageBoxButtons.YesNo) == DialogResult.Yes)
-                    {
-                        string remoteUrl = Module.GetPathSetting(string.Format(SettingKeyString.RemoteUrl, Remote));
-                        remoteUrl = string.IsNullOrEmpty(remoteUrl) ? Remote : remoteUrl;
-                        remoteUrl = GitCommandHelpers.GetPlinkCompatibleUrl(remoteUrl);
-
-                        Module.RunExternalCmdShowConsole("cmd.exe", string.Format("/k \"\"{0}\" {1}\"", AppSettings.Plink, remoteUrl));
-
-                        restart = true;
-                    }
-
-                    KillGitCommand();
-                }
-            }
-            base.DataReceived(sender, e);
         }
     }
 }

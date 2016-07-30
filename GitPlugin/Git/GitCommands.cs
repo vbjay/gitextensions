@@ -9,57 +9,47 @@ namespace GitPlugin.Git
 {
     public static class GitCommands
     {
-        private static string GetRegistryValue(RegistryKey root, string subkey, string key)
+        public static string GetCurrentBranch(string fileName)
         {
             try
             {
-                RegistryKey rk;
-                rk = root.OpenSubKey(subkey, false);
-
-                string value = "";
-
-                if (rk != null && rk.GetValue(key) is string)
+                if (!string.IsNullOrEmpty(fileName))
                 {
-                    value = rk.GetValue(key).ToString();
-                    rk.Flush();
-                    rk.Close();
+                    string head;
+                    string headFileName = FindGitWorkingDir(fileName) + ".git\\HEAD";
+                    if (File.Exists(headFileName))
+                    {
+                        head = File.ReadAllText(headFileName);
+                        if (!head.Contains("ref:"))
+                            head = "no branch";
+                    }
+                    else
+                    {
+                        int exitCode;
+                        head = RunGit("symbolic-ref HEAD", new FileInfo(fileName).DirectoryName, out exitCode);
+                        if (exitCode == 1)
+                            head = "no branch";
+                    }
+
+                    if (!string.IsNullOrEmpty(head))
+                    {
+                        head = head.Replace("ref:", "").Trim().Replace("refs/heads/", string.Empty);
+                        return head;
+                    }
                 }
-
-                return value;
             }
-            catch (UnauthorizedAccessException)
+            catch
             {
-                MessageBox.Show("GitExtensions has insufficient permissions to check the registry.");
+                //ignore
             }
-            return "";
+
+            return string.Empty;
         }
 
-        private static string GetGitExRegValue(string key)
+        public static bool GetShowCurrentBranchSetting()
         {
-            string result = GetRegistryValue(Registry.CurrentUser, "Software\\GitExtensions", key);
-
-            if (string.IsNullOrEmpty(result))
-                result = GetRegistryValue(Registry.Users, "Software\\GitExtensions", key);
-
-            return result;
-        }
-
-        private static ProcessStartInfo CreateStartInfo(string command, string arguments, string workingDir, Encoding encoding = null)
-        {
-            return new ProcessStartInfo
-            {
-                UseShellExecute = false,
-                ErrorDialog = false,
-                CreateNoWindow = true,
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                StandardOutputEncoding = encoding,
-                StandardErrorEncoding = encoding,
-                FileName = command,
-                Arguments = arguments,
-                WorkingDirectory = workingDir
-            };
+            string showCurrentBranchSetting = GetGitExRegValue("ShowCurrentBranchInVS");
+            return string.IsNullOrEmpty(showCurrentBranchSetting) || showCurrentBranchSetting.Equals("true", StringComparison.CurrentCultureIgnoreCase);
         }
 
         public static Process RunGitEx(string command, string filename)
@@ -100,56 +90,22 @@ namespace GitPlugin.Git
             }
         }
 
-        private static string RunGit(string arguments, string filename, out int exitCode)
+        private static ProcessStartInfo CreateStartInfo(string command, string arguments, string workingDir, Encoding encoding = null)
         {
-            string gitcommand = GetGitExRegValue("gitcommand");
-
-            ProcessStartInfo startInfo = CreateStartInfo(gitcommand, arguments, filename);
-
-            using (var process = Process.Start(startInfo))
+            return new ProcessStartInfo
             {
-                string output = process.StandardOutput.ReadToEnd();
-                exitCode = process.ExitCode;
-                process.WaitForExit();
-                return output;
-            }
-        }
-
-        public static string GetCurrentBranch(string fileName)
-        {
-            try
-            {
-                if (!string.IsNullOrEmpty(fileName))
-                {
-                    string head;
-                    string headFileName = FindGitWorkingDir(fileName) + ".git\\HEAD";
-                    if (File.Exists(headFileName))
-                    {
-                        head = File.ReadAllText(headFileName);
-                        if (!head.Contains("ref:"))
-                            head = "no branch";
-                    }
-                    else
-                    {
-                        int exitCode;
-                        head = RunGit("symbolic-ref HEAD", new FileInfo(fileName).DirectoryName, out exitCode);
-                        if (exitCode == 1)
-                            head = "no branch";
-                    }
-
-                    if (!string.IsNullOrEmpty(head))
-                    {
-                        head = head.Replace("ref:", "").Trim().Replace("refs/heads/", string.Empty);
-                        return head;
-                    }
-                }
-            }
-            catch
-            {
-                //ignore
-            }
-
-            return string.Empty;
+                UseShellExecute = false,
+                ErrorDialog = false,
+                CreateNoWindow = true,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                StandardOutputEncoding = encoding,
+                StandardErrorEncoding = encoding,
+                FileName = command,
+                Arguments = arguments,
+                WorkingDirectory = workingDir
+            };
         }
 
         private static string FindGitWorkingDir(string startDir)
@@ -172,6 +128,56 @@ namespace GitPlugin.Git
             return startDir;
         }
 
+        private static string GetGitExRegValue(string key)
+        {
+            string result = GetRegistryValue(Registry.CurrentUser, "Software\\GitExtensions", key);
+
+            if (string.IsNullOrEmpty(result))
+                result = GetRegistryValue(Registry.Users, "Software\\GitExtensions", key);
+
+            return result;
+        }
+
+        private static string GetRegistryValue(RegistryKey root, string subkey, string key)
+        {
+            try
+            {
+                RegistryKey rk;
+                rk = root.OpenSubKey(subkey, false);
+
+                string value = "";
+
+                if (rk != null && rk.GetValue(key) is string)
+                {
+                    value = rk.GetValue(key).ToString();
+                    rk.Flush();
+                    rk.Close();
+                }
+
+                return value;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                MessageBox.Show("GitExtensions has insufficient permissions to check the registry.");
+            }
+            return "";
+        }
+
+        private static string RunGit(string arguments, string filename, out int exitCode)
+        {
+            string gitcommand = GetGitExRegValue("gitcommand");
+
+            ProcessStartInfo startInfo = CreateStartInfo(gitcommand, arguments, filename);
+
+            using (var process = Process.Start(startInfo))
+            {
+                string output = process.StandardOutput.ReadToEnd();
+                exitCode = process.ExitCode;
+                process.WaitForExit();
+                return output;
+            }
+        }
+
         private static bool ValidWorkingDir(string dir)
         {
             if (string.IsNullOrEmpty(dir))
@@ -184,12 +190,6 @@ namespace GitPlugin.Git
                    Directory.Exists(Path.Combine(dir, "info")) &&
                    Directory.Exists(Path.Combine(dir, "objects")) &&
                    Directory.Exists(Path.Combine(dir, "refs"));
-        }
-
-        public static bool GetShowCurrentBranchSetting()
-        {
-            string showCurrentBranchSetting = GetGitExRegValue("ShowCurrentBranchInVS");
-            return string.IsNullOrEmpty(showCurrentBranchSetting) || showCurrentBranchSetting.Equals("true", StringComparison.CurrentCultureIgnoreCase);
         }
     }
 }

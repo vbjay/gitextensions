@@ -16,14 +16,22 @@ namespace GitUI.UserControls
     /// </summary>
     public class ConsoleEmulatorOutputControl : ConsoleOutputControl
     {
-        private int _nLastExitCode;
-
         [NotNull]
         private readonly ConEmuControl _terminal;
+
+        private int _nLastExitCode;
 
         public ConsoleEmulatorOutputControl()
         {
             Controls.Add(_terminal = new ConEmuControl() { Dock = DockStyle.Fill, AutoStartInfo = null /* don't spawn terminal until we have gotten the command */});
+        }
+
+        public static bool IsSupportedInThisEnvironment
+        {
+            get
+            {
+                return EnvUtils.RunningOnWindows(); // ConEmu only works in WinNT
+            }
         }
 
         public override int ExitCode
@@ -39,14 +47,6 @@ namespace GitUI.UserControls
             get
             {
                 return true;
-            }
-        }
-
-        public static bool IsSupportedInThisEnvironment
-        {
-            get
-            {
-                return EnvUtils.RunningOnWindows(); // ConEmu only works in WinNT
             }
         }
 

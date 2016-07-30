@@ -13,14 +13,24 @@ namespace GitUI.UserControls
     /// </summary>
     public abstract class ConsoleOutputControl : ContainerControl
     {
+        public event EventHandler<TextEventArgs> DataReceived;
+
+        /// <summary>
+        /// Fires when the cmdline process exits.
+        /// </summary>
+        public event EventHandler ProcessExited;
+
+        /// <summary>
+        /// Fires when the output control terminates. This only applies to the console emulator control mode (an editbox won't terminate), and fires when the console emulator itself (not the command it were executing) is terminated as a process, and the control goes blank.
+        /// </summary>
+        public event EventHandler Terminated;
+
         public abstract int ExitCode { get; }
 
         /// <summary>
         /// Whether this output controls accurately renders all of the process output, so there's no need in printing select lines manually, or duping progress in the title.
         /// </summary>
         public abstract bool IsDisplayingFullProcessOutput { get; }
-
-        public abstract void AppendMessageFreeThreaded([NotNull] string text);
 
         /// <summary>
         /// Creates the instance best fitting the current environment.
@@ -33,13 +43,13 @@ namespace GitUI.UserControls
             return new EditboxBasedConsoleOutputControl();
         }
 
+        public abstract void AppendMessageFreeThreaded([NotNull] string text);
+
         public abstract void KillProcess();
 
         public abstract void Reset();
 
         public abstract void StartProcess([NotNull] string command, string arguments, string workdir);
-
-        public event EventHandler<TextEventArgs> DataReceived;
 
         protected void FireDataReceived([NotNull] TextEventArgs args)
         {
@@ -63,15 +73,5 @@ namespace GitUI.UserControls
             if (handler != null)
                 handler(this, EventArgs.Empty);
         }
-
-        /// <summary>
-        /// Fires when the cmdline process exits.
-        /// </summary>
-        public event EventHandler ProcessExited;
-
-        /// <summary>
-        /// Fires when the output control terminates. This only applies to the console emulator control mode (an editbox won't terminate), and fires when the console emulator itself (not the command it were executing) is terminated as a process, and the control goes blank.
-        /// </summary>
-        public event EventHandler Terminated;
     }
 }

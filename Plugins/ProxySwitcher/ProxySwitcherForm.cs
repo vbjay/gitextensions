@@ -9,13 +9,13 @@ namespace ProxySwitcher
 {
     public partial class ProxySwitcherForm : GitExtensionsFormBase
     {
-        private readonly ISettingsSource settings;
         private readonly IGitModule gitCommands;
+        private readonly ISettingsSource settings;
 
         #region Translation
 
-        private readonly TranslationString _pluginDescription = new TranslationString("Proxy Switcher");
         private readonly TranslationString _pleaseSetProxy = new TranslationString("There is no proxy configured. Please set the proxy host in the plugin settings.");
+        private readonly TranslationString _pluginDescription = new TranslationString("Proxy Switcher");
 
         #endregion Translation
 
@@ -37,31 +37,6 @@ namespace ProxySwitcher
             this.Text = _pluginDescription.Text;
             this.settings = settings;
             this.gitCommands = gitUiCommands.GitModule;
-        }
-
-        private void ProxySwitcherForm_Load(object sender, EventArgs e)
-        {
-            if (string.IsNullOrEmpty(SettingsKey.HttpProxy.ValueOrDefault(settings)))
-            {
-                MessageBox.Show(this, _pleaseSetProxy.Text, this.Text, MessageBoxButtons.OK);
-                this.Close();
-            }
-            else
-            {
-                RefreshProxy();
-            }
-        }
-
-        private void RefreshProxy()
-        {
-            LocalHttpProxy_TextBox.Text = HidePassword(gitCommands.RunGitCmd("config --get http.proxy"));
-            GlobalHttpProxy_TextBox.Text = HidePassword(gitCommands.RunGitCmd("config --global --get http.proxy"));
-            ApplyGlobally_CheckBox.Checked = string.Equals(LocalHttpProxy_TextBox.Text, GlobalHttpProxy_TextBox.Text);
-        }
-
-        private string HidePassword(string httpProxy)
-        {
-            return Regex.Replace(httpProxy, ":(.*)@", ":****@");
         }
 
         private string BuildHttpProxy()
@@ -89,6 +64,31 @@ namespace ProxySwitcher
             }
             sb.Append("\"");
             return sb.ToString();
+        }
+
+        private string HidePassword(string httpProxy)
+        {
+            return Regex.Replace(httpProxy, ":(.*)@", ":****@");
+        }
+
+        private void ProxySwitcherForm_Load(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(SettingsKey.HttpProxy.ValueOrDefault(settings)))
+            {
+                MessageBox.Show(this, _pleaseSetProxy.Text, this.Text, MessageBoxButtons.OK);
+                this.Close();
+            }
+            else
+            {
+                RefreshProxy();
+            }
+        }
+
+        private void RefreshProxy()
+        {
+            LocalHttpProxy_TextBox.Text = HidePassword(gitCommands.RunGitCmd("config --get http.proxy"));
+            GlobalHttpProxy_TextBox.Text = HidePassword(gitCommands.RunGitCmd("config --global --get http.proxy"));
+            ApplyGlobally_CheckBox.Checked = string.Equals(LocalHttpProxy_TextBox.Text, GlobalHttpProxy_TextBox.Text);
         }
 
         private void SetProxy_Button_Click(object sender, EventArgs e)

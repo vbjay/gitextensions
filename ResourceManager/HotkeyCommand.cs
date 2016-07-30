@@ -16,10 +16,10 @@ namespace ResourceManager
         public int CommandCode { get; set; }
 
         [XmlAttribute]
-        public string Name { get; set; }
+        public Keys KeyData { get; set; }
 
         [XmlAttribute]
-        public Keys KeyData { get; set; }
+        public string Name { get; set; }
 
         #endregion Properties
 

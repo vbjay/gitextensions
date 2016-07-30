@@ -10,6 +10,8 @@ namespace ResourceManager
     /// <summary>Provides translation and hotkey plumbing for GitEx <see cref="UserControl"/>s.</summary>
     public class GitExtensionsControl : UserControl, ITranslate
     {
+        private bool translated;
+
         public GitExtensionsControl()
         {
             Font = AppSettings.Font;
@@ -23,6 +25,35 @@ namespace ResourceManager
         {
             get { return base.Font; }
             set { base.Font = value; }
+        }
+
+        public virtual void AddTranslationItems(ITranslation translation)
+        {
+            TranslationUtils.AddTranslationItemsFromFields(Name, this, translation);
+        }
+
+        public virtual void TranslateItems(ITranslation translation)
+        {
+            TranslationUtils.TranslateItemsFromFields(Name, this, translation);
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+
+            if (!CheckComponent(this))
+                OnRuntimeLoad(e);
+        }
+
+        protected virtual void OnRuntimeLoad(EventArgs e)
+        {
+        }
+
+        /// <summary>Translates the <see cref="UserControl"/>'s elements.</summary>
+        protected void Translate()
+        {
+            Translator.Translate(this, GitCommands.AppSettings.CurrentTranslation);
+            translated = true;
         }
 
         private static bool CheckComponent(object value)
@@ -39,20 +70,6 @@ namespace ResourceManager
             return isComponentInDesignMode;
         }
 
-        protected virtual void OnRuntimeLoad(EventArgs e)
-        {
-        }
-
-        protected override void OnLoad(EventArgs e)
-        {
-            base.OnLoad(e);
-
-            if (!CheckComponent(this))
-                OnRuntimeLoad(e);
-        }
-
-        private bool translated;
-
         private void GitExtensionsControl_Load(object sender, EventArgs e)
         {
             // find out if the value is a component and is currently in design mode
@@ -62,30 +79,23 @@ namespace ResourceManager
                 throw new Exception("The control " + GetType().Name + " is not translated in the constructor. You need to call Translate() right after InitializeComponent().");
         }
 
-        /// <summary>Translates the <see cref="UserControl"/>'s elements.</summary>
-        protected void Translate()
-        {
-            Translator.Translate(this, GitCommands.AppSettings.CurrentTranslation);
-            translated = true;
-        }
-
-        public virtual void AddTranslationItems(ITranslation translation)
-        {
-            TranslationUtils.AddTranslationItemsFromFields(Name, this, translation);
-        }
-
-        public virtual void TranslateItems(ITranslation translation)
-        {
-            TranslationUtils.TranslateItemsFromFields(Name, this, translation);
-        }
-
         #region Hotkeys
+
+        /// <summary>Gets or sets the hotkeys</summary>
+        protected IEnumerable<HotkeyCommand> Hotkeys { get; set; }
 
         /// <summary>Gets or sets a value that specifies if the hotkeys are used</summary>
         protected bool HotkeysEnabled { get; set; }
 
-        /// <summary>Gets or sets the hotkeys</summary>
-        protected IEnumerable<HotkeyCommand> Hotkeys { get; set; }
+        /// <summary>
+        /// Override this method to handle form-specific Hotkey commands.
+        /// <remarks>This base method does nothing and returns false.</remarks>
+        /// </summary>
+        /// <param name="command"></param>
+        protected virtual bool ExecuteCommand(int command)
+        {
+            return false;
+        }
 
         /// <summary>Checks if a hotkey wants to handle the key before letting the message propagate.</summary>
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -100,16 +110,6 @@ namespace ResourceManager
                 }
 
             return base.ProcessCmdKey(ref msg, keyData);
-        }
-
-        /// <summary>
-        /// Override this method to handle form-specific Hotkey commands.
-        /// <remarks>This base method does nothing and returns false.</remarks>
-        /// </summary>
-        /// <param name="command"></param>
-        protected virtual bool ExecuteCommand(int command)
-        {
-            return false;
         }
 
         #endregion Hotkeys

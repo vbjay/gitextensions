@@ -7,14 +7,14 @@ namespace GitUI.CommandsDialogs
 {
     public sealed partial class FormEditor : GitModuleForm
     {
-        private readonly TranslationString _saveChanges = new TranslationString("Do you want to save changes?");
-        private readonly TranslationString _saveChangesCaption = new TranslationString("Save changes");
         private readonly TranslationString _cannotOpenFile = new TranslationString("Cannot open file:");
         private readonly TranslationString _cannotSaveFile = new TranslationString("Cannot save file:");
         private readonly TranslationString _error = new TranslationString("Error");
-        private bool _hasChanges;
+        private readonly TranslationString _saveChanges = new TranslationString("Do you want to save changes?");
+        private readonly TranslationString _saveChangesCaption = new TranslationString("Save changes");
         private string _fileName;
         private bool _formClosing = false;
+        private bool _hasChanges;
 
         public FormEditor(GitUICommands aCommands, string fileName, bool showWarning)
             : base(aCommands)
@@ -40,24 +40,20 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-        private void OpenFile(string fileName)
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            try
+            switch (keyData)
             {
-                _fileName = fileName;
-                fileViewer.ViewFile(_fileName);
-                fileViewer.IsReadOnly = false;
-                fileViewer.SetVisibilityDiffContextMenu(false, false);
-                Text = _fileName;
+                case Keys.Escape:
+                    Close();
+                    return true;
 
-                // loading a new file from disk, the text hasn't been changed yet.
-                HasChanges = false;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(this, _cannotOpenFile.Text + Environment.NewLine + ex.Message, _error.Text);
-                _fileName = string.Empty;
-                Close();
+                case Keys.Control | Keys.S:
+                    SaveChanges();
+                    return true;
+
+                default:
+                    return base.ProcessCmdKey(ref msg, keyData);
             }
         }
 
@@ -111,15 +107,24 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-        private void toolStripSaveButton_Click(object sender, EventArgs e)
+        private void OpenFile(string fileName)
         {
             try
             {
-                SaveChanges();
+                _fileName = fileName;
+                fileViewer.ViewFile(_fileName);
+                fileViewer.IsReadOnly = false;
+                fileViewer.SetVisibilityDiffContextMenu(false, false);
+                Text = _fileName;
+
+                // loading a new file from disk, the text hasn't been changed yet.
+                HasChanges = false;
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, _cannotSaveFile.Text + Environment.NewLine + ex.Message, _error.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, _cannotOpenFile.Text + Environment.NewLine + ex.Message, _error.Text);
+                _fileName = string.Empty;
+                Close();
             }
         }
 
@@ -134,20 +139,15 @@ namespace GitUI.CommandsDialogs
             }
         }
 
-        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        private void toolStripSaveButton_Click(object sender, EventArgs e)
         {
-            switch (keyData)
+            try
             {
-                case Keys.Escape:
-                    Close();
-                    return true;
-
-                case Keys.Control | Keys.S:
-                    SaveChanges();
-                    return true;
-
-                default:
-                    return base.ProcessCmdKey(ref msg, keyData);
+                SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, _cannotSaveFile.Text + Environment.NewLine + ex.Message, _error.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

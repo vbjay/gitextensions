@@ -10,12 +10,6 @@ namespace GitUI.Hotkey
     [Serializable]
     public class HotkeySettings
     {
-        [XmlArray]
-        public HotkeyCommand[] Commands { get; set; }
-
-        [XmlAttribute]
-        public string Name { get; set; }
-
         public HotkeySettings()
         {
         }
@@ -25,5 +19,11 @@ namespace GitUI.Hotkey
             this.Name = name;
             this.Commands = commands;
         }
+
+        [XmlArray]
+        public HotkeyCommand[] Commands { get; set; }
+
+        [XmlAttribute]
+        public string Name { get; set; }
     }
 }

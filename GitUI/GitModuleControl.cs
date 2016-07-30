@@ -12,14 +12,45 @@ namespace GitUI
     {
         private readonly object _lock = new object();
 
-        [Browsable(false)]
-        public bool UICommandsSourceParentSearch { get; private set; }
+        private IGitUICommandsSource _uiCommandsSource;
+
+        public GitModuleControl()
+        {
+            UICommandsSourceParentSearch = true;
+        }
 
         /// <summary>Occurs after the <see cref="UICommandsSource"/> is changed.</summary>
         [Browsable(false)]
         public event EventHandler<GitUICommandsSourceEventArgs> GitUICommandsSourceSet;
 
-        private IGitUICommandsSource _uiCommandsSource;
+        /// <summary>true if <see cref="UICommands"/> has been initialzed.</summary>
+        public bool IsUICommandsInitialized
+        {
+            get
+            {
+                return UICommandsSource != null;
+            }
+        }
+
+        /// <summary>Gets the <see cref="UICommands"/>' <see cref="GitModule"/> reference.</summary>
+        [Browsable(false)]
+        public GitModule Module
+        {
+            get
+            {
+                return UICommands.Module;
+            }
+        }
+
+        /// <summary>Gets the <see cref="UICommandsSource"/>'s <see cref="GitUICommands"/> reference.</summary>
+        [Browsable(false)]
+        public GitUICommands UICommands
+        {
+            get
+            {
+                return UICommandsSource.UICommands;
+            }
+        }
 
         /// <summary>Gets the <see cref="IGitUICommandsSource"/>.</summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -44,39 +75,8 @@ namespace GitUI
             }
         }
 
-        /// <summary>Gets the <see cref="UICommandsSource"/>'s <see cref="GitUICommands"/> reference.</summary>
         [Browsable(false)]
-        public GitUICommands UICommands
-        {
-            get
-            {
-                return UICommandsSource.UICommands;
-            }
-        }
-
-        /// <summary>true if <see cref="UICommands"/> has been initialzed.</summary>
-        public bool IsUICommandsInitialized
-        {
-            get
-            {
-                return UICommandsSource != null;
-            }
-        }
-
-        /// <summary>Gets the <see cref="UICommands"/>' <see cref="GitModule"/> reference.</summary>
-        [Browsable(false)]
-        public GitModule Module
-        {
-            get
-            {
-                return UICommands.Module;
-            }
-        }
-
-        public GitModuleControl()
-        {
-            UICommandsSourceParentSearch = true;
-        }
+        public bool UICommandsSourceParentSearch { get; private set; }
 
         protected override void Dispose(bool disposing)
         {
@@ -96,6 +96,27 @@ namespace GitUI
         protected virtual void DisposeUICommandsSource()
         {
             _uiCommandsSource = null;
+        }
+
+        protected override bool ExecuteCommand(int command)
+        {
+            return ExecuteScriptCommand(command)
+                || base.ExecuteCommand(command);
+        }
+
+        /// <summary>Tries to run scripts identified by a <paramref name="command"/>
+        /// and returns true if any executed.</summary>
+        protected bool ExecuteScriptCommand(int command)
+        {
+            return Script.ScriptRunner.ExecuteScriptCommand(this, Module, command, this as RevisionGrid);
+        }
+
+        /// <summary>Raises the <see cref="GitUICommandsSourceSet"/> event.</summary>
+        protected virtual void OnUICommandsSourceChanged(object sender, IGitUICommandsSource newSource)
+        {
+            var handler = GitUICommandsSourceSet;
+            if (handler != null)
+                handler(this, new GitUICommandsSourceEventArgs(newSource));
         }
 
         /// <summary>Searches up the <see cref="UserControl"/>'s parent tree until it finds a <see cref="IGitUICommandsSource"/>.</summary>
@@ -123,27 +144,6 @@ namespace GitUI
                     throw new InvalidOperationException("The UI Command Source is not available for this control. Are you calling methods before adding it to the parent control?");
                 UICommandsSource = cmdsSrc;
             }
-        }
-
-        protected override bool ExecuteCommand(int command)
-        {
-            return ExecuteScriptCommand(command)
-                || base.ExecuteCommand(command);
-        }
-
-        /// <summary>Tries to run scripts identified by a <paramref name="command"/>
-        /// and returns true if any executed.</summary>
-        protected bool ExecuteScriptCommand(int command)
-        {
-            return Script.ScriptRunner.ExecuteScriptCommand(this, Module, command, this as RevisionGrid);
-        }
-
-        /// <summary>Raises the <see cref="GitUICommandsSourceSet"/> event.</summary>
-        protected virtual void OnUICommandsSourceChanged(object sender, IGitUICommandsSource newSource)
-        {
-            var handler = GitUICommandsSourceSet;
-            if (handler != null)
-                handler(this, new GitUICommandsSourceEventArgs(newSource));
         }
     }
 }

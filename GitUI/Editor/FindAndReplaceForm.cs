@@ -10,6 +10,29 @@ using ResourceManager;
 
 namespace GitUI
 {
+    public static class Globals
+    {
+        public static Color HalfMix(Color one, Color two)
+        {
+            return Color.FromArgb(
+                (one.A + two.A) >> 1,
+                (one.R + two.R) >> 1,
+                (one.G + two.G) >> 1,
+                (one.B + two.B) >> 1);
+        }
+
+        public static int InRange(int x, int lo, int hi)
+        {
+            Debug.Assert(lo <= hi);
+            return x < lo ? lo : (x > hi ? hi : x);
+        }
+
+        public static bool IsInRange(int x, int lo, int hi)
+        {
+            return x >= lo && x <= hi;
+        }
+    }
+
     public partial class FindAndReplaceForm : GitExtensionsForm
     {
         private readonly TranslationString _findAndReplaceString =
@@ -18,35 +41,36 @@ namespace GitUI
         private readonly TranslationString _findString =
             new TranslationString("Find");
 
-        private readonly TranslationString _selectionOnlyString =
-            new TranslationString("selection only");
-
-        private readonly TranslationString _textNotFoundString =
-            new TranslationString("Text not found");
-
-        private readonly TranslationString _noSearchString =
-            new TranslationString("No string specified to look for!");
-
-        private readonly TranslationString _textNotFoundString2 =
-            new TranslationString("Search text not found.");
-
-        private readonly TranslationString _notFoundString =
-            new TranslationString("Not found");
+        private readonly Dictionary<TextEditorControl, HighlightGroup> _highlightGroups =
+            new Dictionary<TextEditorControl, HighlightGroup>();
 
         private readonly TranslationString _noOccurrencesFoundString =
             new TranslationString("No occurrences found.");
 
+        private readonly TranslationString _noSearchString =
+            new TranslationString("No string specified to look for!");
+
+        private readonly TranslationString _notFoundString =
+            new TranslationString("Not found");
+
         private readonly TranslationString _replacedOccurrencesString =
             new TranslationString("Replaced {0} occurrences.");
 
-        private readonly Dictionary<TextEditorControl, HighlightGroup> _highlightGroups =
-            new Dictionary<TextEditorControl, HighlightGroup>();
-
         private readonly TextEditorSearcher _search;
+
+        private readonly TranslationString _selectionOnlyString =
+                                                            new TranslationString("selection only");
+
+        private readonly TranslationString _textNotFoundString =
+            new TranslationString("Text not found");
+
+        private readonly TranslationString _textNotFoundString2 =
+            new TranslationString("Search text not found.");
+
         private TextEditorControl _editor;
+        private Func<bool, Tuple<int, string>> _fileLoader;
         private bool _lastSearchLoopedAround;
         private bool _lastSearchWasBackward;
-        private Func<bool, Tuple<int, string>> _fileLoader;
 
         public FindAndReplaceForm()
         {
@@ -57,15 +81,9 @@ namespace GitUI
             ShowInTaskbar = false;
         }
 
-        private TextEditorControl Editor
+        public string LookFor
         {
-            get { return _editor; }
-            set
-            {
-                _editor = value;
-                _search.Document = _editor.Document;
-                UpdateTitleBar();
-            }
+            get { return txtLookFor.Text; }
         }
 
         public bool ReplaceMode
@@ -81,61 +99,15 @@ namespace GitUI
             }
         }
 
-        public string LookFor
+        private TextEditorControl Editor
         {
-            get { return txtLookFor.Text; }
-        }
-
-        private void UpdateTitleBar()
-        {
-            string text = ReplaceMode ? _findAndReplaceString.Text : _findString.Text;
-            if (_editor != null && _editor.FileName != null)
-                text += " - " + Path.GetFileName(_editor.FileName);
-            if (_search.HasScanRegion)
-                text += " (" + _selectionOnlyString.Text + ")";
-            Text = text;
-        }
-
-        public void ShowFor(TextEditorControl editor, bool replaceMode)
-        {
-            Editor = editor;
-
-            _search.ClearScanRegion();
-            SelectionManager sm = editor.ActiveTextAreaControl.SelectionManager;
-            if (sm.HasSomethingSelected && sm.SelectionCollection.Count == 1)
+            get { return _editor; }
+            set
             {
-                ISelection sel = sm.SelectionCollection[0];
-                if (sel.StartPosition.Line == sel.EndPosition.Line)
-                    txtLookFor.Text = sm.SelectedText;
-                else
-                    _search.SetScanRegion(sel);
+                _editor = value;
+                _search.Document = _editor.Document;
+                UpdateTitleBar();
             }
-            else
-            {
-                // Get the current word that the caret is on
-                Caret caret = editor.ActiveTextAreaControl.Caret;
-                int start = TextUtilities.FindWordStart(editor.Document, caret.Offset);
-                int endAt = TextUtilities.FindWordEnd(editor.Document, caret.Offset);
-                txtLookFor.Text = editor.Document.GetText(start, endAt - start);
-            }
-
-            ReplaceMode = replaceMode;
-
-            Owner = (Form)editor.TopLevelControl;
-            Show();
-
-            txtLookFor.SelectAll();
-            txtLookFor.Focus();
-        }
-
-        private void btnFindPrevious_Click(object sender, EventArgs e)
-        {
-            FindNext(false, true, _textNotFoundString.Text);
-        }
-
-        private void btnFindNext_Click(object sender, EventArgs e)
-        {
-            FindNext(false, false, _textNotFoundString.Text);
         }
 
         public TextRange FindNext(bool viaF3, bool searchBackward, string messageIfNotFound)
@@ -188,15 +160,72 @@ namespace GitUI
             return range;
         }
 
-        private void SelectResult(TextRange range)
+        public void ShowFor(TextEditorControl editor, bool replaceMode)
         {
-            TextLocation p1 = _editor.Document.OffsetToPosition(range.Offset);
-            TextLocation p2 = _editor.Document.OffsetToPosition(range.Offset + range.Length);
-            _editor.ActiveTextAreaControl.SelectionManager.SetSelection(p1, p2);
-            _editor.ActiveTextAreaControl.ScrollTo(p1.Line, p1.Column);
-            // Also move the caret to the end of the selection, because when the user
-            // presses F3, the caret is where we start searching next time.
-            _editor.ActiveTextAreaControl.Caret.Position = p2;
+            Editor = editor;
+
+            _search.ClearScanRegion();
+            SelectionManager sm = editor.ActiveTextAreaControl.SelectionManager;
+            if (sm.HasSomethingSelected && sm.SelectionCollection.Count == 1)
+            {
+                ISelection sel = sm.SelectionCollection[0];
+                if (sel.StartPosition.Line == sel.EndPosition.Line)
+                    txtLookFor.Text = sm.SelectedText;
+                else
+                    _search.SetScanRegion(sel);
+            }
+            else
+            {
+                // Get the current word that the caret is on
+                Caret caret = editor.ActiveTextAreaControl.Caret;
+                int start = TextUtilities.FindWordStart(editor.Document, caret.Offset);
+                int endAt = TextUtilities.FindWordEnd(editor.Document, caret.Offset);
+                txtLookFor.Text = editor.Document.GetText(start, endAt - start);
+            }
+
+            ReplaceMode = replaceMode;
+
+            Owner = (Form)editor.TopLevelControl;
+            Show();
+
+            txtLookFor.SelectAll();
+            txtLookFor.Focus();
+        }
+
+        internal void SetFileLoader(Func<bool, Tuple<int, string>> fileLoader)
+        {
+            _fileLoader = fileLoader;
+        }
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _search.Dispose();
+
+                if (components != null)
+                    components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
+        private void btnFindNext_Click(object sender, EventArgs e)
+        {
+            FindNext(false, false, _textNotFoundString.Text);
+        }
+
+        private void btnFindPrevious_Click(object sender, EventArgs e)
+        {
+            FindNext(false, true, _textNotFoundString.Text);
         }
 
         private void btnHighlightAll_Click(object sender, EventArgs e)
@@ -235,28 +264,6 @@ namespace GitUI
                 else
                     Close();
             }
-        }
-
-        private void FindAndReplaceForm_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            // Prevent dispose, as this form can be re-used
-            if (e.CloseReason != CloseReason.FormOwnerClosing)
-            {
-                if (Owner != null)
-                    Owner.Select(); // prevent another app from being activated instead
-
-                e.Cancel = true;
-                Hide();
-
-                // Discard search region
-                _search.ClearScanRegion();
-                _editor.Refresh(); // must repaint manually
-            }
-        }
-
-        private void btnCancel_Click(object sender, EventArgs e)
-        {
-            Close();
         }
 
         private void btnReplace_Click(object sender, EventArgs e)
@@ -303,6 +310,23 @@ namespace GitUI
             }
         }
 
+        private void FindAndReplaceForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // Prevent dispose, as this form can be re-used
+            if (e.CloseReason != CloseReason.FormOwnerClosing)
+            {
+                if (Owner != null)
+                    Owner.Select(); // prevent another app from being activated instead
+
+                e.Cancel = true;
+                Hide();
+
+                // Discard search region
+                _search.ClearScanRegion();
+                _editor.Refresh(); // must repaint manually
+            }
+        }
+
         private void InsertText(string text)
         {
             TextArea textArea = _editor.ActiveTextAreaControl.TextArea;
@@ -322,34 +346,74 @@ namespace GitUI
             }
         }
 
-        internal void SetFileLoader(Func<bool, Tuple<int, string>> fileLoader)
+        private void SelectResult(TextRange range)
         {
-            _fileLoader = fileLoader;
+            TextLocation p1 = _editor.Document.OffsetToPosition(range.Offset);
+            TextLocation p2 = _editor.Document.OffsetToPosition(range.Offset + range.Length);
+            _editor.ActiveTextAreaControl.SelectionManager.SetSelection(p1, p2);
+            _editor.ActiveTextAreaControl.ScrollTo(p1.Line, p1.Column);
+            // Also move the caret to the end of the selection, because when the user
+            // presses F3, the caret is where we start searching next time.
+            _editor.ActiveTextAreaControl.Caret.Position = p2;
         }
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
+        private void UpdateTitleBar()
         {
-            if (disposing)
-            {
-                _search.Dispose();
-
-                if (components != null)
-                    components.Dispose();
-            }
-            base.Dispose(disposing);
+            string text = ReplaceMode ? _findAndReplaceString.Text : _findString.Text;
+            if (_editor != null && _editor.FileName != null)
+                text += " - " + Path.GetFileName(_editor.FileName);
+            if (_search.HasScanRegion)
+                text += " (" + _selectionOnlyString.Text + ")";
+            Text = text;
         }
     }
 
-    public class TextRange : AbstractSegment
+    /// <summary>Bundles a group of markers together so that they can be cleared
+    /// together.</summary>
+    public sealed class HighlightGroup : IDisposable
     {
-        public TextRange(IDocument document, int offset, int length)
+        private readonly IDocument _document;
+        private readonly TextEditorControl _editor;
+        private readonly List<TextMarker> _markers = new List<TextMarker>();
+
+        public HighlightGroup(TextEditorControl editor)
         {
-            this.offset = offset;
-            this.length = length;
+            _editor = editor;
+            _document = editor.Document;
+        }
+
+        ~HighlightGroup()
+        {
+            Dispose();
+        }
+
+        public IList<TextMarker> Markers
+        {
+            get { return _markers.AsReadOnly(); }
+        }
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            ClearMarkers();
+            GC.SuppressFinalize(this);
+        }
+
+        #endregion IDisposable Members
+
+        public void AddMarker(TextMarker marker)
+        {
+            _markers.Add(marker);
+            _document.MarkerStrategy.AddMarker(marker);
+        }
+
+        public void ClearMarkers()
+        {
+            foreach (TextMarker m in _markers)
+                _document.MarkerStrategy.RemoveMarker(m);
+            _markers.Clear();
+            _editor.Refresh();
         }
     }
 
@@ -375,22 +439,9 @@ namespace GitUI
         // must remember to remove it when it is no longer needed.
         private TextMarker _region;
 
-        public IDocument Document
+        ~TextEditorSearcher()
         {
-            get { return _document; }
-            set
-            {
-                if (_document != value)
-                {
-                    ClearScanRegion();
-                    _document = value;
-                }
-            }
-        }
-
-        public bool HasScanRegion
-        {
-            get { return _region != null; }
+            Dispose();
         }
 
         /// <summary>Begins the start offset for searching</summary>
@@ -404,6 +455,19 @@ namespace GitUI
             }
         }
 
+        public IDocument Document
+        {
+            get { return _document; }
+            set
+            {
+                if (_document != value)
+                {
+                    ClearScanRegion();
+                    _document = value;
+                }
+            }
+        }
+
         /// <summary>Begins the end offset for searching</summary>
         public int EndOffset
         {
@@ -413,6 +477,11 @@ namespace GitUI
                     return _region.EndOffset;
                 return _document.TextLength;
             }
+        }
+
+        public bool HasScanRegion
+        {
+            get { return _region != null; }
         }
 
         public string LookFor
@@ -431,23 +500,6 @@ namespace GitUI
 
         #endregion IDisposable Members
 
-        /// <summary>Sets the region to search. The region is updated
-        /// automatically as the document changes.</summary>
-        public void SetScanRegion(ISelection sel)
-        {
-            SetScanRegion(sel.Offset, sel.Length);
-        }
-
-        /// <summary>Sets the region to search. The region is updated
-        /// automatically as the document changes.</summary>
-        public void SetScanRegion(int offset, int length)
-        {
-            Color bkgColor = _document.HighlightingStrategy.GetColorFor("Default").BackgroundColor;
-            _region = new TextMarker(offset, length, TextMarkerType.SolidBlock,
-                                     Globals.HalfMix(bkgColor, Color.FromArgb(160, 160, 160)));
-            _document.MarkerStrategy.AddMarker(_region);
-        }
-
         public void ClearScanRegion()
         {
             if (_region != null)
@@ -455,11 +507,6 @@ namespace GitUI
                 _document.MarkerStrategy.RemoveMarker(_region);
                 _region = null;
             }
-        }
-
-        ~TextEditorSearcher()
-        {
-            Dispose();
         }
 
         /// <summary>Finds next instance of LookFor, according to the search rules
@@ -499,6 +546,23 @@ namespace GitUI
                 }
             }
             return result;
+        }
+
+        /// <summary>Sets the region to search. The region is updated
+        /// automatically as the document changes.</summary>
+        public void SetScanRegion(ISelection sel)
+        {
+            SetScanRegion(sel.Offset, sel.Length);
+        }
+
+        /// <summary>Sets the region to search. The region is updated
+        /// automatically as the document changes.</summary>
+        public void SetScanRegion(int offset, int length)
+        {
+            Color bkgColor = _document.HighlightingStrategy.GetColorFor("Default").BackgroundColor;
+            _region = new TextMarker(offset, length, TextMarkerType.SolidBlock,
+                                     Globals.HalfMix(bkgColor, Color.FromArgb(160, 160, 160)));
+            _document.MarkerStrategy.AddMarker(_region);
         }
 
         private static bool MatchFirstCh(char a, char b, bool matchCase)
@@ -544,19 +608,6 @@ namespace GitUI
             return null;
         }
 
-        private bool IsWholeWordMatch(int offset)
-        {
-            if (IsWordBoundary(offset) && IsWordBoundary(offset + _lookFor.Length))
-                return IsPartWordMatch(offset);
-            return false;
-        }
-
-        private bool IsWordBoundary(int offset)
-        {
-            return offset <= 0 || offset >= _document.TextLength ||
-                   !IsAlphaNumeric(offset - 1) || !IsAlphaNumeric(offset);
-        }
-
         private bool IsAlphaNumeric(int offset)
         {
             char c = _document.GetCharAt(offset);
@@ -570,77 +621,27 @@ namespace GitUI
                 substr = substr.ToUpperInvariant();
             return substr == _lookFor2;
         }
-    }
 
-    /// <summary>Bundles a group of markers together so that they can be cleared
-    /// together.</summary>
-    public sealed class HighlightGroup : IDisposable
-    {
-        private readonly IDocument _document;
-        private readonly TextEditorControl _editor;
-        private readonly List<TextMarker> _markers = new List<TextMarker>();
-
-        public HighlightGroup(TextEditorControl editor)
+        private bool IsWholeWordMatch(int offset)
         {
-            _editor = editor;
-            _document = editor.Document;
+            if (IsWordBoundary(offset) && IsWordBoundary(offset + _lookFor.Length))
+                return IsPartWordMatch(offset);
+            return false;
         }
 
-        public IList<TextMarker> Markers
+        private bool IsWordBoundary(int offset)
         {
-            get { return _markers.AsReadOnly(); }
-        }
-
-        #region IDisposable Members
-
-        public void Dispose()
-        {
-            ClearMarkers();
-            GC.SuppressFinalize(this);
-        }
-
-        #endregion IDisposable Members
-
-        public void AddMarker(TextMarker marker)
-        {
-            _markers.Add(marker);
-            _document.MarkerStrategy.AddMarker(marker);
-        }
-
-        public void ClearMarkers()
-        {
-            foreach (TextMarker m in _markers)
-                _document.MarkerStrategy.RemoveMarker(m);
-            _markers.Clear();
-            _editor.Refresh();
-        }
-
-        ~HighlightGroup()
-        {
-            Dispose();
+            return offset <= 0 || offset >= _document.TextLength ||
+                   !IsAlphaNumeric(offset - 1) || !IsAlphaNumeric(offset);
         }
     }
 
-    public static class Globals
+    public class TextRange : AbstractSegment
     {
-        public static int InRange(int x, int lo, int hi)
+        public TextRange(IDocument document, int offset, int length)
         {
-            Debug.Assert(lo <= hi);
-            return x < lo ? lo : (x > hi ? hi : x);
-        }
-
-        public static bool IsInRange(int x, int lo, int hi)
-        {
-            return x >= lo && x <= hi;
-        }
-
-        public static Color HalfMix(Color one, Color two)
-        {
-            return Color.FromArgb(
-                (one.A + two.A) >> 1,
-                (one.R + two.R) >> 1,
-                (one.G + two.G) >> 1,
-                (one.B + two.B) >> 1);
+            this.offset = offset;
+            this.length = length;
         }
     }
 }

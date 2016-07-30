@@ -69,6 +69,11 @@ namespace GitCommands
             return sb.ToString();
         }
 
+        public static string ParseQuotedPrintable(Encoding enc, string input)
+        {
+            return ParseQuotedPrintable(enc, input, 0, false);
+        }
+
         private static string ParseEncodedWord(string input)
         {
             var sb = new StringBuilder();
@@ -101,11 +106,6 @@ namespace GitCommands
                     break;
             }
             return sb.ToString();
-        }
-
-        public static string ParseQuotedPrintable(Encoding enc, string input)
-        {
-            return ParseQuotedPrintable(enc, input, 0, false);
         }
 
         private static string ParseQuotedPrintable(Encoding enc, string input, int startPos, bool skipQuestionEquals)

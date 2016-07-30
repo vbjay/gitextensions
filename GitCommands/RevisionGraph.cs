@@ -22,14 +22,44 @@ namespace GitCommands
         NoMerges = 64       // --no-merges
     }
 
-    public abstract class RevisionGraphInMemFilter
-    {
-        public abstract bool PassThru(GitRevision rev);
-    }
-
     public sealed class RevisionGraph : IDisposable
     {
-        public event EventHandler Exited;
+        public string BranchFilter = String.Empty;
+
+        public RevisionGraphInMemFilter InMemFilter;
+
+        public string PathFilter = String.Empty;
+
+        public RefsFiltringOptions RefsOptions = RefsFiltringOptions.All | RefsFiltringOptions.Boundary;
+
+        public string RevisionFilter = String.Empty;
+
+        private const string CommitBegin = "<(__BEGIN_COMMIT__)>";
+
+        private static char[] ShellGlobCharacters = new[] { '?', '*', '[' };
+
+        private readonly AsyncLoader _backgroundLoader = new AsyncLoader();
+
+        private readonly char[] _hexChars = "0123456789ABCDEFabcdef".ToCharArray();
+
+        private readonly GitModule _module;
+
+        private ReadStep _nextStep = ReadStep.Commit;
+
+        private string _previousFileName;
+
+        private Dictionary<string, List<GitRef>> _refs;
+
+        private GitRevision _revision;
+
+        private string _selectedBranchName;
+
+        public RevisionGraph(GitModule module)
+        {
+            _module = module;
+        }
+
+        public event EventHandler BeginUpdate;
 
         public event EventHandler<AsyncErrorEventArgs> Error
         {
@@ -44,30 +74,11 @@ namespace GitCommands
             }
         }
 
+        public event EventHandler Exited;
+
         public event EventHandler Updated;
 
-        public event EventHandler BeginUpdate;
-
-        public int RevisionCount { get; set; }
-
-        public class RevisionGraphUpdatedEventArgs : EventArgs
-        {
-            public RevisionGraphUpdatedEventArgs(GitRevision revision)
-            {
-                Revision = revision;
-            }
-
-            public readonly GitRevision Revision;
-        }
-
-        public bool ShaOnly { get; set; }
-
-        private readonly char[] _hexChars = "0123456789ABCDEFabcdef".ToCharArray();
-
-        private const string CommitBegin = "<(__BEGIN_COMMIT__)>"; // Something unlikely to show up in a comment
-
-        private Dictionary<string, List<GitRef>> _refs;
-
+        // Something unlikely to show up in a comment
         private enum ReadStep
         {
             Commit,
@@ -76,23 +87,131 @@ namespace GitCommands
             FileName,
         }
 
-        private ReadStep _nextStep = ReadStep.Commit;
+        public int RevisionCount { get; set; }
 
-        private GitRevision _revision;
-
-        private readonly AsyncLoader _backgroundLoader = new AsyncLoader();
-
-        private readonly GitModule _module;
-
-        public RevisionGraph(GitModule module)
-        {
-            _module = module;
-        }
+        public bool ShaOnly { get; set; }
 
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        public void Execute()
+        {
+            _backgroundLoader.Load(ProccessGitLog, ProccessGitLogExecuted);
+        }
+
+        private static IEnumerable<string> ReadDataBlocks(StreamReader reader)
+        {
+            int bufferSize = 4 * 1024;
+            char[] buffer = new char[bufferSize];
+
+            StringBuilder incompleteBlock = new StringBuilder();
+            while (true)
+            {
+                int bytesRead = reader.ReadBlock(buffer, 0, bufferSize);
+                if (bytesRead == 0)
+                    break;
+
+                string bufferString = new string(buffer, 0, bytesRead);
+                string[] dataBlocks = bufferString.Split(new char[] { '\0' });
+
+                if (dataBlocks.Length > 1)
+                {
+                    // There are at least two blocks, so we can return the first one
+                    incompleteBlock.Append(dataBlocks[0]);
+                    yield return incompleteBlock.ToString();
+                    incompleteBlock.Clear();
+                }
+
+                int lastDataBlockIndex = dataBlocks.Length - 1;
+
+                // Return all the blocks until the last one
+                for (int i = 1; i < lastDataBlockIndex; i++)
+                {
+                    yield return dataBlocks[i];
+                }
+
+                // Append the beginning of the last block
+                incompleteBlock.Append(dataBlocks[lastDataBlockIndex]);
+            }
+
+            if (incompleteBlock.Length > 0)
+            {
+                yield return incompleteBlock.ToString();
+            }
+        }
+
+        private void DataReceived(string data)
+        {
+            if (data.StartsWith(CommitBegin))
+            {
+                // a new commit finalizes the last revision
+                FinishRevision();
+                _nextStep = ReadStep.Commit;
+            }
+
+            switch (_nextStep)
+            {
+                case ReadStep.Commit:
+                    data = GitModule.ReEncodeString(data, GitModule.LosslessEncoding, _module.LogOutputEncoding);
+
+                    string[] lines = data.Split(new char[] { '\n' });
+                    Debug.Assert(lines.Length == 11);
+                    Debug.Assert(lines[0] == CommitBegin);
+
+                    _revision = new GitRevision(_module, null);
+
+                    _revision.Guid = lines[1];
+                    {
+                        List<GitRef> gitRefs;
+                        if (_refs.TryGetValue(_revision.Guid, out gitRefs))
+                            _revision.Refs.AddRange(gitRefs);
+                    }
+
+                    // RemoveEmptyEntries is required for root commits. They should have empty list of parents.
+                    _revision.ParentGuids = lines[2].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    _revision.TreeGuid = lines[3];
+
+                    _revision.Author = lines[4];
+                    _revision.AuthorEmail = lines[5];
+                    {
+                        DateTime dateTime;
+                        if (DateTimeUtils.TryParseUnixTime(lines[6], out dateTime))
+                            _revision.AuthorDate = dateTime;
+                    }
+
+                    _revision.Committer = lines[7];
+                    _revision.CommitterEmail = lines[8];
+                    {
+                        DateTime dateTime;
+                        if (DateTimeUtils.TryParseUnixTime(lines[9], out dateTime))
+                            _revision.CommitDate = dateTime;
+                    }
+
+                    _revision.MessageEncoding = lines[10];
+                    break;
+
+                case ReadStep.CommitSubject:
+                    _revision.Subject = _module.ReEncodeCommitMessage(data, _revision.MessageEncoding);
+                    break;
+
+                case ReadStep.CommitBody:
+                    _revision.Body = _module.ReEncodeCommitMessage(data, _revision.MessageEncoding);
+                    break;
+
+                case ReadStep.FileName:
+                    if (!string.IsNullOrEmpty(data))
+                    {
+                        // Git adds \n between the format string (ends with \0 in our case)
+                        // and the first file name. So, we need to remove it from the file name.
+                        _revision.Name = data.TrimStart(new char[] { '\n' });
+                    }
+                    break;
+            }
+
+            _nextStep++;
         }
 
         private void Dispose(bool disposing)
@@ -104,17 +223,54 @@ namespace GitCommands
             }
         }
 
-        public RefsFiltringOptions RefsOptions = RefsFiltringOptions.All | RefsFiltringOptions.Boundary;
-        public string RevisionFilter = String.Empty;
-        public string PathFilter = String.Empty;
-        public string BranchFilter = String.Empty;
-        public RevisionGraphInMemFilter InMemFilter;
-        private string _selectedBranchName;
-        private static char[] ShellGlobCharacters = new[] { '?', '*', '[' };
-
-        public void Execute()
+        private void FinishRevision()
         {
-            _backgroundLoader.Load(ProccessGitLog, ProccessGitLogExecuted);
+            if (_revision != null && _revision.Guid == null)
+                _revision = null;
+            if (_revision != null)
+            {
+                if (_revision.Name == null)
+                    _revision.Name = _previousFileName;
+                else
+                    _previousFileName = _revision.Name;
+
+                if (_revision.Guid.Trim(_hexChars).Length == 0 &&
+                    (InMemFilter == null || InMemFilter.PassThru(_revision)))
+                {
+                    // Remove full commit message to reduce memory consumption (28% for a repo with 69K commits)
+                    // Full commit message is used in InMemFilter but later it's not needed
+                    _revision.Body = null;
+
+                    RevisionCount++;
+                    if (Updated != null)
+                        Updated(this, new RevisionGraphUpdatedEventArgs(_revision));
+                }
+            }
+        }
+
+        private IList<GitRef> GetRefs()
+        {
+            var result = _module.GetRefs(true);
+            bool validWorkingDir = _module.IsValidGitWorkingDir();
+            _selectedBranchName = validWorkingDir ? _module.GetSelectedBranch() : string.Empty;
+            GitRef selectedRef = result.FirstOrDefault(head => head.Name == _selectedBranchName);
+
+            if (selectedRef != null)
+            {
+                selectedRef.Selected = true;
+
+                var localConfigFile = _module.LocalConfigFile;
+
+                var selectedHeadMergeSource =
+                    result.FirstOrDefault(head => head.IsRemote
+                                        && selectedRef.GetTrackingRemote(localConfigFile) == head.Remote
+                                        && selectedRef.GetMergeWith(localConfigFile) == head.LocalName);
+
+                if (selectedHeadMergeSource != null)
+                    selectedHeadMergeSource.SelectedHeadMergeSource = true;
+            }
+
+            return result;
         }
 
         private void ProccessGitLog(CancellationToken taskState)
@@ -208,47 +364,6 @@ namespace GitCommands
             }
         }
 
-        private static IEnumerable<string> ReadDataBlocks(StreamReader reader)
-        {
-            int bufferSize = 4 * 1024;
-            char[] buffer = new char[bufferSize];
-
-            StringBuilder incompleteBlock = new StringBuilder();
-            while (true)
-            {
-                int bytesRead = reader.ReadBlock(buffer, 0, bufferSize);
-                if (bytesRead == 0)
-                    break;
-
-                string bufferString = new string(buffer, 0, bytesRead);
-                string[] dataBlocks = bufferString.Split(new char[] { '\0' });
-
-                if (dataBlocks.Length > 1)
-                {
-                    // There are at least two blocks, so we can return the first one
-                    incompleteBlock.Append(dataBlocks[0]);
-                    yield return incompleteBlock.ToString();
-                    incompleteBlock.Clear();
-                }
-
-                int lastDataBlockIndex = dataBlocks.Length - 1;
-
-                // Return all the blocks until the last one
-                for (int i = 1; i < lastDataBlockIndex; i++)
-                {
-                    yield return dataBlocks[i];
-                }
-
-                // Append the beginning of the last block
-                incompleteBlock.Append(dataBlocks[lastDataBlockIndex]);
-            }
-
-            if (incompleteBlock.Length > 0)
-            {
-                yield return incompleteBlock.ToString();
-            }
-        }
-
         private void ProccessGitLogExecuted()
         {
             FinishRevision();
@@ -258,127 +373,19 @@ namespace GitCommands
                 Exited(this, EventArgs.Empty);
         }
 
-        private IList<GitRef> GetRefs()
+        public class RevisionGraphUpdatedEventArgs : EventArgs
         {
-            var result = _module.GetRefs(true);
-            bool validWorkingDir = _module.IsValidGitWorkingDir();
-            _selectedBranchName = validWorkingDir ? _module.GetSelectedBranch() : string.Empty;
-            GitRef selectedRef = result.FirstOrDefault(head => head.Name == _selectedBranchName);
+            public readonly GitRevision Revision;
 
-            if (selectedRef != null)
+            public RevisionGraphUpdatedEventArgs(GitRevision revision)
             {
-                selectedRef.Selected = true;
-
-                var localConfigFile = _module.LocalConfigFile;
-
-                var selectedHeadMergeSource =
-                    result.FirstOrDefault(head => head.IsRemote
-                                        && selectedRef.GetTrackingRemote(localConfigFile) == head.Remote
-                                        && selectedRef.GetMergeWith(localConfigFile) == head.LocalName);
-
-                if (selectedHeadMergeSource != null)
-                    selectedHeadMergeSource.SelectedHeadMergeSource = true;
-            }
-
-            return result;
-        }
-
-        private string _previousFileName;
-
-        private void FinishRevision()
-        {
-            if (_revision != null && _revision.Guid == null)
-                _revision = null;
-            if (_revision != null)
-            {
-                if (_revision.Name == null)
-                    _revision.Name = _previousFileName;
-                else
-                    _previousFileName = _revision.Name;
-
-                if (_revision.Guid.Trim(_hexChars).Length == 0 &&
-                    (InMemFilter == null || InMemFilter.PassThru(_revision)))
-                {
-                    // Remove full commit message to reduce memory consumption (28% for a repo with 69K commits)
-                    // Full commit message is used in InMemFilter but later it's not needed
-                    _revision.Body = null;
-
-                    RevisionCount++;
-                    if (Updated != null)
-                        Updated(this, new RevisionGraphUpdatedEventArgs(_revision));
-                }
+                Revision = revision;
             }
         }
+    }
 
-        private void DataReceived(string data)
-        {
-            if (data.StartsWith(CommitBegin))
-            {
-                // a new commit finalizes the last revision
-                FinishRevision();
-                _nextStep = ReadStep.Commit;
-            }
-
-            switch (_nextStep)
-            {
-                case ReadStep.Commit:
-                    data = GitModule.ReEncodeString(data, GitModule.LosslessEncoding, _module.LogOutputEncoding);
-
-                    string[] lines = data.Split(new char[] { '\n' });
-                    Debug.Assert(lines.Length == 11);
-                    Debug.Assert(lines[0] == CommitBegin);
-
-                    _revision = new GitRevision(_module, null);
-
-                    _revision.Guid = lines[1];
-                    {
-                        List<GitRef> gitRefs;
-                        if (_refs.TryGetValue(_revision.Guid, out gitRefs))
-                            _revision.Refs.AddRange(gitRefs);
-                    }
-
-                    // RemoveEmptyEntries is required for root commits. They should have empty list of parents.
-                    _revision.ParentGuids = lines[2].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                    _revision.TreeGuid = lines[3];
-
-                    _revision.Author = lines[4];
-                    _revision.AuthorEmail = lines[5];
-                    {
-                        DateTime dateTime;
-                        if (DateTimeUtils.TryParseUnixTime(lines[6], out dateTime))
-                            _revision.AuthorDate = dateTime;
-                    }
-
-                    _revision.Committer = lines[7];
-                    _revision.CommitterEmail = lines[8];
-                    {
-                        DateTime dateTime;
-                        if (DateTimeUtils.TryParseUnixTime(lines[9], out dateTime))
-                            _revision.CommitDate = dateTime;
-                    }
-
-                    _revision.MessageEncoding = lines[10];
-                    break;
-
-                case ReadStep.CommitSubject:
-                    _revision.Subject = _module.ReEncodeCommitMessage(data, _revision.MessageEncoding);
-                    break;
-
-                case ReadStep.CommitBody:
-                    _revision.Body = _module.ReEncodeCommitMessage(data, _revision.MessageEncoding);
-                    break;
-
-                case ReadStep.FileName:
-                    if (!string.IsNullOrEmpty(data))
-                    {
-                        // Git adds \n between the format string (ends with \0 in our case)
-                        // and the first file name. So, we need to remove it from the file name.
-                        _revision.Name = data.TrimStart(new char[] { '\n' });
-                    }
-                    break;
-            }
-
-            _nextStep++;
-        }
+    public abstract class RevisionGraphInMemFilter
+    {
+        public abstract bool PassThru(GitRevision rev);
     }
 }

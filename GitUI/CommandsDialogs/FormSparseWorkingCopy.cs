@@ -31,101 +31,14 @@ namespace GitUI.CommandsDialogs
             Translate();
         }
 
-        private void BindSaveOnClose([NotNull] FormSparseWorkingCopyViewModel sparse)
+        protected override void Dispose(bool disposing)
         {
-            if (sparse == null)
-                throw new ArgumentNullException("sparse");
-            Closing += (sender, args) =>
+            base.Dispose(disposing);
+            if (disposing)
             {
-                try
-                {
-                    // Save on OK — even if not dirty, to upd the rules if checkbox is ON
-                    if (DialogResult == DialogResult.OK)
-                    {
-                        sparse.SaveChanges();
-                        return;
-                    }
-
-                    // Closing/canceling, prompt to save if dirty
-                    if (sparse.IsWithUnsavedChanges())
-                    {
-                        switch (MessageBox.Show(this, Globalized.Strings.YouHaveMadeChangesToSettingsOrRulesWouldYouLikeToSaveThem.Text, Globalized.Strings.SparseWorkingCopy.Text + " – " + Globalized.Strings.Cancel.Text, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question))
-                        {
-                            case DialogResult.Yes:
-                                sparse.SaveChanges();
-                                break;
-
-                            case DialogResult.No:
-                                // Just exit
-                                break;
-
-                            default:
-                                // Cancel, or error
-                                args.Cancel = true;
-                                break;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ActiveForm, Globalized.Strings.CouldNotSave.Text + "\n\n" + ex.Message, Globalized.Strings.SparseWorkingCopy.Text + " – " + Globalized.Strings.SaveFile.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            };
-        }
-
-        private void BindToViewModelGlobal([NotNull] FormSparseWorkingCopyViewModel sparse)
-        {
-            if (sparse == null)
-                throw new ArgumentNullException("sparse");
-            sparse.ComfirmAdjustingRulesOnDeactRequested += (sender, args) =>
-            {
-                if (!args.Cancel)
-
-                    args.Cancel |= MessageBox.Show(this, string.Format(Globalized.Strings.ConfirmDisableGitSparse.Text, (args.IsCurrentRuleSetEmpty ? Globalized.Strings.WithTheSparsePassFilterEmptyOrMissing.Text : Globalized.Strings.WithSomeRulesStillInTheSparsePassFilter.Text)), Globalized.Strings.DisableGitSparse.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes;
-            };
-        }
-
-        private void CreateView([NotNull] FormSparseWorkingCopyViewModel sparse)
-        {
-            Text = Globalized.Strings.SparseWorkingCopy.Text;
-            AutoScaleMode = AutoScaleMode.Dpi;
-            StartPosition = FormStartPosition.CenterParent;
-            MinimumSize = new Size(800, 600);
-
-            // Tooltips support for the form
-            var componentcontainer = new Container();
-            _disposable1 = componentcontainer;
-            var tooltip = new ToolTip(componentcontainer) { AutomaticDelay = (int)TimeSpan.FromSeconds(10).TotalMilliseconds };
-
-            Panel panelHeader = CreateViewHeader();
-
-            Button btnSave;
-            Button btnCancel;
-            Panel panelFooter = CreateViewFooter(sparse, tooltip, out btnSave, out btnCancel);
-
-            Control panelOnOff = CreateViewOnOff(sparse, tooltip);
-
-            Panel panelRules = CreateViewRules(sparse, tooltip, this);
-
-            sparse.FirePropertyChanged(); // Initial binding
-
-            Controls.Add(new TableLayoutPanel() { Dock = DockStyle.Fill, Padding = Padding.Empty, Margin = Padding.Empty, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Controls = { panelHeader, CreateViewSeparator(), panelOnOff, panelRules, CreateViewSeparator(), panelFooter }, RowStyles = { new RowStyle(), new RowStyle(), new RowStyle(), new RowStyle(SizeType.Percent, 100) } });
-
-            AcceptButton = btnSave;
-            CancelButton = btnCancel;
-
-            BindSaveOnClose(sparse);
-
-            // Special binding: as the editor takes Enter for itself, bind Ctrl+Enter to commit
-            KeyPreview = true;
-            PreviewKeyDown += (sender, args) =>
-            {
-                if (args.KeyData == (Keys.Enter | Keys.Control))
-                {
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-            };
+                if (_disposable1 != null)
+                    _disposable1.Dispose();
+            }
         }
 
         [NotNull]
@@ -226,24 +139,106 @@ namespace GitUI.CommandsDialogs
             return new Control() { Height = 2, BackColor = SystemColors.ControlDark, Dock = dock ?? DockStyle.Fill, Padding = Padding.Empty, Margin = Padding.Empty };
         }
 
-        protected override void Dispose(bool disposing)
+        private void BindSaveOnClose([NotNull] FormSparseWorkingCopyViewModel sparse)
         {
-            base.Dispose(disposing);
-            if (disposing)
+            if (sparse == null)
+                throw new ArgumentNullException("sparse");
+            Closing += (sender, args) =>
             {
-                if (_disposable1 != null)
-                    _disposable1.Dispose();
-            }
+                try
+                {
+                    // Save on OK — even if not dirty, to upd the rules if checkbox is ON
+                    if (DialogResult == DialogResult.OK)
+                    {
+                        sparse.SaveChanges();
+                        return;
+                    }
+
+                    // Closing/canceling, prompt to save if dirty
+                    if (sparse.IsWithUnsavedChanges())
+                    {
+                        switch (MessageBox.Show(this, Globalized.Strings.YouHaveMadeChangesToSettingsOrRulesWouldYouLikeToSaveThem.Text, Globalized.Strings.SparseWorkingCopy.Text + " – " + Globalized.Strings.Cancel.Text, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question))
+                        {
+                            case DialogResult.Yes:
+                                sparse.SaveChanges();
+                                break;
+
+                            case DialogResult.No:
+                                // Just exit
+                                break;
+
+                            default:
+                                // Cancel, or error
+                                args.Cancel = true;
+                                break;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ActiveForm, Globalized.Strings.CouldNotSave.Text + "\n\n" + ex.Message, Globalized.Strings.SparseWorkingCopy.Text + " – " + Globalized.Strings.SaveFile.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            };
+        }
+
+        private void BindToViewModelGlobal([NotNull] FormSparseWorkingCopyViewModel sparse)
+        {
+            if (sparse == null)
+                throw new ArgumentNullException("sparse");
+            sparse.ComfirmAdjustingRulesOnDeactRequested += (sender, args) =>
+            {
+                if (!args.Cancel)
+
+                    args.Cancel |= MessageBox.Show(this, string.Format(Globalized.Strings.ConfirmDisableGitSparse.Text, (args.IsCurrentRuleSetEmpty ? Globalized.Strings.WithTheSparsePassFilterEmptyOrMissing.Text : Globalized.Strings.WithSomeRulesStillInTheSparsePassFilter.Text)), Globalized.Strings.DisableGitSparse.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes;
+            };
+        }
+
+        private void CreateView([NotNull] FormSparseWorkingCopyViewModel sparse)
+        {
+            Text = Globalized.Strings.SparseWorkingCopy.Text;
+            AutoScaleMode = AutoScaleMode.Dpi;
+            StartPosition = FormStartPosition.CenterParent;
+            MinimumSize = new Size(800, 600);
+
+            // Tooltips support for the form
+            var componentcontainer = new Container();
+            _disposable1 = componentcontainer;
+            var tooltip = new ToolTip(componentcontainer) { AutomaticDelay = (int)TimeSpan.FromSeconds(10).TotalMilliseconds };
+
+            Panel panelHeader = CreateViewHeader();
+
+            Button btnSave;
+            Button btnCancel;
+            Panel panelFooter = CreateViewFooter(sparse, tooltip, out btnSave, out btnCancel);
+
+            Control panelOnOff = CreateViewOnOff(sparse, tooltip);
+
+            Panel panelRules = CreateViewRules(sparse, tooltip, this);
+
+            sparse.FirePropertyChanged(); // Initial binding
+
+            Controls.Add(new TableLayoutPanel() { Dock = DockStyle.Fill, Padding = Padding.Empty, Margin = Padding.Empty, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Controls = { panelHeader, CreateViewSeparator(), panelOnOff, panelRules, CreateViewSeparator(), panelFooter }, RowStyles = { new RowStyle(), new RowStyle(), new RowStyle(), new RowStyle(SizeType.Percent, 100) } });
+
+            AcceptButton = btnSave;
+            CancelButton = btnCancel;
+
+            BindSaveOnClose(sparse);
+
+            // Special binding: as the editor takes Enter for itself, bind Ctrl+Enter to commit
+            KeyPreview = true;
+            PreviewKeyDown += (sender, args) =>
+            {
+                if (args.KeyData == (Keys.Enter | Keys.Control))
+                {
+                    DialogResult = DialogResult.OK;
+                    Close();
+                }
+            };
         }
 
         private class Globalized : Translate
         {
             public static readonly Globalized Strings = new Globalized();
-
-            private Globalized()
-            {
-                Translator.Translate(this, AppSettings.CurrentTranslation);
-            }
 
             public readonly TranslationString Cancel = new TranslationString("Cancel");
 
@@ -292,6 +287,11 @@ namespace GitUI.CommandsDialogs
             public readonly TranslationString WithTheSparsePassFilterEmptyOrMissing = new TranslationString("with the sparse pass-filter empty or missing");
 
             public readonly TranslationString YouHaveMadeChangesToSettingsOrRulesWouldYouLikeToSaveThem = new TranslationString("You have made changes to settings or rules.\nWould you like to save them?");
+
+            private Globalized()
+            {
+                Translator.Translate(this, AppSettings.CurrentTranslation);
+            }
         }
     }
 }

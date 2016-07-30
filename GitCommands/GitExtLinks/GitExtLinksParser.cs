@@ -11,11 +11,9 @@ namespace GitCommands.GitExtLinks
 {
     public class GitExtLinksParser
     {
-        private readonly RepoDistSettings Settings;
-
         public List<GitExtLinkDef> LinkDefs;
-
         private readonly GitExtLinksParser LowerPriority;
+        private readonly RepoDistSettings Settings;
 
         public GitExtLinksParser(RepoDistSettings aSettings)
         {
@@ -47,11 +45,6 @@ namespace GitCommands.GitExtLinks
             }
         }
 
-        public bool ContainsLinkDef(string name)
-        {
-            return LinkDefs.Any(linkDef => linkDef.Name.Equals(name));
-        }
-
         public void AddLinkDef(GitExtLinkDef linkDef)
         {
             if (LowerPriority == null
@@ -67,18 +60,9 @@ namespace GitCommands.GitExtLinks
             }
         }
 
-        public void RemoveLinkDef(GitExtLinkDef linkDef)
+        public bool ContainsLinkDef(string name)
         {
-            if (!LinkDefs.Remove(linkDef) && LowerPriority != null)
-                LowerPriority.RemoveLinkDef(linkDef);
-        }
-
-        public IEnumerable<GitExtLink> Parse(GitRevision revision)
-        {
-            return EffectiveLinkDefs.
-                Where(linkDef => linkDef.Enabled).
-                Select(linkDef => linkDef.Parse(revision)).
-                Unwrap();
+            return LinkDefs.Any(linkDef => linkDef.Name.Equals(name));
         }
 
         public void LoadFromSettings()
@@ -121,6 +105,20 @@ namespace GitCommands.GitExtLinks
 
             if (LinkDefs == null)
                 LinkDefs = new List<GitExtLinkDef>();
+        }
+
+        public IEnumerable<GitExtLink> Parse(GitRevision revision)
+        {
+            return EffectiveLinkDefs.
+                Where(linkDef => linkDef.Enabled).
+                Select(linkDef => linkDef.Parse(revision)).
+                Unwrap();
+        }
+
+        public void RemoveLinkDef(GitExtLinkDef linkDef)
+        {
+            if (!LinkDefs.Remove(linkDef) && LowerPriority != null)
+                LowerPriority.RemoveLinkDef(linkDef);
         }
 
         public void SaveToSettings()

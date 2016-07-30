@@ -13,16 +13,10 @@ namespace GitExtensionsTest.GitUI.Editor.Diff
     {
         private static readonly string TestDataDir = Path.Combine(GetCallingAssemblyDir(),
             "GitUI", "Editor", "Diff");
-        private readonly string _sampleDiff;
-        private readonly string _sampleCombindedDiff;
-        private DiffLineNumAnalyzer _lineNumAnalyzer;
 
-        private static string GetCallingAssemblyDir()
-        {
-            var codeBase = Assembly.GetCallingAssembly().CodeBase;
-            var uri = new UriBuilder(codeBase);
-            return Path.GetDirectoryName(Uri.UnescapeDataString(uri.Path));
-        }
+        private readonly string _sampleCombindedDiff;
+        private readonly string _sampleDiff;
+        private DiffLineNumAnalyzer _lineNumAnalyzer;
 
         public TestDiffLineNumAnalyzer()
         {
@@ -30,24 +24,6 @@ namespace GitExtensionsTest.GitUI.Editor.Diff
             _sampleDiff = File.ReadAllText(Path.Combine(TestDataDir, "Sample.diff"));
 
             _sampleCombindedDiff = File.ReadAllText(Path.Combine(TestDataDir, "SampleCombined.diff"));
-        }
-
-        [SetUp]
-        public void SetUp()
-        {
-            _lineNumAnalyzer = new DiffLineNumAnalyzer();
-        }
-
-        [Test]
-        public void CanGetHeaders()
-        {
-            var result = _lineNumAnalyzer.Analyze(_sampleDiff);
-            var headerLines = new List<int> {5, 17};
-            foreach (var header in headerLines)
-            {
-                result.LineNumbers[header].LeftLineNum.Should().Be(DiffLineNum.NotApplicableLineNum);
-                result.LineNumbers[header].RightLineNum.Should().Be(DiffLineNum.NotApplicableLineNum);
-            }
         }
 
         [Test]
@@ -69,30 +45,15 @@ namespace GitExtensionsTest.GitUI.Editor.Diff
         }
 
         [Test]
-        public void CanGetMinusLines()
+        public void CanGetHeaders()
         {
             var result = _lineNumAnalyzer.Analyze(_sampleDiff);
-
-            result.LineNumbers[9].LeftLineNum.Should().Be(12);
-            result.LineNumbers[9].RightLineNum.Should().Be(DiffLineNum.NotApplicableLineNum);
-
-            result.LineNumbers[21].LeftLineNum.Should().Be(36);
-            result.LineNumbers[21].RightLineNum.Should().Be(DiffLineNum.NotApplicableLineNum);
-        }
-
-        [Test]
-        public void CanGetPlusLines()
-        {
-            var result = _lineNumAnalyzer.Analyze(_sampleDiff);
-
-            result.LineNumbers[12].LeftLineNum.Should().Be(DiffLineNum.NotApplicableLineNum);
-            result.LineNumbers[12].RightLineNum.Should().Be(14);
-
-            result.LineNumbers[13].LeftLineNum.Should().Be(DiffLineNum.NotApplicableLineNum);
-            result.LineNumbers[13].RightLineNum.Should().Be(15);
-
-            result.LineNumbers[22].LeftLineNum.Should().Be(DiffLineNum.NotApplicableLineNum);
-            result.LineNumbers[22].RightLineNum.Should().Be(37);
+            var headerLines = new List<int> { 5, 17 };
+            foreach (var header in headerLines)
+            {
+                result.LineNumbers[header].LeftLineNum.Should().Be(DiffLineNum.NotApplicableLineNum);
+                result.LineNumbers[header].RightLineNum.Should().Be(DiffLineNum.NotApplicableLineNum);
+            }
         }
 
         [Test]
@@ -123,6 +84,46 @@ namespace GitExtensionsTest.GitUI.Editor.Diff
             result.LineNumbers[38].LeftLineNum.Should().Be(DiffLineNum.NotApplicableLineNum);
             result.LineNumbers[38].RightLineNum.Should().Be(103);
             result.LineNumbers[38].Style.Should().Be(DiffLineNum.DiffLineStyle.Plus);
+        }
+
+        [Test]
+        public void CanGetMinusLines()
+        {
+            var result = _lineNumAnalyzer.Analyze(_sampleDiff);
+
+            result.LineNumbers[9].LeftLineNum.Should().Be(12);
+            result.LineNumbers[9].RightLineNum.Should().Be(DiffLineNum.NotApplicableLineNum);
+
+            result.LineNumbers[21].LeftLineNum.Should().Be(36);
+            result.LineNumbers[21].RightLineNum.Should().Be(DiffLineNum.NotApplicableLineNum);
+        }
+
+        [Test]
+        public void CanGetPlusLines()
+        {
+            var result = _lineNumAnalyzer.Analyze(_sampleDiff);
+
+            result.LineNumbers[12].LeftLineNum.Should().Be(DiffLineNum.NotApplicableLineNum);
+            result.LineNumbers[12].RightLineNum.Should().Be(14);
+
+            result.LineNumbers[13].LeftLineNum.Should().Be(DiffLineNum.NotApplicableLineNum);
+            result.LineNumbers[13].RightLineNum.Should().Be(15);
+
+            result.LineNumbers[22].LeftLineNum.Should().Be(DiffLineNum.NotApplicableLineNum);
+            result.LineNumbers[22].RightLineNum.Should().Be(37);
+        }
+
+        [SetUp]
+        public void SetUp()
+        {
+            _lineNumAnalyzer = new DiffLineNumAnalyzer();
+        }
+
+        private static string GetCallingAssemblyDir()
+        {
+            var codeBase = Assembly.GetCallingAssembly().CodeBase;
+            var uri = new UriBuilder(codeBase);
+            return Path.GetDirectoryName(Uri.UnescapeDataString(uri.Path));
         }
     }
 }

@@ -11,15 +11,15 @@ namespace GitUI.CommandsDialogs.BrowseDialog
         //for translation category
         protected string TranslationCategoryName { get; set; }
 
-        public void Translate()
-        {
-            Translator.Translate(this, AppSettings.CurrentTranslation);
-        }
-
         public virtual void AddTranslationItems(ITranslation translation)
         {
             TranslationUtils.AddTranslationItemsFromFields(TranslationCategoryName, this, translation);
             TranslationUtils.AddTranslationItemsFromList(TranslationCategoryName, translation, GetMenuCommandsForTranslationImpl());
+        }
+
+        public void Translate()
+        {
+            Translator.Translate(this, AppSettings.CurrentTranslation);
         }
 
         public virtual void TranslateItems(ITranslation translation)

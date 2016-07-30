@@ -15,16 +15,9 @@ namespace TeamCityIntegration.Settings
             LoadProjects(teamCityServerUrl);
         }
 
-        private struct Node
-        {
-            public string Name;
-            public bool Loaded;
-            public bool IsProject;
-            public string ParentProject;
-        }
+        public string TeamCityBuildIdFilter { get; set; }
 
         public string TeamCityProjectName { get; set; }
-        public string TeamCityBuildIdFilter { get; set; }
 
         public void LoadProjects(string teamCityServerUrl)
         {
@@ -43,9 +36,24 @@ namespace TeamCityIntegration.Settings
             }
         }
 
-        private void treeViewTeamCityProjects_BeforeExpand(object sender, TreeViewCancelEventArgs e)
+        private void buttonCancel_Click(object sender, EventArgs e)
         {
-            LoadSubProjects(e.Node);
+            this.DialogResult = DialogResult.Cancel;
+            this.Close();
+        }
+
+        private void buttonOK_Click(object sender, EventArgs e)
+        {
+            SelectBuild();
+        }
+
+        private bool IsBuildSelected(TreeNode selectedNode)
+        {
+            if (selectedNode == null)
+                return false;
+
+            var node = (Node)selectedNode.Tag;
+            return !node.IsProject;
         }
 
         private void LoadSubProjects(TreeNode treeNode)
@@ -66,11 +74,6 @@ namespace TeamCityIntegration.Settings
             }
         }
 
-        private void treeViewTeamCityProjects_MouseDoubleClick(object sender, MouseEventArgs e)
-        {
-            SelectBuild();
-        }
-
         private void SelectBuild()
         {
             if (treeViewTeamCityProjects.SelectedNode == null)
@@ -86,29 +89,27 @@ namespace TeamCityIntegration.Settings
             this.Close();
         }
 
-        private void buttonOK_Click(object sender, EventArgs e)
+        private void treeViewTeamCityProjects_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            buttonOK.Enabled = IsBuildSelected(e.Node);
+        }
+
+        private void treeViewTeamCityProjects_BeforeExpand(object sender, TreeViewCancelEventArgs e)
+        {
+            LoadSubProjects(e.Node);
+        }
+
+        private void treeViewTeamCityProjects_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             SelectBuild();
         }
 
-        private void buttonCancel_Click(object sender, EventArgs e)
+        private struct Node
         {
-            this.DialogResult = DialogResult.Cancel;
-            this.Close();
-        }
-
-        private bool IsBuildSelected(TreeNode selectedNode)
-        {
-            if (selectedNode == null)
-                return false;
-
-            var node = (Node)selectedNode.Tag;
-            return !node.IsProject;
-        }
-
-        private void treeViewTeamCityProjects_AfterSelect(object sender, TreeViewEventArgs e)
-        {
-            buttonOK.Enabled = IsBuildSelected(e.Node);
+            public bool IsProject;
+            public bool Loaded;
+            public string Name;
+            public string ParentProject;
         }
     }
 }

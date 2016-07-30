@@ -11,36 +11,6 @@ namespace GitExtensionsTest.Git
     [TestClass]
     public class GitCheckoutBranchCmdTest
     {
-        private GitCheckoutBranchCmd GetInstance(bool remote)
-        {
-            return new GitCheckoutBranchCmd("branchName", remote);
-        }
-
-        [TestMethod]
-        public void TestConstructor()
-        {
-            GitCheckoutBranchCmd cmd = GetInstance(true);
-            Assert.IsNotNull(cmd);
-            Assert.AreEqual(cmd.BranchName, "branchName");
-            Assert.IsTrue(cmd.Remote);
-        }
-
-        [TestMethod]
-        public void TestConstructorRemoteIsFalse()
-        {
-            GitCheckoutBranchCmd cmd = GetInstance(false);
-            Assert.IsNotNull(cmd);
-            Assert.AreEqual(cmd.BranchName, "branchName");
-            Assert.IsFalse(cmd.Remote);
-        }
-
-        [TestMethod]
-        public void TestGitCommandName()
-        {
-            GitCheckoutBranchCmd cmd = GetInstance(true);
-            Assert.AreEqual(cmd.GitComandName(), "checkout");
-        }
-
         [TestMethod]
         public void TestAccessesRemoteIsFalse()
         {
@@ -96,8 +66,36 @@ namespace GitExtensionsTest.Git
 
                 Assert.IsTrue(cmd.CollectArguments().SequenceEqual(whenResetChangesWithRemoteNewBranchReset));
             }
+        }
 
+        [TestMethod]
+        public void TestConstructor()
+        {
+            GitCheckoutBranchCmd cmd = GetInstance(true);
+            Assert.IsNotNull(cmd);
+            Assert.AreEqual(cmd.BranchName, "branchName");
+            Assert.IsTrue(cmd.Remote);
+        }
+
+        [TestMethod]
+        public void TestConstructorRemoteIsFalse()
+        {
+            GitCheckoutBranchCmd cmd = GetInstance(false);
+            Assert.IsNotNull(cmd);
+            Assert.AreEqual(cmd.BranchName, "branchName");
+            Assert.IsFalse(cmd.Remote);
+        }
+
+        [TestMethod]
+        public void TestGitCommandName()
+        {
+            GitCheckoutBranchCmd cmd = GetInstance(true);
+            Assert.AreEqual(cmd.GitComandName(), "checkout");
+        }
+
+        private GitCheckoutBranchCmd GetInstance(bool remote)
+        {
+            return new GitCheckoutBranchCmd("branchName", remote);
         }
     }
 }
-

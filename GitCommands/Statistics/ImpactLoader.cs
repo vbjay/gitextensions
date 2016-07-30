@@ -9,84 +9,69 @@ namespace GitCommands.Statistics
 {
     public sealed class ImpactLoader : IDisposable
     {
-        public class CommitEventArgs : EventArgs
-        {
-            public CommitEventArgs(Commit commit)
-            {
-                Commit = commit;
-            }
-
-            public Commit Commit { get; private set; }
-        }
-
-        /// <summary>
-        /// property to enable mailmap respectfulness
-        /// </summary>
-        public bool RespectMailmap { get; set; }
-
-        public event EventHandler Exited;
-
-        public event EventHandler<CommitEventArgs> Updated;
-
-        public struct DataPoint
-        {
-            public int Commits, AddedLines, DeletedLines;
-
-            public int ChangedLines
-            {
-                get { return AddedLines + DeletedLines; }
-            }
-
-            public DataPoint(int commits, int added, int deleted)
-            {
-                this.Commits = commits;
-                this.AddedLines = added;
-                this.DeletedLines = deleted;
-            }
-
-            public static DataPoint operator +(DataPoint d1, DataPoint d2)
-            {
-                DataPoint temp = new DataPoint();
-                temp.Commits = d1.Commits + d2.Commits;
-                temp.AddedLines = d1.AddedLines + d2.AddedLines;
-                temp.DeletedLines = d1.DeletedLines + d2.DeletedLines;
-                return temp;
-            }
-        }
-
-        public struct Commit
-        {
-            public DateTime week;
-            public string author;
-            public DataPoint data;
-        }
+        private readonly IGitModule Module;
 
         private CancellationTokenSource _backgroundLoaderTokenSource = new CancellationTokenSource();
-        private readonly IGitModule Module;
+
+        private bool showSubmodules;
 
         public ImpactLoader(IGitModule aModule)
         {
             Module = aModule;
         }
 
+        public event EventHandler Exited;
+
+        public event EventHandler<CommitEventArgs> Updated;
+
+        /// <summary>
+        /// property to enable mailmap respectfulness
+        /// </summary>
+        public bool RespectMailmap { get; set; }
+
+        public bool ShowSubmodules
+        {
+            get { return showSubmodules; }
+            set { Stop(); showSubmodules = value; }
+        }
+
+        public static void AddIntermediateEmptyWeeks(
+            ref SortedDictionary<DateTime, Dictionary<string, DataPoint>> impact, Dictionary<string, DataPoint> authors)
+        {
+            foreach (var authorData in authors)
+            {
+                string author = authorData.Key;
+
+                // Determine first and last commit week of each author
+                DateTime start = new DateTime(), end = new DateTime();
+                bool startFound = false;
+                foreach (var week in impact)
+                {
+                    if (week.Value.ContainsKey(author))
+                    {
+                        if (!startFound)
+                        {
+                            start = week.Key;
+                            startFound = true;
+                        }
+                        end = week.Key;
+                    }
+                }
+                if (!startFound)
+                    continue;
+
+                // Add 0 commits weeks in between
+                foreach (var week in impact)
+                    if (!week.Value.ContainsKey(author) &&
+                        week.Key > start && week.Key < end)
+                        week.Value.Add(author, new DataPoint(0, 0, 0));
+            }
+        }
+
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
-        }
-
-        private void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                Stop();
-                _backgroundLoaderTokenSource.Dispose();
-            }
-        }
-
-        public void Stop()
-        {
-            _backgroundLoaderTokenSource.Cancel();
         }
 
         public void Execute()
@@ -105,12 +90,18 @@ namespace GitCommands.Statistics
                 TaskScheduler.FromCurrentSynchronizationContext());
         }
 
-        private bool showSubmodules;
-
-        public bool ShowSubmodules
+        public void Stop()
         {
-            get { return showSubmodules; }
-            set { Stop(); showSubmodules = value; }
+            _backgroundLoaderTokenSource.Cancel();
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                Stop();
+                _backgroundLoaderTokenSource.Dispose();
+            }
         }
 
         private Task[] GetTasks(CancellationToken token)
@@ -201,37 +192,47 @@ namespace GitCommands.Statistics
             }
         }
 
-        public static void AddIntermediateEmptyWeeks(
-            ref SortedDictionary<DateTime, Dictionary<string, DataPoint>> impact, Dictionary<string, DataPoint> authors)
+        public struct Commit
         {
-            foreach (var authorData in authors)
+            public string author;
+            public DataPoint data;
+            public DateTime week;
+        }
+
+        public struct DataPoint
+        {
+            public int Commits, AddedLines, DeletedLines;
+
+            public DataPoint(int commits, int added, int deleted)
             {
-                string author = authorData.Key;
-
-                // Determine first and last commit week of each author
-                DateTime start = new DateTime(), end = new DateTime();
-                bool startFound = false;
-                foreach (var week in impact)
-                {
-                    if (week.Value.ContainsKey(author))
-                    {
-                        if (!startFound)
-                        {
-                            start = week.Key;
-                            startFound = true;
-                        }
-                        end = week.Key;
-                    }
-                }
-                if (!startFound)
-                    continue;
-
-                // Add 0 commits weeks in between
-                foreach (var week in impact)
-                    if (!week.Value.ContainsKey(author) &&
-                        week.Key > start && week.Key < end)
-                        week.Value.Add(author, new DataPoint(0, 0, 0));
+                this.Commits = commits;
+                this.AddedLines = added;
+                this.DeletedLines = deleted;
             }
+
+            public int ChangedLines
+            {
+                get { return AddedLines + DeletedLines; }
+            }
+
+            public static DataPoint operator +(DataPoint d1, DataPoint d2)
+            {
+                DataPoint temp = new DataPoint();
+                temp.Commits = d1.Commits + d2.Commits;
+                temp.AddedLines = d1.AddedLines + d2.AddedLines;
+                temp.DeletedLines = d1.DeletedLines + d2.DeletedLines;
+                return temp;
+            }
+        }
+
+        public class CommitEventArgs : EventArgs
+        {
+            public CommitEventArgs(Commit commit)
+            {
+                Commit = commit;
+            }
+
+            public Commit Commit { get; private set; }
         }
     }
 }

@@ -24,14 +24,29 @@ namespace GitUI.CommandsDialogs.ResolveConflictsDialog
         }
 
         public bool Aborted { get; set; }
+        public bool KeepBase { get; set; }
         public bool KeepLocal { get; set; }
         public bool KeepRemote { get; set; }
-        public bool KeepBase { get; set; }
 
         private void AbortClick(object sender, EventArgs e)
         {
             Aborted = true;
             Close();
+        }
+
+        private void Base_Click(object sender, EventArgs e)
+        {
+            Aborted = false;
+            KeepLocal = false;
+            KeepRemote = false;
+            KeepBase = true;
+            Close();
+        }
+
+        private void FormModifiedDeletedCreated_Load(object sender, EventArgs e)
+        {
+            //save position of this dialog, since the teksts could be to large when larger font is used.
+            CenterToParent();
         }
 
         private void Local_Click(object sender, EventArgs e)
@@ -50,21 +65,6 @@ namespace GitUI.CommandsDialogs.ResolveConflictsDialog
             KeepRemote = true;
             KeepBase = false;
             Close();
-        }
-
-        private void Base_Click(object sender, EventArgs e)
-        {
-            Aborted = false;
-            KeepLocal = false;
-            KeepRemote = false;
-            KeepBase = true;
-            Close();
-        }
-
-        private void FormModifiedDeletedCreated_Load(object sender, EventArgs e)
-        {
-            //save position of this dialog, since the teksts could be to large when larger font is used.
-            CenterToParent();
         }
     }
 }

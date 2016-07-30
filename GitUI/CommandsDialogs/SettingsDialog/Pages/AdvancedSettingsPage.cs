@@ -11,16 +11,9 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             Translate();
         }
 
-        protected override void SettingsToPage()
+        public static SettingsPageReference GetPageReference()
         {
-            chkAlwaysShowCheckoutDlg.Checked = AppSettings.AlwaysShowCheckoutBranchDlg;
-            chkUseLocalChangesAction.Checked = AppSettings.UseDefaultCheckoutBranchAction;
-            chkDontSHowHelpImages.Checked = AppSettings.DontShowHelpImages;
-            chkAlwaysShowAdvOpt.Checked = AppSettings.AlwaysShowAdvOpt;
-            chkCheckForRCVersions.Checked = AppSettings.CheckForReleaseCandidates;
-            chkRememberIgnoreWhiteSpacePreference.Checked = AppSettings.RememberIgnoreWhiteSpacePreference;
-            chkOmitUninterestingDiff.Checked = AppSettings.OmitUninterestingDiff;
-            chkConsoleEmulator.Checked = AppSettings.UseConsoleEmulatorForCommands;
+            return new SettingsPageReferenceByType(typeof(AdvancedSettingsPage));
         }
 
         protected override void PageToSettings()
@@ -35,9 +28,16 @@ namespace GitUI.CommandsDialogs.SettingsDialog.Pages
             AppSettings.UseConsoleEmulatorForCommands = chkConsoleEmulator.Checked;
         }
 
-        public static SettingsPageReference GetPageReference()
+        protected override void SettingsToPage()
         {
-            return new SettingsPageReferenceByType(typeof(AdvancedSettingsPage));
+            chkAlwaysShowCheckoutDlg.Checked = AppSettings.AlwaysShowCheckoutBranchDlg;
+            chkUseLocalChangesAction.Checked = AppSettings.UseDefaultCheckoutBranchAction;
+            chkDontSHowHelpImages.Checked = AppSettings.DontShowHelpImages;
+            chkAlwaysShowAdvOpt.Checked = AppSettings.AlwaysShowAdvOpt;
+            chkCheckForRCVersions.Checked = AppSettings.CheckForReleaseCandidates;
+            chkRememberIgnoreWhiteSpacePreference.Checked = AppSettings.RememberIgnoreWhiteSpacePreference;
+            chkOmitUninterestingDiff.Checked = AppSettings.OmitUninterestingDiff;
+            chkConsoleEmulator.Checked = AppSettings.UseConsoleEmulatorForCommands;
         }
     }
 }

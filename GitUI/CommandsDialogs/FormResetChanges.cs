@@ -8,12 +8,6 @@ namespace GitUI.CommandsDialogs
     /// </summary>
     public partial class FormResetChanges : GitExtensionsForm
     {
-        // CANCEL must be placed at first position because it is the default value when
-        // closing the dialog via the X button
-        public enum ActionEnum { Cancel, Reset, ResetAndDelete };
-
-        public ActionEnum SelectedAction { get; private set; }
-
         public FormResetChanges(bool hasExistingFiles, bool hasNewFiles)
         {
             InitializeComponent();
@@ -36,6 +30,12 @@ namespace GitUI.CommandsDialogs
                 cbDeleteNewFilesAndDirectories.Enabled = true; // A mix of types, so enable the checkbox.
             }
         }
+
+        // CANCEL must be placed at first position because it is the default value when
+        // closing the dialog via the X button
+        public enum ActionEnum { Cancel, Reset, ResetAndDelete };
+
+        public ActionEnum SelectedAction { get; private set; }
 
         /// <summary>
         /// Shows the dialog modally under the given owner, and returns the user's selection (RESET, RESET_AND_DELETE, or CANCEL).

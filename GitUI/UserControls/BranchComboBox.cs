@@ -12,6 +12,8 @@ namespace GitUI
     {
         private readonly TranslationString _branchCheckoutError = new TranslationString("Branch '{0}' is not selectable, this branch has been removed from the selection.");
 
+        private IList<GitRef> _branchesToSelect;
+
         public BranchComboBox()
         {
             InitializeComponent();
@@ -19,8 +21,6 @@ namespace GitUI
 
             branches.DisplayMember = "Name";
         }
-
-        private IList<GitRef> _branchesToSelect;
 
         public IList<GitRef> BranchesToSelect
         {
@@ -33,12 +33,6 @@ namespace GitUI
                 _branchesToSelect = value;
                 LoadBranches();
             }
-        }
-
-        private void LoadBranches()
-        {
-            if (_branchesToSelect != null)
-                branches.Items.AddRange(_branchesToSelect.ToArray());
         }
 
         public IEnumerable<GitRef> GetSelectedBranches()
@@ -64,6 +58,12 @@ namespace GitUI
                 throw new ArgumentNullException("text");
 
             branches.Text = text;
+        }
+
+        private void LoadBranches()
+        {
+            if (_branchesToSelect != null)
+                branches.Items.AddRange(_branchesToSelect.ToArray());
         }
 
         private void selectMultipleBranchesButton_Click(object sender, EventArgs e)

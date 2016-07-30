@@ -16,21 +16,14 @@ namespace ReleaseNotesGenerator
     {
         #region Read and decode from clipboard
 
-        /// <summary>
-        /// Get a HTML fragment from the clipboard.
-        /// </summary>
-        /// <example>
-        ///    string html = "<b>Hello!</b>";
-        ///    HtmlFragment.CopyToClipboard(html);
-        ///    HtmlFragment html2 = HtmlFragment.FromClipboard();
-        ///    Debug.Assert(html2.Fragment == html);
-        /// </example>
-        static public HtmlFragment FromClipboard()
-        {
-            string rawClipboardText = Clipboard.GetText(TextDataFormat.Html);
-            var h = new HtmlFragment(rawClipboardText);
-            return h;
-        }
+        private readonly string _fragment;
+
+        private readonly string _fullText;
+
+        private readonly System.Uri _source;
+
+        // Data. See properties for descriptions.
+        private readonly string _version;
 
         /// <summary>
         /// Create an HTML fragment decoder around raw HTML text from the clipboard.
@@ -107,21 +100,6 @@ namespace ReleaseNotesGenerator
             }
         }
 
-        // Data. See properties for descriptions.
-        private readonly string _version;
-
-        private readonly string _fullText;
-        private readonly string _fragment;
-        private readonly System.Uri _source;
-
-        /// <summary>
-        /// Get the Version of the html. Usually something like "1.0".
-        /// </summary>
-        public string Version
-        {
-            get { return _version; }
-        }
-
         /// <summary>
         /// Get the full text (context) of the HTML fragment. This includes tags that the HTML is enclosed in.
         /// May be null if context is not specified.
@@ -147,16 +125,33 @@ namespace ReleaseNotesGenerator
             get { return _source; }
         }
 
+        /// <summary>
+        /// Get the Version of the html. Usually something like "1.0".
+        /// </summary>
+        public string Version
+        {
+            get { return _version; }
+        }
+
+        /// <summary>
+        /// Get a HTML fragment from the clipboard.
+        /// </summary>
+        /// <example>
+        ///    string html = "<b>Hello!</b>";
+        ///    HtmlFragment.CopyToClipboard(html);
+        ///    HtmlFragment html2 = HtmlFragment.FromClipboard();
+        ///    Debug.Assert(html2.Fragment == html);
+        /// </example>
+        static public HtmlFragment FromClipboard()
+        {
+            string rawClipboardText = Clipboard.GetText(TextDataFormat.Html);
+            var h = new HtmlFragment(rawClipboardText);
+            return h;
+        }
+
         #endregion Read and decode from clipboard
 
         #region Write to Clipboard
-
-        // Helper to convert an integer into an 8 digit string.
-        // String must be 8 characters, because it will be used to replace an 8 character string within a larger string.
-        internal static string To8DigitString(int x)
-        {
-            return string.Format("{0:00000000}", x);
-        }
 
         /// <summary>
         /// Clears clipboard and copy a HTML fragment to the clipboard. This generates the header.
@@ -239,6 +234,13 @@ EndFragment:<<<<<<<4
             dataObject.SetText(htmlFragment, TextDataFormat.Text);
 
             return dataObject;
+        }
+
+        // Helper to convert an integer into an 8 digit string.
+        // String must be 8 characters, because it will be used to replace an 8 character string within a larger string.
+        internal static string To8DigitString(int x)
+        {
+            return string.Format("{0:00000000}", x);
         }
 
         #endregion Write to Clipboard

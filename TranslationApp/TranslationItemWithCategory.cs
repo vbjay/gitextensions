@@ -8,6 +8,8 @@ namespace TranslationApp
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public class TranslationItemWithCategory : INotifyPropertyChanged, ICloneable
     {
+        private TranslationItem _item;
+
         public TranslationItemWithCategory()
         {
             _item = new TranslationItem();
@@ -19,18 +21,14 @@ namespace TranslationApp
             _item = item;
         }
 
+        public event PropertyChangedEventHandler PropertyChanged;
+
         public string Category { get; set; }
-
-        private TranslationItem _item;
-
-        public TranslationItem GetTranslationItem()
-        {
-            return _item;
-        }
-
         public string Name { get { return _item.Name; } set { _item.Name = value; } }
-        public string Property { get { return _item.Property; } set { _item.Property = value; } }
+
         public string NeutralValue { get { return _item.Source; } set { _item.Source = value; } }
+
+        public string Property { get { return _item.Property; } set { _item.Property = value; } }
 
         public string TranslatedValue
         {
@@ -49,7 +47,28 @@ namespace TranslationApp
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        private string DebuggerDisplay
+        {
+            get
+            {
+                return string.Format("\"{0}\" - \"{1}\"", Category, NeutralValue);
+            }
+        }
+
+        public TranslationItemWithCategory Clone()
+        {
+            return new TranslationItemWithCategory(Category, _item.Clone());
+        }
+
+        public TranslationItem GetTranslationItem()
+        {
+            return _item;
+        }
+
+        object ICloneable.Clone()
+        {
+            return Clone();
+        }
 
         public bool IsSourceEqual(string value)
         {
@@ -59,24 +78,6 @@ namespace TranslationApp
             if (!equal && value.Contains("\n"))
                 return value.Replace(Environment.NewLine, "\n") == NeutralValue.Replace(Environment.NewLine, "\n");
             return equal;
-        }
-
-        private string DebuggerDisplay
-        {
-            get
-            {
-                return string.Format("\"{0}\" - \"{1}\"", Category, NeutralValue);
-            }
-        }
-
-        object ICloneable.Clone()
-        {
-            return Clone();
-        }
-
-        public TranslationItemWithCategory Clone()
-        {
-            return new TranslationItemWithCategory(Category, _item.Clone());
         }
     }
 }

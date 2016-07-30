@@ -9,8 +9,26 @@ using NUnit.Framework;
 namespace GitExtensionsTest.GitUI.Editor.Diff
 {
     [TestFixture]
-    class LinePrefixHelperFixture
+    internal class LinePrefixHelperFixture
     {
+        [TestCase("++ diffline", "++")]
+        [TestCase("+  diffline", "+ ")]
+        [TestCase(" + diffline", " +")]
+        [TestCase("-- diffline", "--")]
+        [TestCase("-  diffline", "- ")]
+        [TestCase(" - diffline", " -")]
+        [TestCase("+ diffline", "+")]
+        [TestCase("- diffline", "-")]
+        public void CanCheckIfTheLineStartsWithSpecificPrefix(string diffText, string prefix)
+        {
+            var lineSegmentGetter = PrepareliLineSegmentGetter(diffText);
+
+            var doc = PreDocumentForDiffText(diffText);
+
+            var helper = new LinePrefixHelper(lineSegmentGetter);
+            helper.DoesLineStartWith(doc, 0, prefix).Should().BeTrue();
+        }
+
         [Test]
         public void CanFindAddedLines()
         {
@@ -57,26 +75,6 @@ namespace GitExtensionsTest.GitUI.Editor.Diff
             found.Should().BeTrue();
         }
 
-        [TestCase("++ diffline", "++")]
-        [TestCase("+  diffline", "+ ")]
-        [TestCase(" + diffline", " +")]
-
-        [TestCase("-- diffline", "--")]
-        [TestCase("-  diffline", "- ")]
-        [TestCase(" - diffline", " -")]
-
-        [TestCase("+ diffline", "+")]
-        [TestCase("- diffline", "-")]
-        public void CanCheckIfTheLineStartsWithSpecificPrefix(string diffText, string prefix)
-        {
-            var lineSegmentGetter = PrepareliLineSegmentGetter(diffText);
-
-            var doc = PreDocumentForDiffText(diffText);
-
-            var helper = new LinePrefixHelper(lineSegmentGetter);
-            helper.DoesLineStartWith(doc, 0, prefix).Should().BeTrue();
-        }
-
         [TestCase("+")]
         [TestCase("-")]
         public void GivenThatTheDocDoesnotHaveEnoughChars_ShouldReturnFalseWhenCheckPrefix(string diffText)
@@ -87,24 +85,6 @@ namespace GitExtensionsTest.GitUI.Editor.Diff
 
             var helper = new LinePrefixHelper(lineSegmentGetter);
             helper.DoesLineStartWith(doc, 0, "++").Should().BeFalse();
-        }
-
-        private static IDocument PreDocumentForDiffText(string diffText)
-        {
-            var doc = Substitute.For<IDocument>();
-            doc.GetCharAt(Arg.Any<int>()).Returns(args => diffText[(int) args[0]]);
-            doc.TotalNumberOfLines.Returns(diffText.Split('\n').Count());
-            doc.TextLength.Returns(diffText.Length);
-            return doc;
-        }
-
-        private static LineSegmentGetter PrepareliLineSegmentGetter(string diffText)
-        {
-            var lineSegments = GetSegmentsForDiffText(diffText);
-            var lineSegmentGetter = Substitute.For<LineSegmentGetter>();
-            lineSegmentGetter.GetSegment(Arg.Any<IDocument>(), Arg.Any<int>())
-                .Returns(args => lineSegments[(int) args[1]]);
-            return lineSegmentGetter;
         }
 
         private static List<ISegment> GetSegmentsForDiffText(string diffText)
@@ -126,6 +106,24 @@ namespace GitExtensionsTest.GitUI.Editor.Diff
                 lineSegments.Add(seg);
             }
             return lineSegments;
+        }
+
+        private static IDocument PreDocumentForDiffText(string diffText)
+        {
+            var doc = Substitute.For<IDocument>();
+            doc.GetCharAt(Arg.Any<int>()).Returns(args => diffText[(int)args[0]]);
+            doc.TotalNumberOfLines.Returns(diffText.Split('\n').Count());
+            doc.TextLength.Returns(diffText.Length);
+            return doc;
+        }
+
+        private static LineSegmentGetter PrepareliLineSegmentGetter(string diffText)
+        {
+            var lineSegments = GetSegmentsForDiffText(diffText);
+            var lineSegmentGetter = Substitute.For<LineSegmentGetter>();
+            lineSegmentGetter.GetSegment(Arg.Any<IDocument>(), Arg.Any<int>())
+                .Returns(args => lineSegments[(int)args[1]]);
+            return lineSegmentGetter;
         }
     }
 }

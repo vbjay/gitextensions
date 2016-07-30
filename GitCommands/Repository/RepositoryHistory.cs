@@ -4,6 +4,8 @@ namespace GitCommands.Repository
 {
     public class RepositoryHistory : RepositoryCategory
     {
+        private int _maxCount;
+
         public RepositoryHistory(int maxCount)
         {
             Description = "Recent Repositories";
@@ -14,8 +16,6 @@ namespace GitCommands.Repository
             : this(0)
         {
         }
-
-        private int _maxCount;
 
         public int MaxCount
         {
@@ -30,25 +30,6 @@ namespace GitCommands.Repository
                 {
                     Repositories.RemoveAt(_maxCount);
                 }
-            }
-        }
-
-        public override void SetIcon()
-        {
-            foreach (var recentRepository in Repositories)
-            {
-                recentRepository.RepositoryType = RepositoryType.History;
-            }
-        }
-
-        public void RemoveRecentRepository(string repo)
-        {
-            foreach (var recentRepository in Repositories)
-            {
-                if (!recentRepository.Path.Equals(repo, StringComparison.CurrentCultureIgnoreCase))
-                    continue;
-                Repositories.Remove(recentRepository);
-                break;
             }
         }
 
@@ -87,6 +68,25 @@ namespace GitCommands.Repository
             while (MaxCount > 0 && Repositories.Count > MaxCount)
             {
                 Repositories.RemoveAt(MaxCount);
+            }
+        }
+
+        public void RemoveRecentRepository(string repo)
+        {
+            foreach (var recentRepository in Repositories)
+            {
+                if (!recentRepository.Path.Equals(repo, StringComparison.CurrentCultureIgnoreCase))
+                    continue;
+                Repositories.Remove(recentRepository);
+                break;
+            }
+        }
+
+        public override void SetIcon()
+        {
+            foreach (var recentRepository in Repositories)
+            {
+                recentRepository.RepositoryType = RepositoryType.History;
             }
         }
     }

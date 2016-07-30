@@ -7,9 +7,6 @@ namespace GitUI.CommandsDialogs
     {
         private FormBrowse _formBrowse;
 
-        private GitUICommands UICommands
-        { get { return _formBrowse.UICommands; } }
-
         // must be created only once because of translation
         private IEnumerable<MenuCommand> _navigateMenuCommands;
 
@@ -21,6 +18,9 @@ namespace GitUI.CommandsDialogs
             _formBrowse = formBrowse;
         }
 
+        private GitUICommands UICommands
+        { get { return _formBrowse.UICommands; } }
+
         public IEnumerable<MenuCommand> GetNavigateMenuCommands()
         {
             if (_navigateMenuCommands == null)
@@ -31,6 +31,11 @@ namespace GitUI.CommandsDialogs
             return _navigateMenuCommands;
         }
 
+        protected override IEnumerable<MenuCommand> GetMenuCommandsForTranslation()
+        {
+            return GetNavigateMenuCommands();
+        }
+
         private IEnumerable<MenuCommand> CreateNavigateMenuCommands()
         {
             var resultList = new List<MenuCommand>();
@@ -38,11 +43,6 @@ namespace GitUI.CommandsDialogs
             // no additional MenuCommands that are not defined in the RevisionGrid
 
             return resultList;
-        }
-
-        protected override IEnumerable<MenuCommand> GetMenuCommandsForTranslation()
-        {
-            return GetNavigateMenuCommands();
         }
     }
 }

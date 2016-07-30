@@ -5,11 +5,6 @@ namespace GitUI.CommandsDialogs
 {
     public partial class FormCompareToBranch : GitModuleForm
     {
-        private FormCompareToBranch()
-            : this(null, null)
-        {
-        }
-
         public FormCompareToBranch(GitUICommands aCommands, string selectedCommit) : base(aCommands)
         {
             MinimizeBox = false;
@@ -26,9 +21,9 @@ namespace GitUI.CommandsDialogs
             Activated += OnActivated;
         }
 
-        private void OnActivated(object sender, EventArgs eventArgs)
+        private FormCompareToBranch()
+                    : this(null, null)
         {
-            branchSelector.Focus();
         }
 
         public string BranchName { get; private set; }
@@ -41,6 +36,11 @@ namespace GitUI.CommandsDialogs
                 DialogResult = DialogResult.OK;
                 Close();
             }
+            branchSelector.Focus();
+        }
+
+        private void OnActivated(object sender, EventArgs eventArgs)
+        {
             branchSelector.Focus();
         }
     }

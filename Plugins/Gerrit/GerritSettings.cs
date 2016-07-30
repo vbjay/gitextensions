@@ -13,20 +13,14 @@ namespace Gerrit
         #region Translation
 
         private readonly TranslationString _settingsError = new TranslationString("Error loading .gitreview file.");
-        private readonly TranslationString _settingsErrorFileNotFound = new TranslationString("Cannot find the \".gitreview\" file in the working directory.");
-        private readonly TranslationString _settingsErrorPortNotNumeric = new TranslationString("The \"port\" specified in the .gitreview file may only contain digits.");
-        private readonly TranslationString _settingsErrorHostNotEntered = new TranslationString("The \"host\" setting in the .gitreview file is mandatory.");
-        private readonly TranslationString _settingsErrorProjectNotEntered = new TranslationString("The \"project\" setting in the .gitreview file is mandatory.");
         private readonly TranslationString _settingsErrorDefaultRemoteNotPresent = new TranslationString("The remote \"{0}\" specified with the \"defaultremote\" setting in the .gitreview file does not refer to a configured remote. Either create this remote or change the setting in the .gitreview file.");
+        private readonly TranslationString _settingsErrorFileNotFound = new TranslationString("Cannot find the \".gitreview\" file in the working directory.");
+        private readonly TranslationString _settingsErrorHostNotEntered = new TranslationString("The \"host\" setting in the .gitreview file is mandatory.");
+        private readonly TranslationString _settingsErrorPortNotNumeric = new TranslationString("The \"port\" specified in the .gitreview file may only contain digits.");
+        private readonly TranslationString _settingsErrorProjectNotEntered = new TranslationString("The \"project\" setting in the .gitreview file is mandatory.");
 
         #endregion Translation
 
-        public string Host { get; private set; }
-        public int Port { get; private set; }
-        public string Project { get; private set; }
-        public string DefaultBranch { get; private set; }
-        public string DefaultRemote { get; private set; }
-        public bool DefaultRebase { get; private set; }
         private readonly IGitModule Module;
 
         // public only because of FormTranslate
@@ -40,18 +34,12 @@ namespace Gerrit
             DefaultRebase = true;
         }
 
-        private void Validate()
-        {
-            if (string.IsNullOrEmpty(Host))
-                throw new GerritSettingsException(_settingsErrorHostNotEntered.Text);
-            if (string.IsNullOrEmpty(Project))
-                throw new GerritSettingsException(_settingsErrorProjectNotEntered.Text);
-
-            var remotes = Module.GetRemotes(true);
-
-            if (!remotes.Contains(DefaultRemote))
-                throw new GerritSettingsException(String.Format(_settingsErrorDefaultRemoteNotPresent.Text, DefaultRemote));
-        }
+        public string DefaultBranch { get; private set; }
+        public bool DefaultRebase { get; private set; }
+        public string DefaultRemote { get; private set; }
+        public string Host { get; private set; }
+        public int Port { get; private set; }
+        public string Project { get; private set; }
 
         public static GerritSettings Load([NotNull] IGitModule aModule)
         {
@@ -130,6 +118,19 @@ namespace Gerrit
             }
 
             return result;
+        }
+
+        private void Validate()
+        {
+            if (string.IsNullOrEmpty(Host))
+                throw new GerritSettingsException(_settingsErrorHostNotEntered.Text);
+            if (string.IsNullOrEmpty(Project))
+                throw new GerritSettingsException(_settingsErrorProjectNotEntered.Text);
+
+            var remotes = Module.GetRemotes(true);
+
+            if (!remotes.Contains(DefaultRemote))
+                throw new GerritSettingsException(String.Format(_settingsErrorDefaultRemoteNotPresent.Text, DefaultRemote));
         }
     }
 }

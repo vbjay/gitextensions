@@ -11,10 +11,9 @@ namespace GitUI.CommandsDialogs
 {
     public sealed partial class FormAddToGitIgnore : GitModuleForm
     {
+        private readonly AsyncLoader _ignoredFilesLoader;
         private readonly TranslationString _matchingFilesString = new TranslationString("{0} file(s) matched");
         private readonly TranslationString _updateStatusString = new TranslationString("Updating ...");
-
-        private readonly AsyncLoader _ignoredFilesLoader;
 
         public FormAddToGitIgnore(GitUICommands aCommands, params string[] filePatterns)
             : base(aCommands)
@@ -66,19 +65,6 @@ namespace GitUI.CommandsDialogs
             Close();
         }
 
-        private void UpdatePreviewPanel(IList<string> ignoredFiles)
-        {
-            _NO_TRANSLATE_Preview.DataSource = ignoredFiles;
-            _NO_TRANSLATE_filesWillBeIgnored.Text = string.Format(_matchingFilesString.Text, _NO_TRANSLATE_Preview.Items.Count);
-            _NO_TRANSLATE_Preview.Enabled = true;
-            noMatchPanel.Visible = _NO_TRANSLATE_Preview.Items.Count == 0;
-        }
-
-        private IEnumerable<string> GetCurrentPatterns()
-        {
-            return FilePattern.Lines.Where(line => !string.IsNullOrEmpty(line));
-        }
-
         private void FilePattern_TextChanged(object sender, EventArgs e)
         {
             _ignoredFilesLoader.Cancel();
@@ -91,6 +77,19 @@ namespace GitUI.CommandsDialogs
             }
 
             _ignoredFilesLoader.Load(() => Module.GetIgnoredFiles(GetCurrentPatterns()), UpdatePreviewPanel);
+        }
+
+        private IEnumerable<string> GetCurrentPatterns()
+        {
+            return FilePattern.Lines.Where(line => !string.IsNullOrEmpty(line));
+        }
+
+        private void UpdatePreviewPanel(IList<string> ignoredFiles)
+        {
+            _NO_TRANSLATE_Preview.DataSource = ignoredFiles;
+            _NO_TRANSLATE_filesWillBeIgnored.Text = string.Format(_matchingFilesString.Text, _NO_TRANSLATE_Preview.Items.Count);
+            _NO_TRANSLATE_Preview.Enabled = true;
+            noMatchPanel.Visible = _NO_TRANSLATE_Preview.Items.Count == 0;
         }
     }
 }

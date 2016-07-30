@@ -8,13 +8,12 @@ namespace GitUI
 {
     public class FilterBranchHelper : IDisposable
     {
+        private RevisionGrid _NO_TRANSLATE_RevisionGrid;
         private ToolStripComboBox _NO_TRANSLATE_toolStripBranches;
         private ToolStripDropDownButton _NO_TRANSLATE_toolStripDropDownButton2;
-        private RevisionGrid _NO_TRANSLATE_RevisionGrid;
         private ToolStripMenuItem localToolStripMenuItem;
-        private ToolStripMenuItem tagsToolStripMenuItem;
         private ToolStripMenuItem remoteToolStripMenuItem;
-        private GitModule Module { get { return _NO_TRANSLATE_RevisionGrid.Module; } }
+        private ToolStripMenuItem tagsToolStripMenuItem;
 
         public FilterBranchHelper()
         {
@@ -61,6 +60,14 @@ namespace GitUI
             this._NO_TRANSLATE_toolStripBranches.KeyUp += this.toolStripBranches_KeyUp;
         }
 
+        private GitModule Module { get { return _NO_TRANSLATE_RevisionGrid.Module; } }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         public void InitToolStripBranchFilter()
         {
             bool local = localToolStripMenuItem.Checked;
@@ -89,6 +96,37 @@ namespace GitUI
             _NO_TRANSLATE_toolStripBranches.Enabled = Module.IsValidGitWorkingDir();
         }
 
+        public void SetBranchFilter(string filter, bool refresh)
+        {
+            _NO_TRANSLATE_toolStripBranches.Text = filter;
+            ApplyBranchFilter(refresh);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                localToolStripMenuItem.Dispose();
+                remoteToolStripMenuItem.Dispose();
+                tagsToolStripMenuItem.Dispose();
+            }
+        }
+
+        private void ApplyBranchFilter(bool refresh)
+        {
+            bool success = _NO_TRANSLATE_RevisionGrid.SetAndApplyBranchFilter(_NO_TRANSLATE_toolStripBranches.Text);
+            if (success && refresh)
+                _NO_TRANSLATE_RevisionGrid.ForceRefreshRevisions();
+        }
+
+        private List<string> GetBranchAndTagRefs(bool local, bool tag, bool remote)
+        {
+            var list = GetBranchHeads(local, remote);
+            if (tag)
+                list.AddRange(GetTagsRefs());
+            return list;
+        }
+
         private List<string> GetBranchHeads(bool local, bool remote)
         {
             var list = new List<string>();
@@ -115,15 +153,7 @@ namespace GitUI
             return Module.GetRefs(true, false).Select(tag => tag.Name);
         }
 
-        private List<string> GetBranchAndTagRefs(bool local, bool tag, bool remote)
-        {
-            var list = GetBranchHeads(local, remote);
-            if (tag)
-                list.AddRange(GetTagsRefs());
-            return list;
-        }
-
-        private void toolStripBranches_TextUpdate(object sender, EventArgs e)
+        private void toolStripBranches_DropDown(object sender, EventArgs e)
         {
             UpdateBranchFilterItems();
         }
@@ -136,16 +166,14 @@ namespace GitUI
             }
         }
 
-        private void toolStripBranches_DropDown(object sender, EventArgs e)
+        private void toolStripBranches_Leave(object sender, EventArgs e)
         {
-            UpdateBranchFilterItems();
+            ApplyBranchFilter(true);
         }
 
-        private void ApplyBranchFilter(bool refresh)
+        private void toolStripBranches_TextUpdate(object sender, EventArgs e)
         {
-            bool success = _NO_TRANSLATE_RevisionGrid.SetAndApplyBranchFilter(_NO_TRANSLATE_toolStripBranches.Text);
-            if (success && refresh)
-                _NO_TRANSLATE_RevisionGrid.ForceRefreshRevisions();
+            UpdateBranchFilterItems();
         }
 
         private void UpdateBranchFilterItems()
@@ -156,33 +184,6 @@ namespace GitUI
             var branches = GetBranchAndTagRefs(localToolStripMenuItem.Checked, tagsToolStripMenuItem.Checked, remoteToolStripMenuItem.Checked);
             _NO_TRANSLATE_toolStripBranches.Items.AddRange(branches.Where(branch => branch.Contains(filter)).ToArray());
             _NO_TRANSLATE_toolStripBranches.SelectionStart = index;
-        }
-
-        public void SetBranchFilter(string filter, bool refresh)
-        {
-            _NO_TRANSLATE_toolStripBranches.Text = filter;
-            ApplyBranchFilter(refresh);
-        }
-
-        private void toolStripBranches_Leave(object sender, EventArgs e)
-        {
-            ApplyBranchFilter(true);
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                localToolStripMenuItem.Dispose();
-                remoteToolStripMenuItem.Dispose();
-                tagsToolStripMenuItem.Dispose();
-            }
         }
     }
 }

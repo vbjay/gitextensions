@@ -8,8 +8,8 @@ namespace GitUI.HelperDialogs
     public partial class FormResetCurrentBranch : GitModuleForm
     {
         private readonly TranslationString branchInfo = new TranslationString("Reset branch '{0}' to revision:");
-        private readonly TranslationString resetHardWarning = new TranslationString("You are about to discard ALL local changes, are you sure?");
         private readonly TranslationString resetCaption = new TranslationString("Reset branch");
+        private readonly TranslationString resetHardWarning = new TranslationString("You are about to discard ALL local changes, are you sure?");
 
         public FormResetCurrentBranch(GitUICommands aCommands, GitRevision Revision)
             : base(aCommands)
@@ -20,6 +20,11 @@ namespace GitUI.HelperDialogs
         }
 
         public GitRevision Revision { get; set; }
+
+        private void Cancel_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
 
         private void FormResetCurrentBranch_Load(object sender, EventArgs e)
         {
@@ -55,11 +60,6 @@ namespace GitUI.HelperDialogs
             }
 
             UICommands.RepoChangedNotifier.Notify();
-            Close();
-        }
-
-        private void Cancel_Click(object sender, EventArgs e)
-        {
             Close();
         }
     }

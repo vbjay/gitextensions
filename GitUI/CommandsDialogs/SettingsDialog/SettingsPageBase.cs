@@ -11,7 +11,38 @@ namespace GitUI.CommandsDialogs.SettingsDialog
     /// </summary>
     public class SettingsPageBase : GitExtensionsControl, ISettingsPage
     {
+        private bool _loadingSettings;
         private ISettingsPageHost _PageHost;
+
+        private IList<string> childrenText;
+
+        public virtual Control GuiControl { get { return this; } }
+
+        public virtual bool IsInstantSavePage
+        {
+            get { return false; }
+        }
+
+        public virtual SettingsPageReference PageReference
+        {
+            get { return new SettingsPageReferenceByType(GetType()); }
+        }
+
+        protected CheckSettingsLogic CheckSettingsLogic { get { return PageHost.CheckSettingsLogic; } }
+
+        protected CommonLogic CommonLogic { get { return CheckSettingsLogic.CommonLogic; } }
+
+        /// <summary>
+        /// True during execution of LoadSettings(). Usually derived classes
+        /// apply settings to GUI controls. Some of controls trigger events -
+        /// IsLoadingSettings can be used for example to not execute the event action.
+        /// </summary>
+        protected bool IsLoadingSettings
+        {
+            get { return _loadingSettings; }
+        }
+
+        protected GitModule Module { get { return this.CommonLogic.Module; } }
 
         protected ISettingsPageHost PageHost
         {
@@ -24,16 +55,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog
             }
         }
 
-        protected CheckSettingsLogic CheckSettingsLogic { get { return PageHost.CheckSettingsLogic; } }
-        protected CommonLogic CommonLogic { get { return CheckSettingsLogic.CommonLogic; } }
-
-        protected GitModule Module { get { return this.CommonLogic.Module; } }
-
-        protected virtual void Init(ISettingsPageHost aPageHost)
-        {
-            _PageHost = aPageHost;
-        }
-
         public static T Create<T>(ISettingsPageHost aPageHost) where T : SettingsPageBase, new()
         {
             T result = new T();
@@ -43,12 +64,25 @@ namespace GitUI.CommandsDialogs.SettingsDialog
             return result;
         }
 
+        /// <summary>
+        /// override to provide search keywords
+        /// </summary>
+        public virtual IEnumerable<string> GetSearchKeywords()
+        {
+            return childrenText ?? (childrenText = GetChildrenText(this));
+        }
+
         public virtual string GetTitle()
         {
             return Text;
         }
 
-        public virtual Control GuiControl { get { return this; } }
+        public void LoadSettings()
+        {
+            _loadingSettings = true;
+            SettingsToPage();
+            _loadingSettings = false;
+        }
 
         /// <summary>
         /// Called when SettingsPage is shown (again);
@@ -59,46 +93,27 @@ namespace GitUI.CommandsDialogs.SettingsDialog
             // to be overridden
         }
 
-        private bool _loadingSettings;
-
-        /// <summary>
-        /// True during execution of LoadSettings(). Usually derived classes
-        /// apply settings to GUI controls. Some of controls trigger events -
-        /// IsLoadingSettings can be used for example to not execute the event action.
-        /// </summary>
-        protected bool IsLoadingSettings
-        {
-            get { return _loadingSettings; }
-        }
-
-        public void LoadSettings()
-        {
-            _loadingSettings = true;
-            SettingsToPage();
-            _loadingSettings = false;
-        }
-
         public void SaveSettings()
         {
             PageToSettings();
         }
 
-        protected virtual void SettingsToPage()
+        protected virtual string GetCommaSeparatedKeywordList()
         {
+            return "";
+        }
+
+        protected virtual void Init(ISettingsPageHost aPageHost)
+        {
+            _PageHost = aPageHost;
         }
 
         protected virtual void PageToSettings()
         {
         }
 
-        private IList<string> childrenText;
-
-        /// <summary>
-        /// override to provide search keywords
-        /// </summary>
-        public virtual IEnumerable<string> GetSearchKeywords()
+        protected virtual void SettingsToPage()
         {
-            return childrenText ?? (childrenText = GetChildrenText(this));
         }
 
         /// <summary>Recursively gets the text from all <see cref="Control"/>s within the specified <paramref name="control"/>.</summary>
@@ -124,21 +139,6 @@ namespace GitUI.CommandsDialogs.SettingsDialog
                 texts.AddRange(GetChildrenText(child));// recurse
             }
             return texts;
-        }
-
-        protected virtual string GetCommaSeparatedKeywordList()
-        {
-            return "";
-        }
-
-        public virtual bool IsInstantSavePage
-        {
-            get { return false; }
-        }
-
-        public virtual SettingsPageReference PageReference
-        {
-            get { return new SettingsPageReferenceByType(GetType()); }
         }
     }
 }

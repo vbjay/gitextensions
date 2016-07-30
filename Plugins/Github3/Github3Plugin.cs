@@ -11,67 +11,12 @@ using ResourceManager;
 
 namespace Github3
 {
-    internal class GithubAPIInfo
-    {
-        internal static string client_id = "ebc0e8947c206610d737";
-        internal static string client_secret = "c993907df3f45145bf638842692b69c56d1ace4d";
-    }
-
-    internal class GithubLoginInfo
-    {
-        private static string _username;
-
-        public static string username
-        {
-            get
-            {
-                if (_username == "")
-                    return null;
-                if (_username != null)
-                    return _username;
-
-                try
-                {
-                    var user = Github3Plugin.github.getCurrentUser();
-                    if (user != null)
-                    {
-                        _username = user.Login;
-                        //MessageBox.Show("Github username: " + _username);
-                        return _username;
-                    }
-                    else
-                        _username = "";
-
-                    return null;
-                }
-                catch (Exception)
-                {
-                    return null;
-                }
-            }
-        }
-
-        public static string OAuthToken
-        {
-            get
-            {
-                return Github3Plugin.instance.OAuthToken.ValueOrDefault(Github3Plugin.instance.Settings);
-            }
-            set
-            {
-                _username = null;
-                Github3Plugin.instance.OAuthToken[Github3Plugin.instance.Settings] = value;
-                Github3Plugin.github.setOAuth2Token(value);
-            }
-        }
-    }
-
     public class Github3Plugin : GitPluginBase, IRepositoryHostPlugin
     {
         public StringSetting OAuthToken = new StringSetting("OAuth Token", "");
 
-        internal static Github3Plugin instance;
         internal static Client github;
+        internal static Github3Plugin instance;
 
         public Github3Plugin()
         {
@@ -84,18 +29,7 @@ namespace Github3
             github = new Client();
         }
 
-        public override IEnumerable<ISetting> GetSettings()
-        {
-            yield return OAuthToken;
-        }
-
-        public override void Register(IGitUICommands gitUiCommands)
-        {
-            if (!string.IsNullOrEmpty(GithubLoginInfo.OAuthToken))
-            {
-                github.setOAuth2Token(GithubLoginInfo.OAuthToken);
-            }
-        }
+        public bool ConfigurationOk { get { return true; } }
 
         public override bool Execute(GitUIBaseEventArgs gitUiCommands)
         {
@@ -109,35 +43,6 @@ namespace Github3
                 MessageBox.Show(gitUiCommands.OwnerForm, "You already have an OAuth token. To get a new one, delete your old one in Plugins > Settings first.");
             }
             return false;
-        }
-
-        // --
-
-        public IList<IHostedRepository> SearchForRepository(string search)
-        {
-            return github.searchRepositories(search).Select(repo => (IHostedRepository)new GithubRepo(repo)).ToList();
-        }
-
-        public IList<IHostedRepository> GetRepositoriesOfUser(string user)
-        {
-            return github.getRepositories(user).Select(repo => (IHostedRepository)new GithubRepo(repo)).ToList();
-        }
-
-        public IHostedRepository GetRepository(string user, string repositoryName)
-        {
-            return new GithubRepo(github.getRepository(user, repositoryName));
-        }
-
-        public IList<IHostedRepository> GetMyRepos()
-        {
-            return github.getRepositories().Select(repo => (IHostedRepository)new GithubRepo(repo)).ToList();
-        }
-
-        public bool ConfigurationOk { get { return true; } }
-
-        public bool GitModuleIsRelevantToMe(IGitModule aModule)
-        {
-            return GetHostedRemotesForModule(aModule).Count > 0;
         }
 
         /// <summary>
@@ -167,6 +72,101 @@ namespace Github3
             }
 
             return repoInfos;
+        }
+
+        public IList<IHostedRepository> GetMyRepos()
+        {
+            return github.getRepositories().Select(repo => (IHostedRepository)new GithubRepo(repo)).ToList();
+        }
+
+        public IList<IHostedRepository> GetRepositoriesOfUser(string user)
+        {
+            return github.getRepositories(user).Select(repo => (IHostedRepository)new GithubRepo(repo)).ToList();
+        }
+
+        public IHostedRepository GetRepository(string user, string repositoryName)
+        {
+            return new GithubRepo(github.getRepository(user, repositoryName));
+        }
+
+        public override IEnumerable<ISetting> GetSettings()
+        {
+            yield return OAuthToken;
+        }
+
+        public bool GitModuleIsRelevantToMe(IGitModule aModule)
+        {
+            return GetHostedRemotesForModule(aModule).Count > 0;
+        }
+
+        public override void Register(IGitUICommands gitUiCommands)
+        {
+            if (!string.IsNullOrEmpty(GithubLoginInfo.OAuthToken))
+            {
+                github.setOAuth2Token(GithubLoginInfo.OAuthToken);
+            }
+        }
+
+        // --
+
+        public IList<IHostedRepository> SearchForRepository(string search)
+        {
+            return github.searchRepositories(search).Select(repo => (IHostedRepository)new GithubRepo(repo)).ToList();
+        }
+    }
+
+    internal class GithubAPIInfo
+    {
+        internal static string client_id = "ebc0e8947c206610d737";
+        internal static string client_secret = "c993907df3f45145bf638842692b69c56d1ace4d";
+    }
+
+    internal class GithubLoginInfo
+    {
+        private static string _username;
+
+        public static string OAuthToken
+        {
+            get
+            {
+                return Github3Plugin.instance.OAuthToken.ValueOrDefault(Github3Plugin.instance.Settings);
+            }
+            set
+            {
+                _username = null;
+                Github3Plugin.instance.OAuthToken[Github3Plugin.instance.Settings] = value;
+                Github3Plugin.github.setOAuth2Token(value);
+            }
+        }
+
+        public static string username
+        {
+            get
+            {
+                if (_username == "")
+                    return null;
+                if (_username != null)
+                    return _username;
+
+                try
+                {
+                    var user = Github3Plugin.github.getCurrentUser();
+                    if (user != null)
+                    {
+                        _username = user.Login;
+                        //MessageBox.Show("Github username: " + _username);
+                        return _username;
+                    }
+                    else
+                        _username = "";
+
+                    return null;
+                }
+                catch (Exception)
+                {
+                    return null;
+                }
+            }
         }
     }
 }

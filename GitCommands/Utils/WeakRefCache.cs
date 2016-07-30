@@ -7,15 +7,20 @@ namespace GitCommands.Utils
 {
     public class WeakRefCache : IDisposable
     {
-        private Dictionary<string, WeakReference> weakMap = new Dictionary<string, WeakReference>();
-        private readonly Timer _clearTimer = new Timer(60 * 1000);
-
         public static readonly WeakRefCache Default = new WeakRefCache();
+        private readonly Timer _clearTimer = new Timer(60 * 1000);
+        private Dictionary<string, WeakReference> weakMap = new Dictionary<string, WeakReference>();
 
         public WeakRefCache()
         {
             _clearTimer.Elapsed += OnClearTimer;
             _clearTimer.Start();
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -54,6 +59,12 @@ namespace GitCommands.Utils
             return (T)cached;
         }
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+                _clearTimer.Dispose();
+        }
+
         private void OnClearTimer(object source, System.Timers.ElapsedEventArgs e)
         {
             lock (weakMap)
@@ -62,18 +73,6 @@ namespace GitCommands.Utils
                 foreach (var key in toRemove)
                     weakMap.Remove(key);
             }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-                _clearTimer.Dispose();
         }
     }
 }

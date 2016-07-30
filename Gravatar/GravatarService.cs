@@ -76,7 +76,6 @@ namespace Gravatar
     public class GravatarService
     {
         private static IImageCache cache;
-        private static object gravatarServiceLock = new object();
 
         /// <summary>
         /// Provides a mapping for the image defaults.
@@ -89,6 +88,8 @@ namespace Gravatar
             { FallBackService.Wavatar, "wavatar" },
             { FallBackService.Retro, "retro" },
         };
+
+        private static object gravatarServiceLock = new object();
 
         /// <summary>
         /// Gets a collection of <see cref="FallBackService"/> for which
@@ -107,19 +108,35 @@ namespace Gravatar
             }
         }
 
+        public static void CacheImage(string imageFileName, string email, int imageSize,
+                                        FallBackService fallBack)
+        {
+            try
+            {
+                if (cache == null)
+                    return;
+
+                if (IsValidEmail(email) && !cache.FileIsCached(imageFileName))
+                {
+                    //Lock added to make sure gravatar doesn't block this ip..
+                    lock (gravatarServiceLock)
+                    {
+                        GetImageFromGravatar(imageFileName, email, imageSize, fallBack);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                //catch IO errors
+                Trace.WriteLine(ex.Message);
+            }
+        }
+
         public static void ClearImageCache()
         {
             if (cache != null)
             {
                 cache.ClearCache();
-            }
-        }
-
-        public static void RemoveImageFromCache(string imageFileName)
-        {
-            if (cache != null)
-            {
-                cache.DeleteCachedFile(imageFileName);
             }
         }
 
@@ -150,28 +167,22 @@ namespace Gravatar
             return null;
         }
 
-        private static bool IsValidEmail(string strIn)
-        {
-            // Return true if strIn is in valid e-mail format.
-            return Regex.IsMatch(strIn, @"^([\w-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([\w-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$");
-        }
-
-        public static void CacheImage(string imageFileName, string email, int imageSize,
-                                        FallBackService fallBack)
+        public static void GetImageFromGravatar(string imageFileName, string email, int authorImageSize, FallBackService fallBack)
         {
             try
             {
-                if (cache == null)
-                    return;
+                var imageUrl = BuildGravatarUrl(email,
+                    authorImageSize,
+                    false,
+                    Rating.G,
+                    fallBack);
 
-                if (IsValidEmail(email) && !cache.FileIsCached(imageFileName))
-                {
-                    //Lock added to make sure gravatar doesn't block this ip..
-                    lock (gravatarServiceLock)
-                    {
-                        GetImageFromGravatar(imageFileName, email, imageSize, fallBack);
-                    }
-                }
+                var webClient = new WebClient { Proxy = WebRequest.DefaultWebProxy };
+                webClient.Proxy.Credentials = CredentialCache.DefaultCredentials;
+
+                var imageStream = webClient.OpenRead(imageUrl);
+
+                cache.CacheImage(imageFileName, imageStream);
             }
             catch (Exception ex)
             {
@@ -216,17 +227,21 @@ namespace Gravatar
             }
         }
 
-        /// <summary>
-        /// Generates an email hash as per the Gravatar specifications.
-        /// </summary>
-        /// <param name="email">The email to hash.</param>
-        /// <returns>The hash of the email.</returns>
-        /// <remarks>
-        /// The process of creating the hash are specified at http://en.gravatar.com/site/implement/hash/
-        /// </remarks>
-        private static string HashEmail(string email)
+        public static void OpenGravatarRegistration()
         {
-            return MD5.CalcMD5(email.Trim().ToLowerInvariant());
+            new Process
+            {
+                EnableRaisingEvents = false,
+                StartInfo = { FileName = @"http://www.gravatar.com" }
+            }.Start();
+        }
+
+        public static void RemoveImageFromCache(string imageFileName)
+        {
+            if (cache != null)
+            {
+                cache.DeleteCachedFile(imageFileName);
+            }
         }
 
         /// <summary>
@@ -275,37 +290,23 @@ namespace Gravatar
             return builder.Uri;
         }
 
-        public static void GetImageFromGravatar(string imageFileName, string email, int authorImageSize, FallBackService fallBack)
+        /// <summary>
+        /// Generates an email hash as per the Gravatar specifications.
+        /// </summary>
+        /// <param name="email">The email to hash.</param>
+        /// <returns>The hash of the email.</returns>
+        /// <remarks>
+        /// The process of creating the hash are specified at http://en.gravatar.com/site/implement/hash/
+        /// </remarks>
+        private static string HashEmail(string email)
         {
-            try
-            {
-                var imageUrl = BuildGravatarUrl(email,
-                    authorImageSize,
-                    false,
-                    Rating.G,
-                    fallBack);
-
-                var webClient = new WebClient { Proxy = WebRequest.DefaultWebProxy };
-                webClient.Proxy.Credentials = CredentialCache.DefaultCredentials;
-
-                var imageStream = webClient.OpenRead(imageUrl);
-
-                cache.CacheImage(imageFileName, imageStream);
-            }
-            catch (Exception ex)
-            {
-                //catch IO errors
-                Trace.WriteLine(ex.Message);
-            }
+            return MD5.CalcMD5(email.Trim().ToLowerInvariant());
         }
 
-        public static void OpenGravatarRegistration()
+        private static bool IsValidEmail(string strIn)
         {
-            new Process
-            {
-                EnableRaisingEvents = false,
-                StartInfo = { FileName = @"http://www.gravatar.com" }
-            }.Start();
+            // Return true if strIn is in valid e-mail format.
+            return Regex.IsMatch(strIn, @"^([\w-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([\w-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$");
         }
     }
 }

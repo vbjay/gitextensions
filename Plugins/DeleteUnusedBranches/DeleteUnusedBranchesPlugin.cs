@@ -5,19 +5,14 @@ namespace DeleteUnusedBranches
 {
     public class DeleteUnusedBranchesPlugin : GitPluginBase, IGitPluginForRepository
     {
+        private NumberSetting<int> DaysOlderThan = new NumberSetting<int>("Delete obsolete branches older than (days)", 30);
+
+        private StringSetting MergedInBranch = new StringSetting("Branch where all branches should be merged in", "HEAD");
+
         public DeleteUnusedBranchesPlugin()
         {
             SetNameAndDescription("Delete obsolete branches");
             Translate();
-        }
-
-        private StringSetting MergedInBranch = new StringSetting("Branch where all branches should be merged in", "HEAD");
-        private NumberSetting<int> DaysOlderThan = new NumberSetting<int>("Delete obsolete branches older than (days)", 30);
-
-        public override System.Collections.Generic.IEnumerable<ISetting> GetSettings()
-        {
-            yield return DaysOlderThan;
-            yield return MergedInBranch;
         }
 
         public override bool Execute(GitUIBaseEventArgs gitUiArgs)
@@ -28,6 +23,12 @@ namespace DeleteUnusedBranches
             }
 
             return true;
+        }
+
+        public override System.Collections.Generic.IEnumerable<ISetting> GetSettings()
+        {
+            yield return DaysOlderThan;
+            yield return MergedInBranch;
         }
     }
 }

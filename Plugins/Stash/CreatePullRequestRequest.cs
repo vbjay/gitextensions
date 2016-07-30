@@ -4,17 +4,6 @@ using RestSharp;
 
 namespace Stash
 {
-    internal class PullRequestInfo
-    {
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public Repository SourceRepo { get; set; }
-        public Repository TargetRepo { get; set; }
-        public string SourceBranch { get; set; }
-        public string TargetBranch { get; set; }
-        public IEnumerable<StashUser> Reviewers { get; set; }
-    }
-
     internal class CreatePullRequestRequest : StashRequestBase<JObject>
     {
         private readonly PullRequestInfo _info;
@@ -23,6 +12,15 @@ namespace Stash
             : base(settings)
         {
             _info = info;
+        }
+
+        protected override string ApiUrl
+        {
+            get
+            {
+                return string.Format("/projects/{0}/repos/{1}/pull-requests",
+                                     _info.TargetRepo.ProjectKey, _info.TargetRepo.RepoName);
+            }
         }
 
         protected override object RequestBody
@@ -35,18 +33,20 @@ namespace Stash
             get { return Method.POST; }
         }
 
-        protected override string ApiUrl
-        {
-            get
-            {
-                return string.Format("/projects/{0}/repos/{1}/pull-requests",
-                                     _info.TargetRepo.ProjectKey, _info.TargetRepo.RepoName);
-            }
-        }
-
         protected override JObject ParseResponse(JObject json)
         {
             return json;
+        }
+
+        private JObject CreatePullRequestRef(string projectKey, string repoName, string branchName)
+        {
+            var reference = new JObject();
+            reference["id"] = branchName;
+            reference["repository"] = new JObject();
+            reference["repository"]["slug"] = repoName;
+            reference["repository"]["project"] = new JObject();
+            reference["repository"]["project"]["key"] = projectKey;
+            return reference;
         }
 
         private string GetPullRequestBody()
@@ -76,16 +76,16 @@ namespace Stash
 
             return resource.ToString();
         }
+    }
 
-        private JObject CreatePullRequestRef(string projectKey, string repoName, string branchName)
-        {
-            var reference = new JObject();
-            reference["id"] = branchName;
-            reference["repository"] = new JObject();
-            reference["repository"]["slug"] = repoName;
-            reference["repository"]["project"] = new JObject();
-            reference["repository"]["project"]["key"] = projectKey;
-            return reference;
-        }
+    internal class PullRequestInfo
+    {
+        public string Description { get; set; }
+        public IEnumerable<StashUser> Reviewers { get; set; }
+        public string SourceBranch { get; set; }
+        public Repository SourceRepo { get; set; }
+        public string TargetBranch { get; set; }
+        public Repository TargetRepo { get; set; }
+        public string Title { get; set; }
     }
 }

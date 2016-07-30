@@ -9,6 +9,11 @@ namespace GitCommands
         /// </summary>
         private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
+        public static DateTime ParseUnixTime(string unixTime)
+        {
+            return UnixEpoch.AddSeconds(long.Parse(unixTime)).ToLocalTime();
+        }
+
         public static bool TryParseUnixTime(string unixTime, out DateTime result)
         {
             long seconds;
@@ -20,11 +25,6 @@ namespace GitCommands
 
             result = default(DateTime);
             return false;
-        }
-
-        public static DateTime ParseUnixTime(string unixTime)
-        {
-            return UnixEpoch.AddSeconds(long.Parse(unixTime)).ToLocalTime();
         }
     }
 }

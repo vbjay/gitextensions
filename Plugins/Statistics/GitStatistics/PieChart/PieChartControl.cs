@@ -41,11 +41,7 @@ namespace GitStatistics.PieChart
             SetStyle(ControlStyles.ResizeRedraw, true);
         }
 
-        /// <summary>
-        ///   Gets or sets the tool tips.
-        /// </summary>
-        /// <value>The tool tips.</value>
-        public string[] ToolTips { get; set; }
+        public event SliceSelectedHandler SliceSelected;
 
         /// <summary>
         ///   Sets the initial angle from which pies are drawn.
@@ -58,6 +54,59 @@ namespace GitStatistics.PieChart
                 _initialAngle = value;
                 Invalidate();
             }
+        }
+
+        /// <summary>
+        ///   Gets or sets the tool tips.
+        /// </summary>
+        /// <value>The tool tips.</value>
+        public string[] ToolTips { get; set; }
+
+        /// <summary>
+        ///   Sets the bottom margin for the chart.
+        /// </summary>
+        public void SetBottomMargin(float value)
+        {
+            Debug.Assert(value >= 0);
+            _bottomMargin = value;
+            Invalidate();
+        }
+
+        /// <summary>
+        ///   Sets colors to be used for rendering pie slices.
+        /// </summary>
+        public void SetColors(Color[] value)
+        {
+            _colors = value;
+            Invalidate();
+        }
+
+        /// <summary>
+        ///   Sets the edge color type.
+        /// </summary>
+        public void SetEdgeColorType(EdgeColorType value)
+        {
+            _edgeColorType = value;
+            Invalidate();
+        }
+
+        /// <summary>
+        ///   Sets the edge lines width.
+        /// </summary>
+        public void SetEdgeLineWidth(float value)
+        {
+            _edgeLineWidth = value;
+            Invalidate();
+        }
+
+        /// <summary>
+        ///   Sets the indicator if chart should fit the bounding rectangle
+        ///   exactly.
+        /// </summary>
+        public void SetFitChart(bool value)
+        {
+            _fitChart = value;
+            Invalidate();
         }
 
         /// <summary>
@@ -81,56 +130,11 @@ namespace GitStatistics.PieChart
         }
 
         /// <summary>
-        ///   Sets the top margin for the chart.
+        ///   Sets the shadow style.
         /// </summary>
-        public void SetTopMargin(float value)
+        public void SetShadowStyle(ShadowStyle value)
         {
-            Debug.Assert(value >= 0);
-            _topMargin = value;
-            Invalidate();
-        }
-
-        /// <summary>
-        ///   Sets the bottom margin for the chart.
-        /// </summary>
-        public void SetBottomMargin(float value)
-        {
-            Debug.Assert(value >= 0);
-            _bottomMargin = value;
-            Invalidate();
-        }
-
-        /// <summary>
-        ///   Sets the indicator if chart should fit the bounding rectangle
-        ///   exactly.
-        /// </summary>
-        public void SetFitChart(bool value)
-        {
-            _fitChart = value;
-            Invalidate();
-        }
-
-        /// <summary>
-        ///   Sets values to be represented by the chart.
-        /// </summary>
-        public void SetValues(decimal[] value)
-        {
-            _values = value;
-            Invalidate();
-        }
-
-        public void SetTags(object[] value)
-        {
-            _tags = value;
-            Invalidate();
-        }
-
-        /// <summary>
-        ///   Sets colors to be used for rendering pie slices.
-        /// </summary>
-        public void SetColors(Color[] value)
-        {
-            _colors = value;
+            _shadowStyle = value;
             Invalidate();
         }
 
@@ -152,52 +156,29 @@ namespace GitStatistics.PieChart
             Invalidate();
         }
 
-        /// <summary>
-        ///   Sets the shadow style.
-        /// </summary>
-        public void SetShadowStyle(ShadowStyle value)
+        public void SetTags(object[] value)
         {
-            _shadowStyle = value;
+            _tags = value;
             Invalidate();
         }
 
         /// <summary>
-        ///   Sets the edge color type.
+        ///   Sets the top margin for the chart.
         /// </summary>
-        public void SetEdgeColorType(EdgeColorType value)
+        public void SetTopMargin(float value)
         {
-            _edgeColorType = value;
+            Debug.Assert(value >= 0);
+            _topMargin = value;
             Invalidate();
         }
 
         /// <summary>
-        ///   Sets the edge lines width.
+        ///   Sets values to be represented by the chart.
         /// </summary>
-        public void SetEdgeLineWidth(float value)
+        public void SetValues(decimal[] value)
         {
-            _edgeLineWidth = value;
+            _values = value;
             Invalidate();
-        }
-
-        /// <summary>
-        ///   Handles <c>OnPaint</c> event.
-        /// </summary>
-        /// <param name = "args">
-        ///   <c>PaintEventArgs</c> object.
-        /// </param>
-        protected override void OnPaint(PaintEventArgs args)
-        {
-            DoDraw(args.Graphics);
-        }
-
-        /// <summary>
-        ///   Handles <c>OnResize</c> event.
-        /// </summary>
-        /// <param name = "args">
-        /// </param>
-        protected override void OnResize(EventArgs args)
-        {
-            Refresh();
         }
 
         /// <summary>
@@ -235,14 +216,31 @@ namespace GitStatistics.PieChart
             _pieChart.Draw(graphics);
         }
 
-        private bool HasNonZeroValue()
+        protected override void OnMouseDown(MouseEventArgs e)
         {
-            foreach (var value in _values)
+            if (_pieChart != null)
             {
-                if (value != 0)
-                    return true;
+                var index = _pieChart.FindPieSliceUnderPoint(new PointF(e.X, e.Y));
+                if (index != -1)
+                {
+                    if (ToolTips == null || ToolTips.Length <= index || ToolTips[index].Length == 0)
+                        _toolTip.SetToolTip(this, _values[index].ToString());
+                    else
+                        _toolTip.SetToolTip(this, ToolTips[index]);
+
+                    if (SliceSelected != null)
+                        SliceSelected(this,
+                                      new SliceSelectedArgs(_values[index], _toolTip.GetToolTip(this),
+                                                            (_tags != null ? _tags[index] : null)));
+                }
+                else
+                {
+                    _toolTip.RemoveAll();
+                }
+                _highlightedIndex = index;
+                Refresh();
             }
-            return false;
+            base.OnMouseDown(e);
         }
 
         protected override void OnMouseEnter(EventArgs e)
@@ -283,33 +281,35 @@ namespace GitStatistics.PieChart
             Refresh();
         }
 
-        protected override void OnMouseDown(MouseEventArgs e)
+        /// <summary>
+        ///   Handles <c>OnPaint</c> event.
+        /// </summary>
+        /// <param name = "args">
+        ///   <c>PaintEventArgs</c> object.
+        /// </param>
+        protected override void OnPaint(PaintEventArgs args)
         {
-            if (_pieChart != null)
-            {
-                var index = _pieChart.FindPieSliceUnderPoint(new PointF(e.X, e.Y));
-                if (index != -1)
-                {
-                    if (ToolTips == null || ToolTips.Length <= index || ToolTips[index].Length == 0)
-                        _toolTip.SetToolTip(this, _values[index].ToString());
-                    else
-                        _toolTip.SetToolTip(this, ToolTips[index]);
-
-                    if (SliceSelected != null)
-                        SliceSelected(this,
-                                      new SliceSelectedArgs(_values[index], _toolTip.GetToolTip(this),
-                                                            (_tags != null ? _tags[index] : null)));
-                }
-                else
-                {
-                    _toolTip.RemoveAll();
-                }
-                _highlightedIndex = index;
-                Refresh();
-            }
-            base.OnMouseDown(e);
+            DoDraw(args.Graphics);
         }
 
-        public event SliceSelectedHandler SliceSelected;
+        /// <summary>
+        ///   Handles <c>OnResize</c> event.
+        /// </summary>
+        /// <param name = "args">
+        /// </param>
+        protected override void OnResize(EventArgs args)
+        {
+            Refresh();
+        }
+
+        private bool HasNonZeroValue()
+        {
+            foreach (var value in _values)
+            {
+                if (value != 0)
+                    return true;
+            }
+            return false;
+        }
     }
 }

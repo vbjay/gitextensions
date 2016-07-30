@@ -8,7 +8,6 @@ using TestMethod = NUnit.Framework.TestAttribute;
 
 namespace GitExtensionsTest.Git
 {
-    
     [TestClass]
     public class GitBlameHeaderTest
     {
@@ -19,19 +18,6 @@ namespace GitExtensionsTest.Git
         {
             GitBlameHeader header = new GitBlameHeader();
             Assert.IsNotNull(header);
-        }
-
-        [TestMethod]
-        public void TestGetColor()
-        {
-            string randomGuid = "b35a3233-8345-43aa-a618-2ca0de12000c";
-
-            GitBlameHeader header = new GitBlameHeader { CommitGuid = randomGuid };
-
-            Color expectedColor = Color.FromArgb(255, 246, 226, 238);
-
-            Assert.AreEqual(expectedColor, header.GetColor());
-
         }
 
         [TestMethod]
@@ -51,6 +37,18 @@ namespace GitExtensionsTest.Git
             GitBlameHeader header2 = new GitBlameHeader();
 
             Assert.IsFalse(header1.Equals(header2));
+        }
+
+        [TestMethod]
+        public void TestGetColor()
+        {
+            string randomGuid = "b35a3233-8345-43aa-a618-2ca0de12000c";
+
+            GitBlameHeader header = new GitBlameHeader { CommitGuid = randomGuid };
+
+            Color expectedColor = Color.FromArgb(255, 246, 226, 238);
+
+            Assert.AreEqual(expectedColor, header.GetColor());
         }
 
         [TestMethod]
@@ -84,4 +82,3 @@ namespace GitExtensionsTest.Git
         }
     }
 }
-

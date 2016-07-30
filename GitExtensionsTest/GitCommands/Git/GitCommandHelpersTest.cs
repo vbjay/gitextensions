@@ -59,6 +59,20 @@ namespace GitExtensionsTest.Git
         }
 
         [TestMethod]
+        public void GetFullBranchNameTest()
+        {
+            Assert.AreEqual(null, GitCommandHelpers.GetFullBranchName(null));
+            Assert.AreEqual("", GitCommandHelpers.GetFullBranchName(""));
+            Assert.AreEqual("", GitCommandHelpers.GetFullBranchName("    "));
+            Assert.AreEqual("4e0f0fe3f6add43557913c354de02560b8faec32", GitCommandHelpers.GetFullBranchName("4e0f0fe3f6add43557913c354de02560b8faec32"));
+            Assert.AreEqual("refs/heads/master", GitCommandHelpers.GetFullBranchName("master"));
+            Assert.AreEqual("refs/heads/master", GitCommandHelpers.GetFullBranchName(" master "));
+            Assert.AreEqual("refs/heads/master", GitCommandHelpers.GetFullBranchName("refs/heads/master"));
+            Assert.AreEqual("refs/heads/release/2.48", GitCommandHelpers.GetFullBranchName("refs/heads/release/2.48"));
+            Assert.AreEqual("refs/tags/my-tag", GitCommandHelpers.GetFullBranchName("refs/tags/my-tag"));
+        }
+
+        [TestMethod]
         public void TestGetAllChangedFilesFromString()
         {
             GitModule module = new GitModule(null);
@@ -97,17 +111,20 @@ namespace GitExtensionsTest.Git
         }
 
         [TestMethod]
-        public void GetFullBranchNameTest()
+        public void TestGetPlinkCompatibleUrl_Compatible()
         {
-            Assert.AreEqual(null, GitCommandHelpers.GetFullBranchName(null));
-            Assert.AreEqual("", GitCommandHelpers.GetFullBranchName(""));
-            Assert.AreEqual("", GitCommandHelpers.GetFullBranchName("    "));
-            Assert.AreEqual("4e0f0fe3f6add43557913c354de02560b8faec32", GitCommandHelpers.GetFullBranchName("4e0f0fe3f6add43557913c354de02560b8faec32"));
-            Assert.AreEqual("refs/heads/master", GitCommandHelpers.GetFullBranchName("master"));
-            Assert.AreEqual("refs/heads/master", GitCommandHelpers.GetFullBranchName(" master "));
-            Assert.AreEqual("refs/heads/master", GitCommandHelpers.GetFullBranchName("refs/heads/master"));
-            Assert.AreEqual("refs/heads/release/2.48", GitCommandHelpers.GetFullBranchName("refs/heads/release/2.48"));
-            Assert.AreEqual("refs/tags/my-tag", GitCommandHelpers.GetFullBranchName("refs/tags/my-tag"));
+            // Test urls that are already compatible, these shouldn't be changed
+            string inUrl, outUrl;
+
+            // ssh in compatible form
+            inUrl = "git@github.com:gitextensions/gitextensions.git";
+            outUrl = GitCommandHelpers.GetPlinkCompatibleUrl(inUrl);
+            Assert.AreEqual("\"" + inUrl + "\"", outUrl);
+
+            // ssh in compatible form, no user
+            inUrl = "example.org:some/path/to/repo.git";
+            outUrl = GitCommandHelpers.GetPlinkCompatibleUrl(inUrl);
+            Assert.AreEqual("\"" + inUrl + "\"", outUrl);
         }
 
         [TestMethod]
@@ -135,18 +152,16 @@ namespace GitExtensionsTest.Git
         }
 
         [TestMethod]
-        public void TestGetPlinkCompatibleUrl_Compatible()
+        public void TestGetPlinkCompatibleUrl_Invalid()
         {
-            // Test urls that are already compatible, these shouldn't be changed
+            // Test urls that are no valid uris, these should be ignored
             string inUrl, outUrl;
 
-            // ssh in compatible form
-            inUrl = "git@github.com:gitextensions/gitextensions.git";
+            inUrl = "foo://server/path/to/project.git";
             outUrl = GitCommandHelpers.GetPlinkCompatibleUrl(inUrl);
             Assert.AreEqual("\"" + inUrl + "\"", outUrl);
 
-            // ssh in compatible form, no user
-            inUrl = "example.org:some/path/to/repo.git";
+            inUrl = @"ssh:\\server\path\to\project.git";
             outUrl = GitCommandHelpers.GetPlinkCompatibleUrl(inUrl);
             Assert.AreEqual("\"" + inUrl + "\"", outUrl);
         }
@@ -194,21 +209,6 @@ namespace GitExtensionsTest.Git
 
             // https, no user
             inUrl = "https://server/path/to/project.git";
-            outUrl = GitCommandHelpers.GetPlinkCompatibleUrl(inUrl);
-            Assert.AreEqual("\"" + inUrl + "\"", outUrl);
-        }
-
-        [TestMethod]
-        public void TestGetPlinkCompatibleUrl_Invalid()
-        {
-            // Test urls that are no valid uris, these should be ignored
-            string inUrl, outUrl;
-
-            inUrl = "foo://server/path/to/project.git";
-            outUrl = GitCommandHelpers.GetPlinkCompatibleUrl(inUrl);
-            Assert.AreEqual("\"" + inUrl + "\"", outUrl);
-
-            inUrl = @"ssh:\\server\path\to\project.git";
             outUrl = GitCommandHelpers.GetPlinkCompatibleUrl(inUrl);
             Assert.AreEqual("\"" + inUrl + "\"", outUrl);
         }

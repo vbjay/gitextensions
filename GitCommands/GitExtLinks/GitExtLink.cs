@@ -8,15 +8,15 @@ namespace GitCommands.GitExtLinks
         public string Caption { get; set; }
         public string URI { get; set; }
 
+        public override int GetHashCode()
+        {
+            return URI.GetHashCode();
+        }
+
         protected internal override IEnumerable<object> InlinedStructure()
         {
             yield return Caption;
             yield return URI;
-        }
-
-        public override int GetHashCode()
-        {
-            return URI.GetHashCode();
         }
     }
 }

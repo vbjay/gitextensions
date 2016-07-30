@@ -6,10 +6,10 @@ namespace Stash
 {
     internal class GetInBetweenCommitsRequest : StashRequestBase<List<Commit>>
     {
-        private readonly Repository _sourceRepo;
-        private readonly Repository _targetRepo;
         private readonly Commit _sourceCommit;
+        private readonly Repository _sourceRepo;
         private readonly Commit _targetCommit;
+        private readonly Repository _targetRepo;
 
         public GetInBetweenCommitsRequest(Repository sourceRepo, Repository targetRepo,
             Commit sourceCommit, Commit targetCommit, Settings settings)
@@ -21,16 +21,6 @@ namespace Stash
             _targetCommit = targetCommit;
         }
 
-        protected override object RequestBody
-        {
-            get { return null; }
-        }
-
-        protected override Method RequestMethod
-        {
-            get { return Method.GET; }
-        }
-
         protected override string ApiUrl
         {
             get
@@ -40,6 +30,16 @@ namespace Stash
                     _sourceRepo.ProjectKey, _sourceRepo.RepoName,
                     _sourceCommit.Hash, _targetCommit.Hash, _targetRepo.Id);
             }
+        }
+
+        protected override object RequestBody
+        {
+            get { return null; }
+        }
+
+        protected override Method RequestMethod
+        {
+            get { return Method.GET; }
         }
 
         protected override List<Commit> ParseResponse(JObject json)

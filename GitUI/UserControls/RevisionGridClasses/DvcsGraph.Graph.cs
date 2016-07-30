@@ -20,8 +20,8 @@ namespace GitUI.RevisionGridClasses
 
             public readonly List<Node> AddedNodes = new List<Node>();
 
-            private readonly List<Junction> junctions = new List<Junction>();
             public readonly Dictionary<string, Node> Nodes = new Dictionary<string, Node>();
+            private readonly List<Junction> junctions = new List<Junction>();
             private readonly Lanes lanes;
             private int filterNodeCount;
 
@@ -32,6 +32,26 @@ namespace GitUI.RevisionGridClasses
             public Graph()
             {
                 lanes = new Lanes(this);
+            }
+
+            public event GraphUpdatedHandler Updated;
+
+            public int CachedCount
+            {
+                get { return lanes.CachedCount; }
+            }
+
+            public int Count
+            {
+                get
+                {
+                    if (IsFilter)
+                    {
+                        return filterNodeCount;
+                    }
+
+                    return nodeCount;
+                }
             }
 
             public bool IsFilter
@@ -56,97 +76,10 @@ namespace GitUI.RevisionGridClasses
                 }
             }
 
-            public int Count
-            {
-                get
-                {
-                    if (IsFilter)
-                    {
-                        return filterNodeCount;
-                    }
-
-                    return nodeCount;
-                }
-            }
-
             public ILaneRow this[int col]
             {
                 get { return lanes[col]; }
             }
-
-            public int CachedCount
-            {
-                get { return lanes.CachedCount; }
-            }
-
-            public void Filter(string aId)
-            {
-                Node node = Nodes[aId];
-
-                if (!node.IsFiltered)
-                {
-                    filterNodeCount++;
-                    node.IsFiltered = true;
-                }
-
-                // Clear the filtered lane data.
-                // TODO: We could be smart and only clear items after Node[aId]. The check
-                // below isn't valid, since it could be either the filtered or unfiltered
-                // lane...
-                //if (node.InLane != int.MaxValue)
-                //{
-                //    filteredLanes.Clear();
-                //}
-            }
-
-            public void ClearHighlightBranch()
-            {
-                foreach (Node node in Nodes.Values)
-                {
-                    foreach (Junction junction in node.Ancestors)
-                    {
-                        junction.HighLight = false;
-                    }
-                }
-            }
-
-            public void HighlightBranch(string aId)
-            {
-                ClearHighlightBranch();
-                HighlightBranchRecursive(aId);
-            }
-
-            public bool IsRevisionRelative(string aGuid)
-            {
-                Node startNode;
-
-                if (Nodes.TryGetValue(aGuid, out startNode))
-                {
-                    return startNode.Ancestors.Any(a => a.IsRelative);
-                }
-
-                return false;
-            }
-
-            public void HighlightBranchRecursive(string aId)
-            {
-                Node startNode;
-
-                if (Nodes.TryGetValue(aId, out startNode))
-                {
-                    foreach (Junction junction in startNode.Ancestors)
-                    {
-                        if (junction.HighLight)
-                            continue;
-
-                        junction.HighLight = true;
-
-                        HighlightBranchRecursive(junction.Oldest.Id);
-                    }
-                }
-            }
-
-            public event GraphUpdatedHandler Updated;
 
             public void Add(string aId, string[] aParentIds, DataType aType, GitRevision aData)
             {
@@ -259,6 +192,11 @@ namespace GitUI.RevisionGridClasses
                 }
             }
 
+            public bool CacheTo(int idx)
+            {
+                return lanes.CacheTo(idx);
+            }
+
             public void Clear()
             {
                 AddedNodes.Clear();
@@ -267,6 +205,86 @@ namespace GitUI.RevisionGridClasses
                 lanes.Clear();
                 nodeCount = 0;
                 filterNodeCount = 0;
+            }
+
+            public void ClearHighlightBranch()
+            {
+                foreach (Node node in Nodes.Values)
+                {
+                    foreach (Junction junction in node.Ancestors)
+                    {
+                        junction.HighLight = false;
+                    }
+                }
+            }
+
+            public void Filter(string aId)
+            {
+                Node node = Nodes[aId];
+
+                if (!node.IsFiltered)
+                {
+                    filterNodeCount++;
+                    node.IsFiltered = true;
+                }
+
+                // Clear the filtered lane data.
+                // TODO: We could be smart and only clear items after Node[aId]. The check
+                // below isn't valid, since it could be either the filtered or unfiltered
+                // lane...
+                //if (node.InLane != int.MaxValue)
+                //{
+                //    filteredLanes.Clear();
+                //}
+            }
+
+            public IEnumerable<Node> GetRefs()
+            {
+                var nodes = new List<Node>();
+                foreach (Junction j in junctions)
+                {
+                    if (j.Youngest.Descendants.Count == 0 && !nodes.Contains(j.Youngest))
+                    {
+                        nodes.Add(j.Youngest);
+                    }
+                }
+                return nodes;
+            }
+
+            public void HighlightBranch(string aId)
+            {
+                ClearHighlightBranch();
+                HighlightBranchRecursive(aId);
+            }
+
+            public void HighlightBranchRecursive(string aId)
+            {
+                Node startNode;
+
+                if (Nodes.TryGetValue(aId, out startNode))
+                {
+                    foreach (Junction junction in startNode.Ancestors)
+                    {
+                        if (junction.HighLight)
+                            continue;
+
+                        junction.HighLight = true;
+
+                        HighlightBranchRecursive(junction.Oldest.Id);
+                    }
+                }
+            }
+
+            public bool IsRevisionRelative(string aGuid)
+            {
+                Node startNode;
+
+                if (Nodes.TryGetValue(aGuid, out startNode))
+                {
+                    return startNode.Ancestors.Any(a => a.IsRelative);
+                }
+
+                return false;
             }
 
             public void ProcessNode(Node aNode)
@@ -321,24 +339,6 @@ namespace GitUI.RevisionGridClasses
                         goto start_over;
                     }
                 }
-            }
-
-            public IEnumerable<Node> GetRefs()
-            {
-                var nodes = new List<Node>();
-                foreach (Junction j in junctions)
-                {
-                    if (j.Youngest.Descendants.Count == 0 && !nodes.Contains(j.Youngest))
-                    {
-                        nodes.Add(j.Youngest);
-                    }
-                }
-                return nodes;
-            }
-
-            public bool CacheTo(int idx)
-            {
-                return lanes.CacheTo(idx);
             }
 
             // TopoSorting is an easy way to detect if something has gone wrong with the graph
@@ -463,10 +463,20 @@ namespace GitUI.RevisionGridClasses
                     get { return junctions; }
                 }
 
+                public static implicit operator int(LaneInfo a)
+                {
+                    return a.ConnectLane;
+                }
+
                 public LaneInfo Clone()
                 {
                     var other = new LaneInfo { connectLane = connectLane, junctions = new List<Junction>(junctions) };
                     return other;
+                }
+
+                public override string ToString()
+                {
+                    return ConnectLane.ToString();
                 }
 
                 public void UnionWith(LaneInfo aOther)
@@ -480,16 +490,6 @@ namespace GitUI.RevisionGridClasses
                     }
                     junctions.TrimExcess();
                 }
-
-                public static implicit operator int(LaneInfo a)
-                {
-                    return a.ConnectLane;
-                }
-
-                public override string ToString()
-                {
-                    return ConnectLane.ToString();
-                }
             }
 
             #endregion Nested type: LaneInfo
@@ -498,13 +498,13 @@ namespace GitUI.RevisionGridClasses
 
             public interface ILaneRow
             {
-                // Node information
-                int NodeLane { get; }
+                // Lane information
+                int Count { get; }
 
                 Node Node { get; }
 
-                // Lane information
-                int Count { get; }
+                // Node information
+                int NodeLane { get; }
 
                 LaneInfo this[int lane, int item] { get; }
 

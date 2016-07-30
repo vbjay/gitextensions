@@ -10,6 +10,36 @@ namespace GitUI
     {
         private GitUICommands _uiCommands;
 
+        public GitModuleForm(GitUICommands aCommands)
+                    : this(true, aCommands)
+        {
+        }
+
+        public GitModuleForm(bool enablePositionRestore, GitUICommands aCommands)
+                    : base(enablePositionRestore)
+        {
+            UICommands = aCommands;
+        }
+
+        protected GitModuleForm()
+        {
+        }
+
+        public event EventHandler<GitUICommandsChangedEventArgs> GitUICommandsChanged;
+
+        /// <summary>true if <see cref="UICommands"/> has been initialzed.</summary>
+        public bool IsUICommandsInitialized
+        {
+            get
+            {
+                return _uiCommands != null;
+            }
+        }
+
+        /// <summary>Gets a <see cref="GitModule"/> reference.</summary>
+        [Browsable(false)]
+        public GitModule Module { get { return _uiCommands != null ? _uiCommands.Module : null; } }
+
         /// <summary>Gets a <see cref="GitUICommands"/> reference.</summary>
         [Browsable(false)]
         public GitUICommands UICommands
@@ -29,36 +59,6 @@ namespace GitUI
                 if (GitUICommandsChanged != null)
                     GitUICommandsChanged(this, new GitUICommandsChangedEventArgs(oldCommands));
             }
-        }
-
-        /// <summary>true if <see cref="UICommands"/> has been initialzed.</summary>
-        public bool IsUICommandsInitialized
-        {
-            get
-            {
-                return _uiCommands != null;
-            }
-        }
-
-        /// <summary>Gets a <see cref="GitModule"/> reference.</summary>
-        [Browsable(false)]
-        public GitModule Module { get { return _uiCommands != null ? _uiCommands.Module : null; } }
-
-        public event EventHandler<GitUICommandsChangedEventArgs> GitUICommandsChanged;
-
-        protected GitModuleForm()
-        {
-        }
-
-        public GitModuleForm(GitUICommands aCommands)
-            : this(true, aCommands)
-        {
-        }
-
-        public GitModuleForm(bool enablePositionRestore, GitUICommands aCommands)
-            : base(enablePositionRestore)
-        {
-            UICommands = aCommands;
         }
 
         protected override bool ExecuteCommand(int command)
