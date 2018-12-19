@@ -55,6 +55,19 @@ build_script:
     # build
     & Setup\Build.cmd
     if ($LastExitCode -ne 0) { $host.SetShouldExit($LastExitCode) }
+    & Write-Host ----------------------------------------------------------------------
+    & Write-Host Package PDBs
+    & Write-Host ----------------------------------------------------------------------
+    # collect pdbs
+    & pushd Setup
+    & xcopy ..\GitExtensions\bin\Release\*.pdb pdbs\ /Y
+    & xcopy ..\GitExtensions\bin\Release\Plugins\*.pdb pdbs\Plugins\ /Y
+
+    & pushd pdbs
+    & ..\..\packages\7-Zip.CommandLine.9.20.0\tools\7za.exe a -tzip ..\GitExtensions-$env:APPVEYOR_BUILD_VERSION-pdb.zip .
+    & popd
+    & popd
+
 
 # to run your custom scripts instead of automatic tests
 test_script:
@@ -101,6 +114,7 @@ for:
   artifacts:
     # upload the generated portable archive only
     - path: 'Setup/GitExtensions-Portable-*.zip'
+    - path: 'Setup/GitExtensions-*-pdb.zip
 
 # configuration for release branches ONLY
 -
