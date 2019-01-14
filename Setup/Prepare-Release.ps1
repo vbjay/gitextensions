@@ -191,7 +191,7 @@ try {
     popd
 
     # cleanup
-    Remove-Item -Force -Recurse pdbs
+    Remove-Item -Force -Recurse GitExtensions-pdbs
     Remove-Item -Force -Recurse GitExtensions
 
 }
