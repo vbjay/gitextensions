@@ -1,4 +1,4 @@
-version: 3.01.00.{build}
+version: 3.1.0.{build}
 
 os: Visual Studio 2017
 
@@ -113,7 +113,7 @@ for:
           #& tree /F /A > tree.txt
           #Push-AppveyorArtifact .\tree.txt
       }
-      
+
   artifacts:
     # upload the generated portable archive only
     - path: 'Setup/GitExtensions-Portable-*.zip'
